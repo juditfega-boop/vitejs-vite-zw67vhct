@@ -229,11 +229,11 @@ export default function App() {
         </button>
 
         <button
-  onClick={() => setPantalla("errores")}
-  style={styles.button}
->
-  ⭐ Repasar errores ({pendientesErrores})
-</button>
+          onClick={() => setPantalla("errores")}
+          style={styles.button}
+        >
+          ⭐ Repasar errores ({pendientesErrores})
+        </button>
 
         <button onClick={() => setPantalla("estadisticas")} style={styles.button}>
           📊 Estadísticas
@@ -255,128 +255,143 @@ export default function App() {
   }
 
   // ⭐ REPASAR ERRORES
+  if (pantalla === "errores") {
 
-if (pantalla === "errores") {
+    const stats = obtenerStats();
 
-  const stats = obtenerStats();
+    const muyOlvidadas = [];
+    const pendientes = [];
+    const recuperadas = [];
 
-  const muyOlvidadas = [];
-  const pendientes = [];
-  const recuperadas = [];
+    preguntasBase.forEach((p) => {
 
-  preguntasBase.forEach((p) => {
+      const s = stats[String(p.id)];
 
-    const s = stats[String(p.id)];
+      if (!s) return;
 
-    if (!s) return;
+      if (s.errores >= 3) {
+        muyOlvidadas.push(p);
+      }
 
-    if (s.errores >= 3) {
-      muyOlvidadas.push(p);
-    }
+      else if (s.errores > s.aciertos) {
+        pendientes.push(p);
+      }
 
-    else if (s.errores > s.aciertos) {
-      pendientes.push(p);
-    }
+      else if (
+        s.aciertos >= s.errores &&
+        s.errores > 0
+      ) {
+        recuperadas.push(p);
+      }
 
-    else if (
-      s.aciertos >= s.errores &&
-      s.errores > 0
-    ) {
-      recuperadas.push(p);
-    }
+    });
 
-  });
+    return (
+      <div style={styles.container}>
 
-  return (
-    <div style={styles.container}>
+        <h1>⭐ Repasar errores</h1>
 
-      <h1>⭐ Repasar errores</h1>
+        <div style={{
+          border:"1px solid #ddd",
+          padding:15,
+          marginTop:10,
+          borderRadius:10
+        }}>
+          <h3>
+            🔴 Muy olvidadas ({muyOlvidadas.length})
+          </h3>
 
-      <div style={{
-        border:"1px solid #ddd",
-        padding:15,
-        marginTop:10,
-        borderRadius:10
-      }}>
-        <h3>
-          🔴 Muy olvidadas ({muyOlvidadas.length})
-        </h3>
+          <p>
+            Estas preguntas viven de alquiler en tu cabeza 👀
+          </p>
 
-        <p>
-          Estas preguntas viven de alquiler en tu cabeza 👀
-        </p>
+          <button
+            style={styles.button}
+            onClick={() => iniciarBloque(muyOlvidadas)}
+          >
+            Repasar
+          </button>
+
+        </div>
+
+
+        <div style={{
+          border:"1px solid #ddd",
+          padding:15,
+          marginTop:10,
+          borderRadius:10
+        }}>
+          <h3>
+            🟡 Pendientes ({pendientes.length})
+          </h3>
+
+          <p>
+            Aún te la están colando 😅
+          </p>
+
+          <button
+            style={styles.button}
+            onClick={() => iniciarBloque(pendientes)}
+          >
+            Repasar
+          </button>
+
+        </div>
+
+
+        <div style={{
+          border:"1px solid #ddd",
+          padding:15,
+          marginTop:10,
+          borderRadius:10
+        }}>
+          <h3>
+            🟢 Recuperadas ({recuperadas.length})
+          </h3>
+
+          <p>
+            Antes daban guerra, ahora tiemblan 💪
+          </p>
+
+          <button
+            style={styles.button}
+            onClick={() => iniciarBloque(recuperadas)}
+          >
+            Repasar
+          </button>
+
+        </div>
 
         <button
+          onClick={volverMenu}
           style={styles.button}
-          onClick={() => iniciarBloque(muyOlvidadas)}
         >
-          Repasar
+          ⬅ Volver
         </button>
 
       </div>
+    );
+  }
 
+  // 📊 ESTADÍSTICAS
+  if (pantalla === "estadisticas") {
 
-      <div style={{
-        border:"1px solid #ddd",
-        padding:15,
-        marginTop:10,
-        borderRadius:10
-      }}>
-        <h3>
-          🟡 Pendientes ({pendientes.length})
-        </h3>
+    const statsGuardadas = obtenerStats();
+    const bloques = {};
 
-        <p>
-          Aún te la están colando 😅
-        </p>
+    Object.values(statsGuardadas).forEach((dato) => {
+      const bloque = dato.bloque || "Sin bloque";
 
-        <button
-          style={styles.button}
-          onClick={() => iniciarBloque(pendientes)}
-        >
-          Repasar
-        </button>
+      if (!bloques[bloque]) {
+        bloques[bloque] = {
+          respondidas: 0,
+          aciertos: 0
+        };
+      }
 
-      </div>
-
-
-      <div style={{
-        border:"1px solid #ddd",
-        padding:15,
-        marginTop:10,
-        borderRadius:10
-      }}>
-        <h3>
-          🟢 Recuperadas ({recuperadas.length})
-        </h3>
-
-        <p>
-          Antes daban guerra, ahora tiemblan 💪
-        </p>
-
-        <button
-          style={styles.button}
-          onClick={() => iniciarBloque(recuperadas)}
-        >
-          Repasar
-        </button>
-
-      </div>
-
-      <button
-        onClick={volverMenu}
-        style={styles.button}
-      >
-        ⬅ Volver
-      </button>
-
-    </div>
-  );
-}
       bloques[bloque].respondidas += dato.veces || 0;
       bloques[bloque].aciertos += dato.aciertos || 0;
-
-    };
+    });
 
     function mensajeBloque(p) {
 
@@ -455,6 +470,7 @@ if (pantalla === "errores") {
 
       </div>
     );
+  }
 
   // 🟣 QUIZ (y también SIMULACRO, que usa la misma vista)
   if ((pantalla === "quiz" || pantalla === "simulacro") && pregunta) {
@@ -556,6 +572,7 @@ if (pantalla === "errores") {
       </button>
     </div>
   );
+}
 
 function obtenerStats() {
   return JSON.parse(localStorage.getItem(CLAVE_STATS)) || {};
