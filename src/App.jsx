@@ -13,7 +13,6 @@ export default function App() {
   const [aciertos, setAciertos] = useState(0);
   const [cantidad, setCantidad] = useState(20);
 
-  // 📚 cargar preguntas
   useEffect(() => {
     async function init() {
       const datos = await cargarPreguntas();
@@ -24,7 +23,6 @@ export default function App() {
 
   const pregunta = preguntas[indice];
 
-  // 📊 stats globales
   const stats = obtenerStats();
   const totalRespondidas = Object.values(stats).reduce(
     (a, b) => a + (b.veces || 0),
@@ -39,7 +37,6 @@ export default function App() {
     ? Math.round((totalAciertos / totalRespondidas) * 100)
     : 0;
 
-  // 🌱 MENÚ
   function volverMenu() {
     setPantalla("inicio");
     setIndice(0);
@@ -48,12 +45,10 @@ export default function App() {
     setMostrar(false);
   }
 
-  // 🎲 mezclar preguntas
   function mezclar(array) {
     return [...array].sort(() => Math.random() - 0.5);
   }
 
-  // 🎲 preparar respuestas mezcladas
   function prepararPregunta(p) {
     const respuestas = p.respuestas.map((r, i) => ({
       texto: r,
@@ -73,7 +68,6 @@ export default function App() {
     };
   }
 
-  // 📦 agrupar por bloques
   function agruparPorBloques(lista) {
     const bloques = {};
 
@@ -86,7 +80,6 @@ export default function App() {
     return bloques;
   }
 
-  // 🚀 iniciar sesión normal
   function iniciar(tipo = "normal", lista = preguntasBase) {
     let base = [...lista];
 
@@ -106,7 +99,6 @@ export default function App() {
     setPantalla("quiz");
   }
 
-  // 📦 iniciar por bloque
   function iniciarBloque(lista) {
     const base = mezclar(lista)
       .slice(0, cantidad)
@@ -120,30 +112,24 @@ export default function App() {
     setPantalla("quiz");
   }
 
-  // ⭐ preguntas débiles
   function obtenerPreguntasDebiles(lista) {
     const stats = obtenerStats();
-  
+
     const muyOlvidadas = [];
     const pendientes = [];
     const recuperadas = [];
-  
+
     lista.forEach((p) => {
       const s = stats[String(p.id)];
-  
+
       if (!s) return;
-  
-      // fallada muchas veces
+
       if (s.errores >= 3) {
         muyOlvidadas.push(p);
       }
-  
-      // aún falla más de lo que acierta
       else if (s.errores > s.aciertos) {
         pendientes.push(p);
       }
-  
-      // antes fallaba pero ahora mejora
       else if (
         s.aciertos >= s.errores &&
         s.errores > 0
@@ -151,7 +137,7 @@ export default function App() {
         recuperadas.push(p);
       }
     });
-  
+
     return [
       ...muyOlvidadas,
       ...pendientes,
@@ -159,7 +145,8 @@ export default function App() {
     ];
   }
 
-  // 🧠 comprobar respuesta
+  const pendientesErrores = obtenerPreguntasDebiles(preguntasBase).length;
+
   function comprobar(index) {
     const esCorrecta = index === pregunta.correcta;
 
@@ -186,7 +173,6 @@ export default function App() {
     }
   }
 
-  // 🔵 INICIO
   if (pantalla === "inicio") {
     const bloques = agruparPorBloques(preguntasBase);
 
@@ -210,20 +196,16 @@ export default function App() {
           📖 Estudio general
         </button>
 
-        const pendientesErrores =
-  obtenerPreguntasDebiles(
-    preguntasBase
-  ).length;
-  <button
-  onClick={() => iniciar("errores")}
-  style={styles.button}
->
- ⭐ Repasar errores ({pendientesErrores})
-</button>
+        <button
+          onClick={() => iniciar("errores")}
+          style={styles.button}
+        >
+          ⭐ Repasar errores ({pendientesErrores})
+        </button>
 
-        <button onClick={() => setPantalla("estadisticas")} style={styles.button}
->📊 Estadísticas
-</button>
+        <button onClick={() => setPantalla("estadisticas")} style={styles.button}>
+          📊 Estadísticas
+        </button>
 
         <h3>📦 Por bloques</h3>
 
@@ -239,108 +221,108 @@ export default function App() {
       </div>
     );
   }
-// // 📊 ESTADÍSTICAS
-if (pantalla === "estadisticas") {
 
-  const statsGuardadas = obtenerStats();
+  if (pantalla === "estadisticas") {
 
-  const bloques = {};
+    const statsGuardadas = obtenerStats();
 
-  Object.values(statsGuardadas).forEach((dato) => {
+    const bloques = {};
 
-    const bloque = dato.bloque || "Sin bloque";
+    Object.values(statsGuardadas).forEach((dato) => {
 
-    if (!bloques[bloque]) {
-      bloques[bloque] = {
-        respondidas: 0,
-        aciertos: 0
-      };
+      const bloque = dato.bloque || "Sin bloque";
+
+      if (!bloques[bloque]) {
+        bloques[bloque] = {
+          respondidas: 0,
+          aciertos: 0
+        };
+      }
+
+      bloques[bloque].respondidas += dato.veces || 0;
+      bloques[bloque].aciertos += dato.aciertos || 0;
+
+    });
+
+    function mensajeBloque(p) {
+
+      if (p >= 90)
+        return "🔥 ¿Necesitas una plaza o sustituir al tribunal?";
+
+      if (p >= 75)
+        return "😎 En esto estás sobrada";
+
+      if (p >= 60)
+        return "🙂 Vas bien, pero aún hay preguntas que te vacilan";
+
+      if (p >= 40)
+        return "⚠️ Este tema te está haciendo una llave de judo";
+
+      if (p >= 20)
+        return "🍺 Deja la cerveza y estudia, que este tema lo estás viendo menos que Stevie Wonder";
+
+      return "🚨 Si este tema sale en el examen toca invocar fuerzas superiores";
     }
 
-    bloques[bloque].respondidas += dato.veces || 0;
-    bloques[bloque].aciertos += dato.aciertos || 0;
+    const ordenados = Object.entries(bloques)
+      .map(([nombre, datos]) => ({
+        nombre,
+        porcentaje: datos.respondidas
+          ? Math.round(
+              (datos.aciertos /
+              datos.respondidas) * 100
+            )
+          : 0
+      }))
+      .sort((a, b) => b.porcentaje - a.porcentaje);
 
-  });
+    return (
+      <div style={styles.container}>
 
-  function mensajeBloque(p) {
+        <h1>📊 Estadísticas</h1>
 
-    if (p >= 90)
-      return "🔥 ¿Necesitas una plaza o sustituir al tribunal?";
+        {ordenados.length === 0 ? (
 
-    if (p >= 75)
-      return "😎 En esto estás sobrada";
+          <p>
+            Todavía no has respondido preguntas 😅
+          </p>
 
-    if (p >= 60)
-      return "🙂 Vas bien, pero aún hay preguntas que te vacilan";
+        ) : (
 
-    if (p >= 40)
-      return "⚠️ Este tema te está haciendo una llave de judo";
+          <>
+            {ordenados.map((b) => (
+              <div
+                key={b.nombre}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: 10,
+                  marginTop: 10,
+                  borderRadius: 10
+                }}
+              >
+                <h3>{b.nombre}</h3>
 
-    if (p >= 20)
-      return "🍺 Deja la cerveza y estudia, que este tema lo estás viendo menos que Stevie Wonder";
+                <p>{b.porcentaje}% aciertos</p>
 
-    return "🚨 Si este tema sale en el examen toca invocar fuerzas superiores";
+                <p>{mensajeBloque(b.porcentaje)}</p>
+
+              </div>
+            ))}
+          </>
+
+        )}
+
+        <button
+          onClick={volverMenu}
+          style={styles.button}
+        >
+          ⬅ Volver
+        </button>
+
+      </div>
+    );
   }
 
-  const ordenados = Object.entries(bloques)
-    .map(([nombre, datos]) => ({
-      nombre,
-      porcentaje: datos.respondidas
-        ? Math.round(
-            (datos.aciertos /
-            datos.respondidas) * 100
-          )
-        : 0
-    }))
-    .sort((a,b)=>b.porcentaje-a.porcentaje);
-
-  return (
-    <div style={styles.container}>
-
-      <h1>📊 Estadísticas</h1>
-
-      {ordenados.length === 0 ? (
-
-        <p>
-          Todavía no has respondido preguntas 😅
-        </p>
-
-      ) : (
-
-        <>
-          {ordenados.map((b)=>(
-            <div
-              key={b.nombre}
-              style={{
-                border:"1px solid #ddd",
-                padding:10,
-                marginTop:10,
-                borderRadius:10
-              }}
-            >
-              <h3>{b.nombre}</h3>
-
-              <p>{b.porcentaje}% aciertos</p>
-
-              <p>{mensajeBloque(b.porcentaje)}</p>
-
-            </div>
-          ))}
-        </>
-
-      )}
-
-      <button
-        onClick={volverMenu}
-        style={styles.button}
-      >
-        ⬅ Volver
-      </button>
-
-    </div>
-  );
-}
-  // 🟣 QUIZ
   if (pantalla === "quiz" && pregunta) {
     return (
       <div style={styles.container}>
@@ -378,40 +360,42 @@ if (pantalla === "estadisticas") {
         {mostrar && (
           <>
             <p>{mensaje}</p>
-            {mostrar && (() => {
-  const s = obtenerStats()[String(pregunta.id)];
 
-  if (!s) return null;
+            {(() => {
+              const s = obtenerStats()[String(pregunta.id)];
 
-  if (s.errores >= 5) {
-    return (
-      <p>
-        💀 Esta pregunta te persigue desde hace tiempo...
-      </p>
-    );
-  }
+              if (!s) return null;
 
-  if (s.errores >= 3) {
-    return (
-      <p>
-        👀 Ya os estáis viendo demasiado tú y esta pregunta
-      </p>
-    );
-  }
+              if (s.errores >= 5) {
+                return (
+                  <p>
+                    💀 Esta pregunta te persigue desde hace tiempo...
+                  </p>
+                );
+              }
 
-  if (
-    s.aciertos >= s.errores &&
-    s.errores > 0
-  ) {
-    return (
-      <p>
-        🏆 Recuperada. Antes te ganaba ella.
-      </p>
-    );
-  }
+              if (s.errores >= 3) {
+                return (
+                  <p>
+                    👀 Ya os estáis viendo demasiado tú y esta pregunta
+                  </p>
+                );
+              }
 
-  return null;
-})()}
+              if (
+                s.aciertos >= s.errores &&
+                s.errores > 0
+              ) {
+                return (
+                  <p>
+                    🏆 Recuperada. Antes te ganaba ella.
+                  </p>
+                );
+              }
+
+              return null;
+            })()}
+
             <p style={{ fontSize: 13 }}>
               <b>Explicación:</b> {pregunta.explicacion}
             </p>
@@ -425,7 +409,6 @@ if (pantalla === "estadisticas") {
     );
   }
 
-  // 🟢 RESULTADO
   return (
     <div style={styles.container}>
       <h2>Fin del bloque</h2>
@@ -441,7 +424,6 @@ if (pantalla === "estadisticas") {
   );
 }
 
-/* 🧠 STORAGE */
 function obtenerStats() {
   return JSON.parse(localStorage.getItem(CLAVE_STATS)) || {};
 }
@@ -475,7 +457,6 @@ function registrarRespuesta(pregunta, correcta) {
   guardarStats(stats);
 }
 
-/* 🎨 estilos */
 const styles = {
   container: {
     maxWidth: 700,
