@@ -123,11 +123,40 @@ export default function App() {
   // ⭐ preguntas débiles
   function obtenerPreguntasDebiles(lista) {
     const stats = obtenerStats();
-
-    return lista.filter((p) => {
+  
+    const muyOlvidadas = [];
+    const pendientes = [];
+    const recuperadas = [];
+  
+    lista.forEach((p) => {
       const s = stats[String(p.id)];
-      return s && s.errores > s.aciertos;
+  
+      if (!s) return;
+  
+      // fallada muchas veces
+      if (s.errores >= 3) {
+        muyOlvidadas.push(p);
+      }
+  
+      // aún falla más de lo que acierta
+      else if (s.errores > s.aciertos) {
+        pendientes.push(p);
+      }
+  
+      // antes fallaba pero ahora mejora
+      else if (
+        s.aciertos >= s.errores &&
+        s.errores > 0
+      ) {
+        recuperadas.push(p);
+      }
     });
+  
+    return [
+      ...muyOlvidadas,
+      ...pendientes,
+      ...recuperadas
+    ];
   }
 
   // 🧠 comprobar respuesta
@@ -181,9 +210,16 @@ export default function App() {
           📖 Estudio general
         </button>
 
-        <button onClick={() => iniciar("errores")} style={styles.button}>
-          ⭐ Repasar errores
-        </button>
+        const pendientesErrores =
+  obtenerPreguntasDebiles(
+    preguntasBase
+  ).length;
+  <button
+  onClick={() => iniciar("errores")}
+  style={styles.button}
+>
+ ⭐ Repasar errores ({pendientesErrores})
+</button>
 
         <button onClick={() => setPantalla("estadisticas")} style={styles.button}
 >📊 Estadísticas
@@ -342,7 +378,40 @@ if (pantalla === "estadisticas") {
         {mostrar && (
           <>
             <p>{mensaje}</p>
+            {mostrar && (() => {
+  const s = obtenerStats()[String(pregunta.id)];
 
+  if (!s) return null;
+
+  if (s.errores >= 5) {
+    return (
+      <p>
+        💀 Esta pregunta te persigue desde hace tiempo...
+      </p>
+    );
+  }
+
+  if (s.errores >= 3) {
+    return (
+      <p>
+        👀 Ya os estáis viendo demasiado tú y esta pregunta
+      </p>
+    );
+  }
+
+  if (
+    s.aciertos >= s.errores &&
+    s.errores > 0
+  ) {
+    return (
+      <p>
+        🏆 Recuperada. Antes te ganaba ella.
+      </p>
+    );
+  }
+
+  return null;
+})()}
             <p style={{ fontSize: 13 }}>
               <b>Explicación:</b> {pregunta.explicacion}
             </p>
