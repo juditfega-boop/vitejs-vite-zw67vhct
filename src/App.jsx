@@ -185,6 +185,10 @@ export default function App() {
           ⭐ Repasar errores
         </button>
 
+        <button onClick={() => setPantalla("estadisticas")} style={styles.button}
+>📊 Estadísticas
+</button>
+
         <h3>📦 Por bloques</h3>
 
         {Object.keys(bloques).map((b) => (
@@ -199,7 +203,107 @@ export default function App() {
       </div>
     );
   }
+// // 📊 ESTADÍSTICAS
+if (pantalla === "estadisticas") {
 
+  const statsGuardadas = obtenerStats();
+
+  const bloques = {};
+
+  Object.values(statsGuardadas).forEach((dato) => {
+
+    const bloque = dato.bloque || "Sin bloque";
+
+    if (!bloques[bloque]) {
+      bloques[bloque] = {
+        respondidas: 0,
+        aciertos: 0
+      };
+    }
+
+    bloques[bloque].respondidas += dato.veces || 0;
+    bloques[bloque].aciertos += dato.aciertos || 0;
+
+  });
+
+  function mensajeBloque(p) {
+
+    if (p >= 90)
+      return "🔥 ¿Necesitas una plaza o sustituir al tribunal?";
+
+    if (p >= 75)
+      return "😎 En esto estás sobrada";
+
+    if (p >= 60)
+      return "🙂 Vas bien, pero aún hay preguntas que te vacilan";
+
+    if (p >= 40)
+      return "⚠️ Este tema te está haciendo una llave de judo";
+
+    if (p >= 20)
+      return "🍺 Deja la cerveza y estudia, que este tema lo estás viendo menos que Stevie Wonder";
+
+    return "🚨 Si este tema sale en el examen toca invocar fuerzas superiores";
+  }
+
+  const ordenados = Object.entries(bloques)
+    .map(([nombre, datos]) => ({
+      nombre,
+      porcentaje: datos.respondidas
+        ? Math.round(
+            (datos.aciertos /
+            datos.respondidas) * 100
+          )
+        : 0
+    }))
+    .sort((a,b)=>b.porcentaje-a.porcentaje);
+
+  return (
+    <div style={styles.container}>
+
+      <h1>📊 Estadísticas</h1>
+
+      {ordenados.length === 0 ? (
+
+        <p>
+          Todavía no has respondido preguntas 😅
+        </p>
+
+      ) : (
+
+        <>
+          {ordenados.map((b)=>(
+            <div
+              key={b.nombre}
+              style={{
+                border:"1px solid #ddd",
+                padding:10,
+                marginTop:10,
+                borderRadius:10
+              }}
+            >
+              <h3>{b.nombre}</h3>
+
+              <p>{b.porcentaje}% aciertos</p>
+
+              <p>{mensajeBloque(b.porcentaje)}</p>
+
+            </div>
+          ))}
+        </>
+
+      )}
+
+      <button
+        onClick={volverMenu}
+        style={styles.button}
+      >
+        ⬅ Volver
+      </button>
+
+    </div>
+  );
+}
   // 🟣 QUIZ
   if (pantalla === "quiz" && pregunta) {
     return (
@@ -284,6 +388,7 @@ function registrarRespuesta(pregunta, correcta) {
   if (!stats[id]) {
     stats[id] = {
       id,
+      bloque: pregunta.bloque || "Sin bloque",
       aciertos: 0,
       errores: 0,
       veces: 0
@@ -292,8 +397,11 @@ function registrarRespuesta(pregunta, correcta) {
 
   stats[id].veces += 1;
 
-  if (correcta) stats[id].aciertos += 1;
-  else stats[id].errores += 1;
+  if (correcta) {
+    stats[id].aciertos += 1;
+  } else {
+    stats[id].errores += 1;
+  }
 
   guardarStats(stats);
 }
