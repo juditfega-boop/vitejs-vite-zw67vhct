@@ -197,11 +197,11 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => iniciar("errores")}
-          style={styles.button}
-        >
-          ⭐ Repasar errores ({pendientesErrores})
-        </button>
+  onClick={() => setPantalla("errores")}
+  style={styles.button}
+>
+ ⭐ Repasar errores ({pendientesErrores})
+</button>
 
         <button onClick={() => setPantalla("estadisticas")} style={styles.button}>
           📊 Estadísticas
@@ -322,7 +322,128 @@ export default function App() {
       </div>
     );
   }
+// ⭐ PANTALLA REPASO DE ERRORES
 
+if (pantalla === "errores") {
+
+  const stats = obtenerStats();
+
+  const muyOlvidadas = [];
+  const pendientes = [];
+  const recuperadas = [];
+
+  preguntasBase.forEach((p) => {
+
+    const s = stats[String(p.id)];
+
+    if (!s) return;
+
+    if (s.errores >= 3) {
+      muyOlvidadas.push(p);
+    }
+
+    else if (s.errores > s.aciertos) {
+      pendientes.push(p);
+    }
+
+    else if (
+      s.aciertos >= s.errores &&
+      s.errores > 0
+    ) {
+      recuperadas.push(p);
+    }
+
+  });
+
+  return (
+    <div style={styles.container}>
+
+      <h1>⭐ Repasar errores</h1>
+
+      <div
+        style={{
+          border:"1px solid #ddd",
+          padding:15,
+          marginTop:10,
+          borderRadius:10
+        }}
+      >
+        <h3>
+          🔴 Muy olvidadas ({muyOlvidadas.length})
+        </h3>
+
+        <p>
+          Estas preguntas viven de alquiler en tu cabeza 👀
+        </p>
+
+        <button
+          style={styles.button}
+          onClick={() => iniciarBloque(muyOlvidadas)}
+        >
+          Repasar
+        </button>
+      </div>
+
+
+      <div
+        style={{
+          border:"1px solid #ddd",
+          padding:15,
+          marginTop:10,
+          borderRadius:10
+        }}
+      >
+        <h3>
+          🟡 Pendientes ({pendientes.length})
+        </h3>
+
+        <p>
+          Aún te la están colando 😅
+        </p>
+
+        <button
+          style={styles.button}
+          onClick={() => iniciarBloque(pendientes)}
+        >
+          Repasar
+        </button>
+      </div>
+
+
+      <div
+        style={{
+          border:"1px solid #ddd",
+          padding:15,
+          marginTop:10,
+          borderRadius:10
+        }}
+      >
+        <h3>
+          🟢 Recuperadas ({recuperadas.length})
+        </h3>
+
+        <p>
+          Antes daban guerra, ahora tiemblan 💪
+        </p>
+
+        <button
+          style={styles.button}
+          onClick={() => iniciarBloque(recuperadas)}
+        >
+          Repasar
+        </button>
+      </div>
+
+      <button
+        onClick={volverMenu}
+        style={styles.button}
+      >
+        ⬅ Volver
+      </button>
+
+    </div>
+  );
+}
   if (pantalla === "quiz" && pregunta) {
     return (
       <div style={styles.container}>
