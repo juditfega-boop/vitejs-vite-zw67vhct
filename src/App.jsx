@@ -1,17 +1,30 @@
 import { useEffect, useState } from "react";
 import { cargarPreguntas } from "./cargarPreguntas";
+import portada from "./assets/portada.jpeg";
 
 const CLAVE_STATS = "opo_stats_v1";
+
+// 📌 Array de frases de bienvenida — añade aquí nuevas cuando quieras
+const FRASES_BIENVENIDA = [
+  "venimos de personas que con la poesía cambiaron el mundo",
+  "me declaro aprendiz imperecedera",
+  "el conocimiento también se construye en sociedad"
+];
 
 export default function App() {
   const [preguntasBase, setPreguntasBase] = useState([]);
   const [preguntas, setPreguntas] = useState([]);
   const [indice, setIndice] = useState(0);
-  const [pantalla, setPantalla] = useState("inicio");
+  const [pantalla, setPantalla] = useState("landing"); // 👈 ahora arranca en landing
   const [mensaje, setMensaje] = useState("");
   const [mostrar, setMostrar] = useState(false);
   const [aciertos, setAciertos] = useState(0);
   const [cantidad, setCantidad] = useState(20);
+
+  // 👈 se elige una sola vez al abrir la app (inicializador perezoso)
+  const [frase] = useState(
+    () => FRASES_BIENVENIDA[Math.floor(Math.random() * FRASES_BIENVENIDA.length)]
+  );
 
   useEffect(() => {
     async function init() {
@@ -199,6 +212,30 @@ export default function App() {
     } else {
       setPantalla("resultado");
     }
+  }
+
+  // 🌸 PANTALLA DE BIENVENIDA (LANDING)
+  if (pantalla === "landing") {
+    return (
+      <div style={styles.landingContainer}>
+        <img
+          src={portada}
+          alt="Asistontas"
+          style={styles.landingImage}
+        />
+
+        <div style={styles.landingOverlay}>
+          <p style={styles.landingFrase}>"{frase}"</p>
+
+          <button
+            onClick={() => setPantalla("inicio")}
+            style={styles.landingButton}
+          >
+            Empezar a estudiar
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (pantalla === "inicio") {
@@ -624,5 +661,52 @@ const styles = {
     border: "1px solid #ccc",
     background: "#fff",
     cursor: "pointer"
+  },
+
+  // 🌸 estilos de la portada
+  landingContainer: {
+    position: "relative",
+    width: "100vw",
+    height: "100vh",
+    margin: 0,
+    overflow: "hidden"
+  },
+  landingImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block"
+  },
+  landingOverlay: {
+    position: "absolute",
+    bottom: "6%",
+    left: 0,
+    right: 0,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "0 24px",
+    boxSizing: "border-box"
+  },
+  landingFrase: {
+    fontFamily: "Arial",
+    fontStyle: "italic",
+    color: "#5a5147",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 18,
+    maxWidth: 320
+  },
+  landingButton: {
+    padding: "16px 42px",
+    borderRadius: 30,
+    border: "none",
+    background: "#e29aa0",
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+    cursor: "pointer",
+    boxShadow: "0 6px 16px rgba(0,0,0,0.18)"
   }
 };
