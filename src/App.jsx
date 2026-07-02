@@ -238,55 +238,117 @@ export default function App() {
     );
   }
 
+  // 🟣 MENÚ PRINCIPAL
   if (pantalla === "inicio") {
     const bloques = agruparPorBloques(preguntasBase);
 
     return (
-      <div style={styles.container}>
-        <h1>📚 OpoSocial</h1>
+      <div style={styles.menuContainer}>
+        <style>{`
+          .menu-btn {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+          }
+          .menu-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(0,0,0,0.12);
+          }
+          .menu-btn:active {
+            transform: translateY(0) scale(0.98);
+          }
+          .cantidad-pill {
+            transition: all 0.2s ease;
+          }
+          .bloque-chip {
+            transition: all 0.2s ease;
+          }
+          .bloque-chip:hover {
+            background: #efe8da;
+            transform: translateY(-1px);
+          }
+        `}</style>
 
-        <p>📊 Progreso global: {porcentaje}%</p>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Menú principal</h1>
+          <div style={styles.menuUnderline} />
+        </div>
 
-        <label>Número de preguntas:</label>
-        <select
-          value={cantidad}
-          onChange={(e) => setCantidad(Number(e.target.value))}
+        <div style={styles.progressCard}>
+          <div style={styles.progressTextRow}>
+            <span style={styles.progressLabel}>Progreso global</span>
+            <span style={styles.progressValue}>{porcentaje}%</span>
+          </div>
+          <div style={styles.progressTrack}>
+            <div
+              style={{ ...styles.progressFill, width: `${porcentaje}%` }}
+            />
+          </div>
+        </div>
+
+        <div style={styles.cantidadRow}>
+          <span style={styles.cantidadLabel}>Nº de preguntas</span>
+          <div style={styles.cantidadGroup}>
+            {[20, 50, 100].map((n) => (
+              <button
+                key={n}
+                className="cantidad-pill"
+                onClick={() => setCantidad(n)}
+                style={{
+                  ...styles.cantidadPill,
+                  ...(cantidad === n ? styles.cantidadPillActiva : {})
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          className="menu-btn"
+          onClick={() => iniciar("normal")}
+          style={{ ...styles.menuButton, ...styles.btnPeach }}
         >
-          <option value={20}>20</option>
-          <option value={50}>50</option>
-          <option value={100}>100</option>
-        </select>
-
-        <button onClick={() => iniciar("normal")} style={styles.button}>
           📖 Estudio general
         </button>
 
-        <button onClick={iniciarSimulacro} style={styles.button}>
+        <button
+          className="menu-btn"
+          onClick={iniciarSimulacro}
+          style={{ ...styles.menuButton, ...styles.btnPurple }}
+        >
           📝 Simulacro oficial
         </button>
 
         <button
+          className="menu-btn"
           onClick={() => setPantalla("errores")}
-          style={styles.button}
+          style={{ ...styles.menuButton, ...styles.btnPink }}
         >
           ⭐ Repasar errores ({pendientesErrores})
         </button>
 
-        <button onClick={() => setPantalla("estadisticas")} style={styles.button}>
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("estadisticas")}
+          style={{ ...styles.menuButton, ...styles.btnOlive }}
+        >
           📊 Estadísticas
         </button>
 
-        <h3>📦 Por bloques</h3>
+        <h3 style={styles.bloquesTitle}>Por bloques</h3>
 
-        {Object.keys(bloques).map((b) => (
-          <button
-            key={b}
-            onClick={() => iniciarBloque(bloques[b])}
-            style={styles.button}
-          >
-            {b}
-          </button>
-        ))}
+        <div style={styles.bloquesGrid}>
+          {Object.keys(bloques).map((b) => (
+            <button
+              key={b}
+              className="bloque-chip"
+              onClick={() => iniciarBloque(bloques[b])}
+              style={styles.bloqueChip}
+            >
+              {b}
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
@@ -669,7 +731,8 @@ const styles = {
     width: "100vw",
     height: "100vh",
     margin: 0,
-    overflow: "hidden"
+    overflow: "hidden",
+    background: "#f5f1ea"
   },
   landingImage: {
     width: "100%",
@@ -708,5 +771,139 @@ const styles = {
     letterSpacing: 0.5,
     cursor: "pointer",
     boxShadow: "0 6px 16px rgba(0,0,0,0.18)"
+  },
+
+  // 🟣 estilos del menú principal
+  menuContainer: {
+    maxWidth: 480,
+    margin: "0 auto",
+    minHeight: "100vh",
+    padding: "40px 20px 60px",
+    fontFamily: "Arial",
+    background: "linear-gradient(180deg, #faf7f2 0%, #f2ece0 100%)",
+    boxSizing: "border-box"
+  },
+  menuHeader: {
+    textAlign: "center",
+    marginBottom: 28
+  },
+  menuTitle: {
+    fontSize: 26,
+    fontWeight: 700,
+    color: "#4a463f",
+    margin: 0,
+    letterSpacing: 0.5
+  },
+  menuUnderline: {
+    width: 70,
+    height: 4,
+    borderRadius: 4,
+    background: "linear-gradient(90deg, #cbb8e8, #e29aa0)",
+    margin: "10px auto 0"
+  },
+  progressCard: {
+    background: "#fff",
+    borderRadius: 18,
+    padding: "16px 18px",
+    marginBottom: 20,
+    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
+  },
+  progressTextRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: 8
+  },
+  progressLabel: {
+    fontSize: 13,
+    color: "#8a8578"
+  },
+  progressValue: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: "#4a463f"
+  },
+  progressTrack: {
+    width: "100%",
+    height: 8,
+    borderRadius: 8,
+    background: "#eee6da",
+    overflow: "hidden"
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 8,
+    background: "linear-gradient(90deg, #f2b366, #e29aa0)",
+    transition: "width 0.4s ease"
+  },
+  cantidadRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 22
+  },
+  cantidadLabel: {
+    fontSize: 13,
+    color: "#8a8578"
+  },
+  cantidadGroup: {
+    display: "flex",
+    gap: 6,
+    background: "#fff",
+    padding: 4,
+    borderRadius: 20,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+  },
+  cantidadPill: {
+    border: "none",
+    background: "transparent",
+    padding: "6px 14px",
+    borderRadius: 16,
+    fontSize: 13,
+    color: "#8a8578",
+    cursor: "pointer"
+  },
+  cantidadPillActiva: {
+    background: "#e29aa0",
+    color: "#fff",
+    fontWeight: 700
+  },
+  menuButton: {
+    display: "block",
+    width: "100%",
+    border: "none",
+    borderRadius: 18,
+    padding: "16px 18px",
+    marginBottom: 14,
+    fontSize: 15,
+    fontWeight: 600,
+    color: "#4a463f",
+    textAlign: "left",
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
+  },
+  btnPeach: { background: "#f6d7ae" },
+  btnPurple: { background: "#d9cdf0" },
+  btnPink: { background: "#f3cdd2" },
+  btnOlive: { background: "#d7dcc0" },
+  bloquesTitle: {
+    fontSize: 13,
+    color: "#8a8578",
+    margin: "22px 0 10px",
+    textTransform: "uppercase",
+    letterSpacing: 0.5
+  },
+  bloquesGrid: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8
+  },
+  bloqueChip: {
+    border: "1px solid #e4ddcf",
+    background: "#fff",
+    borderRadius: 20,
+    padding: "8px 16px",
+    fontSize: 13,
+    color: "#4a463f",
+    cursor: "pointer"
   }
 };
