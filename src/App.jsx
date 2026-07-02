@@ -3,6 +3,11 @@ import { cargarPreguntas } from "./cargarPreguntas";
 import portada from "./assets/portada.jpeg";
 
 const CLAVE_STATS = "opo_stats_v1";
+const CLAVE_RACHA = "opo_racha_v1";
+const CLAVE_TIEMPOS = "opo_tiempos_v1";
+
+// ⏱️ duración total del simulacro oficial (minutos). Ajusta este número si quieres otro tiempo.
+const DURACION_SIMULACRO_MINUTOS = 100;
 
 // 📌 Array de frases de bienvenida — añade aquí nuevas cuando quieras
 const FRASES_BIENVENIDA = [
@@ -15,16 +20,36 @@ export default function App() {
   const [preguntasBase, setPreguntasBase] = useState([]);
   const [preguntas, setPreguntas] = useState([]);
   const [indice, setIndice] = useState(0);
-  const [pantalla, setPantalla] = useState("landing"); // 👈 ahora arranca en landing
+  const [pantalla, setPantalla] = useState("landing");
   const [mensaje, setMensaje] = useState("");
   const [mostrar, setMostrar] = useState(false);
   const [aciertos, setAciertos] = useState(0);
   const [cantidad, setCantidad] = useState(20);
 
-  // 👈 se elige una sola vez al abrir la app (inicializador perezoso)
+  // 👈 frase de portada, elegida una sola vez al abrir la app
   const [frase] = useState(
     () => FRASES_BIENVENIDA[Math.floor(Math.random() * FRASES_BIENVENIDA.length)]
   );
+
+  // 🧭 configuración de la pantalla "Estudiar"
+  const [tipoEstudio, setTipoEstudio] = useState("general"); // "general" | "bloques"
+  const [bloquesSeleccionados, setBloquesSeleccionados] = useState([]);
+  const [cronometroActivo, setCronometroActivo] = useState(false);
+  const [tipoCronometro, setTipoCronometro] = useState("auto"); // "auto" | "personalizado"
+  const [minutosPersonalizados, setMinutosPersonalizados] = useState(20);
+  const [conExplicacion, setConExplicacion] = useState(true);
+
+  // ⏱️ temporizador del estudio (null = sin cronómetro)
+  const [tiempoRestante, setTiempoRestante] = useState(null);
+
+  // 📝 estado del simulacro oficial
+  const [respuestasSimulacro, setRespuestasSimulacro] = useState([]);
+  const [tiempoRestanteSimulacro, setTiempoRestanteSimulacro] = useState(null);
+  const [horaInicioSimulacro, setHoraInicioSimulacro] = useState(null);
+  const [resultadoSimulacro, setResultadoSimulacro] = useState(null);
+
+  // ⏱️ instante en que se mostró la pregunta actual (para tiempo medio)
+  const [inicioPregunta, setInicioPregunta] = useState(null);
 
   useEffect(() => {
     async function init() {
@@ -50,8 +75,58 @@ export default function App() {
     ? Math.round((totalAciertos / totalRespondidas) * 100)
     : 0;
 
+  // 🕐 marca el inicio de cada pregunta nueva, para poder medir tiempo medio
+  useEffect(() => {
+    if (pregunta) {
+      setInicioPregunta(Date.now());
+    }
+  }, [pregunta]);
+
+  // ⏱️ cuenta atrás del cronómetro de estudio
+  useEffect(() => {
+    if (pantalla !== "quiz" || tiempoRestante === null) return;
+
+    if (tiempoRestante <= 0) {
+      setTiempoRestante(null);
+      setPantalla("resultado");
+      return;
+    }
+
+    const id = setTimeout(() => {
+      setTiempoRestante((t) => (t !== null ? t - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(id);
+  }, [pantalla, tiempoRestante]);
+
+  // ⏱️ cuenta atrás del simulacro oficial
+  useEffect(() => {
+    if (pantalla !== "simulacro" || tiempoRestanteSimulacro === null) return;
+
+    if (tiempoRestanteSimulacro <= 0) {
+      finalizarSimulacro();
+      return;
+    }
+
+    const id = setTimeout(() => {
+      setTiempoRestanteSimulacro((t) => (t !== null ? t - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(id);
+  }, [pantalla, tiempoRestanteSimulacro]);
+
   function volverMenu() {
     setPantalla("inicio");
+    setIndice(0);
+    setAciertos(0);
+    setMensaje("");
+    setMostrar(false);
+    setTiempoRestante(null);
+    setTiempoRestanteSimulacro(null);
+  }
+
+  function volverProgreso() {
+    setPantalla("progreso");
     setIndice(0);
     setAciertos(0);
     setMensaje("");
@@ -109,10 +184,53 @@ export default function App() {
     setAciertos(0);
     setMensaje("");
     setMostrar(false);
+    setTiempoRestante(null);
+    setConExplicacion(true);
+    actualizarRacha();
     setPantalla("quiz");
   }
 
-  // 📝 crear simulacro oficial
+  // ⚙️ construir sesión de estudio a partir de la configuración elegida
+  function comenzarEstudioPersonalizado() {
+    let listaFuente = preguntasBase;
+
+    if (tipoEstudio === "bloques") {
+      listaFuente = preguntasBase.filter((p) =>
+        bloquesSeleccionados.includes(p.bloque || "Sin bloque")
+      );
+    }
+
+    const base = mezclar(listaFuente)
+      .slice(0, cantidad)
+      .map(prepararPregunta);
+
+    setPreguntas(base);
+    setIndice(0);
+    setAciertos(0);
+    setMensaje("");
+    setMostrar(false);
+
+    if (cronometroActivo) {
+      const minutos =
+        tipoCronometro === "auto" ? cantidad : (minutosPersonalizados || 1);
+      setTiempoRestante(minutos * 60);
+    } else {
+      setTiempoRestante(null);
+    }
+
+    actualizarRacha();
+    setPantalla("quiz");
+  }
+
+  function toggleBloqueSeleccionado(nombre) {
+    setBloquesSeleccionados((prev) =>
+      prev.includes(nombre)
+        ? prev.filter((b) => b !== nombre)
+        : [...prev, nombre]
+    );
+  }
+
+  // 📝 crear simulacro oficial (100 preguntas)
   function iniciarSimulacro() {
     const grupo1 = preguntasBase.filter(
       p => Number(p.grupo) === 1
@@ -137,7 +255,58 @@ export default function App() {
     setAciertos(0);
     setMensaje("");
     setMostrar(false);
+    setRespuestasSimulacro(new Array(examenFinal.length).fill(null));
+    setTiempoRestanteSimulacro(DURACION_SIMULACRO_MINUTOS * 60);
+    setHoraInicioSimulacro(Date.now());
+    setResultadoSimulacro(null);
+    actualizarRacha();
     setPantalla("simulacro");
+  }
+
+  function seleccionarRespuestaSimulacro(i) {
+    setRespuestasSimulacro((prev) => {
+      const copia = [...prev];
+      copia[indice] = copia[indice] === i ? null : i;
+      return copia;
+    });
+  }
+
+  function finalizarSimulacro() {
+    let aciertosF = 0;
+    let erroresF = 0;
+    let blancosF = 0;
+
+    preguntas.forEach((p, i) => {
+      const r = respuestasSimulacro[i];
+
+      if (r === null || r === undefined) {
+        blancosF++;
+      } else if (r === p.correcta) {
+        aciertosF++;
+        registrarRespuesta(p, true);
+      } else {
+        erroresF++;
+        registrarRespuesta(p, false);
+      }
+    });
+
+    const notaBruta = aciertosF * 1 - erroresF * (1 / 3);
+    const nota = Math.max(0, notaBruta);
+
+    const segundosEmpleados = horaInicioSimulacro
+      ? Math.round((Date.now() - horaInicioSimulacro) / 1000)
+      : 0;
+
+    setResultadoSimulacro({
+      nota: nota.toFixed(2),
+      aciertos: aciertosF,
+      errores: erroresF,
+      blancos: blancosF,
+      tiempo: formatearTiempo(segundosEmpleados)
+    });
+
+    setTiempoRestanteSimulacro(null);
+    setPantalla("resultado-simulacro");
   }
 
   function iniciarBloque(lista) {
@@ -150,6 +319,9 @@ export default function App() {
     setAciertos(0);
     setMensaje("");
     setMostrar(false);
+    setTiempoRestante(null);
+    setConExplicacion(true);
+    actualizarRacha();
     setPantalla("quiz");
   }
 
@@ -192,6 +364,11 @@ export default function App() {
     const esCorrecta = index === pregunta.correcta;
 
     registrarRespuesta(pregunta, esCorrecta);
+
+    if (inicioPregunta) {
+      const segundos = Math.round((Date.now() - inicioPregunta) / 1000);
+      registrarTiempoPregunta(segundos);
+    }
 
     if (esCorrecta) {
       setMensaje("✅ Correcto");
@@ -240,61 +417,138 @@ export default function App() {
 
   // 🟣 MENÚ PRINCIPAL
   if (pantalla === "inicio") {
-    const bloques = agruparPorBloques(preguntasBase);
-
     return (
       <div style={styles.menuContainer}>
-        <style>{`
-          .menu-btn {
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-          }
-          .menu-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 22px rgba(0,0,0,0.12);
-          }
-          .menu-btn:active {
-            transform: translateY(0) scale(0.98);
-          }
-          .cantidad-pill {
-            transition: all 0.2s ease;
-          }
-          .bloque-chip {
-            transition: all 0.2s ease;
-          }
-          .bloque-chip:hover {
-            background: #efe8da;
-            transform: translateY(-1px);
-          }
-        `}</style>
+        <style>{globalStyles}</style>
 
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>Menú principal</h1>
           <div style={styles.menuUnderline} />
         </div>
 
-        <div style={styles.progressCard}>
-          <div style={styles.progressTextRow}>
-            <span style={styles.progressLabel}>Progreso global</span>
-            <span style={styles.progressValue}>{porcentaje}%</span>
-          </div>
-          <div style={styles.progressTrack}>
-            <div
-              style={{ ...styles.progressFill, width: `${porcentaje}%` }}
-            />
-          </div>
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("estudiar-config")}
+          style={{ ...styles.menuButton, ...styles.btnPeach }}
+        >
+          📖 Estudiar
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("simulacro-intro")}
+          style={{ ...styles.menuButton, ...styles.btnPurple }}
+        >
+          📝 Simulacro oficial
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("progreso")}
+          style={{ ...styles.menuButton, ...styles.btnPink }}
+        >
+          📈 Mi evolución
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("desarrollo")}
+          style={{ ...styles.menuButton, ...styles.btnMuted }}
+        >
+          🧩 Desarrollo <span style={styles.badgeProximamente}>Próximamente</span>
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("minijuegos")}
+          style={{ ...styles.menuButton, ...styles.btnMuted }}
+        >
+          🎮 Minijuegos <span style={styles.badgeProximamente}>Próximamente</span>
+        </button>
+
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("ajustes")}
+          style={{ ...styles.menuButton, ...styles.btnOlive }}
+        >
+          ⚙️ Ajustes
+        </button>
+      </div>
+    );
+  }
+
+  // ⚙️ CONFIGURACIÓN DE ESTUDIO
+  if (pantalla === "estudiar-config") {
+    const bloquesDisponibles = Object.keys(agruparPorBloques(preguntasBase));
+    const puedeComenzar =
+      tipoEstudio === "general" || bloquesSeleccionados.length > 0;
+
+    return (
+      <div style={styles.menuContainer}>
+        <style>{globalStyles}</style>
+
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Estudiar</h1>
+          <div style={styles.menuUnderline} />
         </div>
 
-        <div style={styles.cantidadRow}>
-          <span style={styles.cantidadLabel}>Nº de preguntas</span>
-          <div style={styles.cantidadGroup}>
-            {[20, 50, 100].map((n) => (
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Tipo de estudio</p>
+          <div style={styles.pillGroup}>
+            <button
+              className="pill"
+              onClick={() => setTipoEstudio("general")}
+              style={{
+                ...styles.pillBtn,
+                ...(tipoEstudio === "general" ? styles.pillBtnActiva : {})
+              }}
+            >
+              Estudio general
+            </button>
+            <button
+              className="pill"
+              onClick={() => setTipoEstudio("bloques")}
+              style={{
+                ...styles.pillBtn,
+                ...(tipoEstudio === "bloques" ? styles.pillBtnActiva : {})
+              }}
+            >
+              Por bloques
+            </button>
+          </div>
+
+          {tipoEstudio === "bloques" && (
+            <div style={styles.bloquesGrid}>
+              {bloquesDisponibles.map((b) => (
+                <button
+                  key={b}
+                  className="bloque-chip"
+                  onClick={() => toggleBloqueSeleccionado(b)}
+                  style={{
+                    ...styles.bloqueChip,
+                    ...(bloquesSeleccionados.includes(b)
+                      ? styles.bloqueChipActiva
+                      : {})
+                  }}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Número de preguntas</p>
+          <div style={styles.pillGroup}>
+            {[10, 20, 30, 50, 100].map((n) => (
               <button
                 key={n}
-                className="cantidad-pill"
+                className="pill"
                 onClick={() => setCantidad(n)}
                 style={{
-                  ...styles.cantidadPill,
-                  ...(cantidad === n ? styles.cantidadPillActiva : {})
+                  ...styles.pillBtn,
+                  ...(cantidad === n ? styles.pillBtnActiva : {})
                 }}
               >
                 {n}
@@ -303,20 +557,299 @@ export default function App() {
           </div>
         </div>
 
+        <div style={styles.configCard}>
+          <div style={styles.configRow}>
+            <p style={styles.configCardTitle}>Activar cronómetro</p>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={cronometroActivo}
+                onChange={() => setCronometroActivo((v) => !v)}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+
+          {cronometroActivo && (
+            <>
+              <div style={styles.pillGroup}>
+                <button
+                  className="pill"
+                  onClick={() => setTipoCronometro("auto")}
+                  style={{
+                    ...styles.pillBtn,
+                    ...(tipoCronometro === "auto" ? styles.pillBtnActiva : {})
+                  }}
+                >
+                  1 min / pregunta
+                </button>
+                <button
+                  className="pill"
+                  onClick={() => setTipoCronometro("personalizado")}
+                  style={{
+                    ...styles.pillBtn,
+                    ...(tipoCronometro === "personalizado"
+                      ? styles.pillBtnActiva
+                      : {})
+                  }}
+                >
+                  Personalizado
+                </button>
+              </div>
+
+              {tipoCronometro === "personalizado" && (
+                <div style={{ marginTop: 10 }}>
+                  <label style={styles.configSubLabel}>
+                    Minutos totales:{" "}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={minutosPersonalizados}
+                    onChange={(e) =>
+                      setMinutosPersonalizados(Number(e.target.value))
+                    }
+                    style={styles.numeroInput}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div style={styles.configCard}>
+          <div style={styles.configRow}>
+            <p style={styles.configCardTitle}>Mostrar explicación al responder</p>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={conExplicacion}
+                onChange={() => setConExplicacion((v) => !v)}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+
         <button
-          className="menu-btn"
-          onClick={() => iniciar("normal")}
-          style={{ ...styles.menuButton, ...styles.btnPeach }}
+          onClick={comenzarEstudioPersonalizado}
+          disabled={!puedeComenzar}
+          style={{
+            ...styles.ctaButton,
+            ...(puedeComenzar ? {} : styles.ctaButtonDisabled)
+          }}
         >
-          📖 Estudio general
+          Comenzar estudio
         </button>
+
+        <button onClick={volverMenu} style={styles.linkVolver}>
+          ⬅ Volver al menú
+        </button>
+      </div>
+    );
+  }
+
+  // 📝 INTRO DEL SIMULACRO OFICIAL
+  if (pantalla === "simulacro-intro") {
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Simulacro oficial</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <div style={styles.configCard}>
+          <div style={styles.resultRow}>
+            <span>📋 Nº de preguntas</span>
+            <b>100</b>
+          </div>
+          <div style={styles.resultRow}>
+            <span>⏱ Tiempo total</span>
+            <b>{DURACION_SIMULACRO_MINUTOS} min</b>
+          </div>
+          <div style={styles.resultRow}>
+            <span>✅ Acierto</span>
+            <b>+1 punto</b>
+          </div>
+          <div style={styles.resultRow}>
+            <span>❌ Error</span>
+            <b>−1/3 punto</b>
+          </div>
+          <div style={{ ...styles.resultRow, borderBottom: "none" }}>
+            <span>⬜ En blanco</span>
+            <b>No penaliza</b>
+          </div>
+        </div>
+
+        <p style={styles.configSubLabel}>
+          Puedes dejar preguntas en blanco y volver a ellas más adelante,
+          mientras te quede tiempo.
+        </p>
+
+        <button onClick={iniciarSimulacro} style={styles.ctaButton}>
+          Comenzar simulacro
+        </button>
+
+        <button onClick={volverMenu} style={styles.linkVolver}>
+          ⬅ Volver al menú
+        </button>
+      </div>
+    );
+  }
+
+  // 📝 SIMULACRO OFICIAL — EN CURSO
+  if (pantalla === "simulacro" && pregunta) {
+    const respondidas = respuestasSimulacro.filter(
+      (r) => r !== null && r !== undefined
+    ).length;
+
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.simHeaderBar}>
+          <span style={styles.simTimer}>
+            ⏱ {formatearTiempo(tiempoRestanteSimulacro || 0)}
+          </span>
+          <span style={styles.configSubLabel}>
+            {respondidas} / {preguntas.length} respondidas
+          </span>
+          <button onClick={finalizarSimulacro} style={styles.simFinalizarBtn}>
+            Finalizar
+          </button>
+        </div>
+
+        <div style={styles.simDotsWrap}>
+          {preguntas.map((p, i) => (
+            <button
+              key={i}
+              onClick={() => setIndice(i)}
+              style={{
+                ...styles.simDot,
+                ...(respuestasSimulacro[i] !== null &&
+                respuestasSimulacro[i] !== undefined
+                  ? styles.simDotRespondida
+                  : {}),
+                ...(i === indice ? styles.simDotActual : {})
+              }}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+
+        <p style={styles.configSubLabel}>
+          Pregunta {indice + 1} / {preguntas.length}
+        </p>
+
+        <h3>{pregunta.pregunta}</h3>
+
+        {pregunta.respuestas.map((r, i) => (
+          <button
+            key={i}
+            onClick={() => seleccionarRespuestaSimulacro(i)}
+            style={{
+              ...styles.simRespuestaBtn,
+              ...(respuestasSimulacro[indice] === i
+                ? styles.simRespuestaSeleccionada
+                : {})
+            }}
+          >
+            {r}
+          </button>
+        ))}
+
+        <div style={styles.simNavRow}>
+          <button
+            disabled={indice === 0}
+            onClick={() => setIndice((i) => i - 1)}
+            style={{
+              ...styles.simNavBtn,
+              background: "#fff",
+              color: "#4a463f",
+              opacity: indice === 0 ? 0.4 : 1
+            }}
+          >
+            ← Anterior
+          </button>
+
+          {indice + 1 < preguntas.length ? (
+            <button
+              onClick={() => setIndice((i) => i + 1)}
+              style={{ ...styles.simNavBtn, ...styles.btnPeach }}
+            >
+              Siguiente →
+            </button>
+          ) : (
+            <button
+              onClick={finalizarSimulacro}
+              style={{ ...styles.simNavBtn, ...styles.btnPurple }}
+            >
+              Finalizar simulacro
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 🏁 RESULTADO DEL SIMULACRO
+  if (pantalla === "resultado-simulacro" && resultadoSimulacro) {
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Resultado del simulacro</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <div style={styles.resultCard}>
+          <div style={{ textAlign: "center", marginBottom: 14 }}>
+            <span style={{ fontSize: 13, color: "#8a8578" }}>Nota final</span>
+            <div style={{ fontSize: 42, fontWeight: 700, color: "#4a463f" }}>
+              {resultadoSimulacro.nota}
+            </div>
+          </div>
+
+          <div style={styles.resultRow}>
+            <span>✅ Aciertos</span>
+            <b>{resultadoSimulacro.aciertos}</b>
+          </div>
+          <div style={styles.resultRow}>
+            <span>❌ Errores</span>
+            <b>{resultadoSimulacro.errores}</b>
+          </div>
+          <div style={styles.resultRow}>
+            <span>⬜ En blanco</span>
+            <b>{resultadoSimulacro.blancos}</b>
+          </div>
+          <div style={{ ...styles.resultRow, borderBottom: "none" }}>
+            <span>⏱ Tiempo empleado</span>
+            <b>{resultadoSimulacro.tiempo}</b>
+          </div>
+        </div>
+
+        <button onClick={volverMenu} style={styles.ctaButton}>
+          Volver al menú
+        </button>
+      </div>
+    );
+  }
+
+  // 📈 MI PROGRESO (hub)
+  if (pantalla === "progreso") {
+    return (
+      <div style={styles.menuContainer}>
+        <style>{globalStyles}</style>
+
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Mi progreso</h1>
+          <div style={styles.menuUnderline} />
+        </div>
 
         <button
           className="menu-btn"
-          onClick={iniciarSimulacro}
-          style={{ ...styles.menuButton, ...styles.btnPurple }}
+          onClick={() => setPantalla("estadisticas")}
+          style={{ ...styles.menuButton, ...styles.btnPeach }}
         >
-          📝 Simulacro oficial
+          📊 Estadísticas
         </button>
 
         <button
@@ -327,28 +860,9 @@ export default function App() {
           ⭐ Repasar errores ({pendientesErrores})
         </button>
 
-        <button
-          className="menu-btn"
-          onClick={() => setPantalla("estadisticas")}
-          style={{ ...styles.menuButton, ...styles.btnOlive }}
-        >
-          📊 Estadísticas
+        <button onClick={volverMenu} style={styles.linkVolver}>
+          ⬅ Volver al menú
         </button>
-
-        <h3 style={styles.bloquesTitle}>Por bloques</h3>
-
-        <div style={styles.bloquesGrid}>
-          {Object.keys(bloques).map((b) => (
-            <button
-              key={b}
-              className="bloque-chip"
-              onClick={() => iniciarBloque(bloques[b])}
-              style={styles.bloqueChip}
-            >
-              {b}
-            </button>
-          ))}
-        </div>
       </div>
     );
   }
@@ -462,7 +976,7 @@ export default function App() {
         </div>
 
         <button
-          onClick={volverMenu}
+          onClick={volverProgreso}
           style={styles.button}
         >
           ⬅ Volver
@@ -524,10 +1038,63 @@ export default function App() {
       }))
       .sort((a, b) => b.porcentaje - a.porcentaje);
 
-    return (
-      <div style={styles.container}>
+    const racha = obtenerRacha().racha;
+    const tiempos = obtenerTiempos();
+    const tiempoMedio =
+      tiempos.totalPreguntas > 0
+        ? Math.round(tiempos.totalSegundos / tiempos.totalPreguntas)
+        : 0;
+    const mejorBloque = ordenados.length > 0 ? ordenados[0] : null;
+    const peorBloque = ordenados.length > 0 ? ordenados[ordenados.length - 1] : null;
 
-        <h1>📊 Estadísticas</h1>
+    return (
+      <div style={styles.menuContainer}>
+
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>📊 Estadísticas</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <div style={styles.statGrid}>
+          <div style={styles.statCard}>
+            <div style={styles.statValue}>{totalRespondidas}</div>
+            <div style={styles.statLabel}>Preguntas respondidas</div>
+          </div>
+          <div style={styles.statCard}>
+            <div style={styles.statValue}>{porcentaje}%</div>
+            <div style={styles.statLabel}>Aciertos</div>
+          </div>
+          <div style={styles.statCard}>
+            <div style={styles.statValue}>
+              {tiempoMedio ? `${tiempoMedio}s` : "—"}
+            </div>
+            <div style={styles.statLabel}>Tiempo medio / pregunta</div>
+          </div>
+          <div style={styles.statCard}>
+            <div style={styles.statValue}>🔥 {racha}</div>
+            <div style={styles.statLabel}>Días seguidos estudiando</div>
+          </div>
+        </div>
+
+        {mejorBloque && (
+          <div style={{ ...styles.configCard, marginBottom: 10 }}>
+            <p style={styles.configCardTitle}>🏆 Mejor bloque</p>
+            <p style={styles.configSubLabel}>
+              {mejorBloque.nombre} — {mejorBloque.porcentaje}% aciertos
+            </p>
+          </div>
+        )}
+
+        {peorBloque && peorBloque !== mejorBloque && (
+          <div style={styles.configCard}>
+            <p style={styles.configCardTitle}>🧐 Bloque a reforzar</p>
+            <p style={styles.configSubLabel}>
+              {peorBloque.nombre} — {peorBloque.porcentaje}% aciertos
+            </p>
+          </div>
+        )}
+
+        <h3 style={styles.bloquesTitle}>Rendimiento por bloque</h3>
 
         {ordenados.length === 0 ? (
 
@@ -538,14 +1105,15 @@ export default function App() {
         ) : (
 
           <>
-            {ordenados.map((b) => (
+            {ordenados.map((b)=>(
               <div
                 key={b.nombre}
                 style={{
-                  border: "1px solid #ddd",
-                  padding: 10,
-                  marginTop: 10,
-                  borderRadius: 10
+                  border:"1px solid #ddd",
+                  padding:10,
+                  marginTop:10,
+                  borderRadius:10,
+                  background: "#fff"
                 }}
               >
                 <h3>{b.nombre}</h3>
@@ -561,8 +1129,8 @@ export default function App() {
         )}
 
         <button
-          onClick={volverMenu}
-          style={styles.button}
+          onClick={volverProgreso}
+          style={styles.linkVolver}
         >
           ⬅ Volver
         </button>
@@ -571,13 +1139,67 @@ export default function App() {
     );
   }
 
-  // 🟣 QUIZ (y también SIMULACRO, que usa la misma vista)
-  if ((pantalla === "quiz" || pantalla === "simulacro") && pregunta) {
+  // 🧩 DESARROLLO (próximamente)
+  if (pantalla === "desarrollo") {
+    return (
+      <div style={styles.placeholderContainer}>
+        <div style={styles.placeholderCard}>
+          <div style={styles.placeholderEmoji}>🧩</div>
+          <h2>Desarrollo</h2>
+          <p style={styles.configSubLabel}>Próximamente</p>
+          <button onClick={volverMenu} style={styles.linkVolver}>
+            ⬅ Volver al menú
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 🎮 MINIJUEGOS (próximamente)
+  if (pantalla === "minijuegos") {
+    return (
+      <div style={styles.placeholderContainer}>
+        <div style={styles.placeholderCard}>
+          <div style={styles.placeholderEmoji}>🎮</div>
+          <h2>Minijuegos</h2>
+          <p style={styles.configSubLabel}>Próximamente</p>
+          <button onClick={volverMenu} style={styles.linkVolver}>
+            ⬅ Volver al menú
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ⚙️ AJUSTES
+  if (pantalla === "ajustes") {
+    return (
+      <div style={styles.placeholderContainer}>
+        <div style={styles.placeholderCard}>
+          <div style={styles.placeholderEmoji}>⚙️</div>
+          <h2>Ajustes</h2>
+          <p style={styles.configSubLabel}>Próximamente</p>
+          <button onClick={volverMenu} style={styles.linkVolver}>
+            ⬅ Volver al menú
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 🟣 QUIZ (estudio general / por bloques / repasar errores)
+  if (pantalla === "quiz" && pregunta) {
     return (
       <div style={styles.container}>
         <button onClick={volverMenu} style={styles.button}>
           ⬅ Menú
         </button>
+
+        {tiempoRestante !== null && (
+          <p style={{ fontWeight: 700, color: "#e29aa0" }}>
+            ⏱ {formatearTiempo(tiempoRestante)}
+          </p>
+        )}
 
         <p>
           Pregunta {indice + 1} / {preguntas.length}
@@ -645,9 +1267,11 @@ export default function App() {
               return null;
             })()}
 
-            <p style={{ fontSize: 13 }}>
-              <b>Explicación:</b> {pregunta.explicacion}
-            </p>
+            {conExplicacion && (
+              <p style={{ fontSize: 13 }}>
+                <b>Explicación:</b> {pregunta.explicacion}
+              </p>
+            )}
 
             <button onClick={siguiente} style={styles.button}>
               Siguiente →
@@ -705,6 +1329,102 @@ function registrarRespuesta(pregunta, correcta) {
 
   guardarStats(stats);
 }
+
+// 🔥 racha de estudio (días consecutivos)
+function obtenerRacha() {
+  return JSON.parse(localStorage.getItem(CLAVE_RACHA)) || {
+    ultimaFecha: null,
+    racha: 0
+  };
+}
+
+function actualizarRacha() {
+  const hoy = new Date().toISOString().slice(0, 10);
+  const datos = obtenerRacha();
+
+  if (datos.ultimaFecha === hoy) return;
+
+  const ayer = new Date();
+  ayer.setDate(ayer.getDate() - 1);
+  const ayerStr = ayer.toISOString().slice(0, 10);
+
+  const nuevaRacha = datos.ultimaFecha === ayerStr ? datos.racha + 1 : 1;
+
+  localStorage.setItem(
+    CLAVE_RACHA,
+    JSON.stringify({ ultimaFecha: hoy, racha: nuevaRacha })
+  );
+}
+
+// ⏱️ tiempo medio por pregunta
+function obtenerTiempos() {
+  return JSON.parse(localStorage.getItem(CLAVE_TIEMPOS)) || {
+    totalSegundos: 0,
+    totalPreguntas: 0
+  };
+}
+
+function registrarTiempoPregunta(segundos) {
+  const datos = obtenerTiempos();
+  datos.totalSegundos += segundos;
+  datos.totalPreguntas += 1;
+  localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos));
+}
+
+function formatearTiempo(segundosTotales) {
+  const m = Math.floor(segundosTotales / 60);
+  const s = segundosTotales % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+const globalStyles = `
+  .menu-btn, .pill, .bloque-chip {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+  }
+  .menu-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.12);
+  }
+  .menu-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+  .bloque-chip:hover {
+    background: #efe8da;
+    transform: translateY(-1px);
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  .switch input { display: none; }
+  .switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #e4ddcf;
+    transition: 0.2s;
+    border-radius: 26px;
+  }
+  .switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; width: 20px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: 0.2s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .switch input:checked + .slider {
+    background-color: #e29aa0;
+  }
+  .switch input:checked + .slider:before {
+    transform: translateX(20px);
+  }
+`;
 
 const styles = {
   container: {
@@ -773,7 +1493,7 @@ const styles = {
     boxShadow: "0 6px 16px rgba(0,0,0,0.18)"
   },
 
-  // 🟣 estilos del menú principal
+  // 🟣 contenedor general estilo "app"
   menuContainer: {
     maxWidth: 480,
     margin: "0 auto",
@@ -801,72 +1521,6 @@ const styles = {
     background: "linear-gradient(90deg, #cbb8e8, #e29aa0)",
     margin: "10px auto 0"
   },
-  progressCard: {
-    background: "#fff",
-    borderRadius: 18,
-    padding: "16px 18px",
-    marginBottom: 20,
-    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
-  },
-  progressTextRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 8
-  },
-  progressLabel: {
-    fontSize: 13,
-    color: "#8a8578"
-  },
-  progressValue: {
-    fontSize: 13,
-    fontWeight: 700,
-    color: "#4a463f"
-  },
-  progressTrack: {
-    width: "100%",
-    height: 8,
-    borderRadius: 8,
-    background: "#eee6da",
-    overflow: "hidden"
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 8,
-    background: "linear-gradient(90deg, #f2b366, #e29aa0)",
-    transition: "width 0.4s ease"
-  },
-  cantidadRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 22
-  },
-  cantidadLabel: {
-    fontSize: 13,
-    color: "#8a8578"
-  },
-  cantidadGroup: {
-    display: "flex",
-    gap: 6,
-    background: "#fff",
-    padding: 4,
-    borderRadius: 20,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
-  },
-  cantidadPill: {
-    border: "none",
-    background: "transparent",
-    padding: "6px 14px",
-    borderRadius: 16,
-    fontSize: 13,
-    color: "#8a8578",
-    cursor: "pointer"
-  },
-  cantidadPillActiva: {
-    background: "#e29aa0",
-    color: "#fff",
-    fontWeight: 700
-  },
   menuButton: {
     display: "block",
     width: "100%",
@@ -885,6 +1539,85 @@ const styles = {
   btnPurple: { background: "#d9cdf0" },
   btnPink: { background: "#f3cdd2" },
   btnOlive: { background: "#d7dcc0" },
+  btnMuted: { background: "#efece4", color: "#a39d8e" },
+  badgeProximamente: {
+    float: "right",
+    fontSize: 10,
+    fontWeight: 700,
+    background: "#fff",
+    color: "#a39d8e",
+    padding: "3px 8px",
+    borderRadius: 10
+  },
+  linkVolver: {
+    display: "block",
+    width: "100%",
+    textAlign: "center",
+    border: "none",
+    background: "transparent",
+    color: "#8a8578",
+    fontSize: 13,
+    padding: 12,
+    marginTop: 6,
+    cursor: "pointer"
+  },
+
+  // ⚙️ tarjetas de configuración
+  configCard: {
+    background: "#fff",
+    borderRadius: 18,
+    padding: "16px 18px",
+    marginBottom: 18,
+    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
+  },
+  configCardTitle: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#4a463f",
+    marginBottom: 12
+  },
+  configRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4
+  },
+  configSubLabel: {
+    fontSize: 13,
+    color: "#8a8578"
+  },
+  numeroInput: {
+    border: "1px solid #e4ddcf",
+    borderRadius: 10,
+    padding: "8px 12px",
+    fontSize: 14,
+    width: 80
+  },
+
+  // 🔘 pills genéricas reutilizables
+  pillGroup: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+    background: "#faf7f2",
+    padding: 4,
+    borderRadius: 20
+  },
+  pillBtn: {
+    border: "none",
+    background: "transparent",
+    padding: "8px 16px",
+    borderRadius: 16,
+    fontSize: 13,
+    color: "#8a8578",
+    cursor: "pointer"
+  },
+  pillBtnActiva: {
+    background: "#e29aa0",
+    color: "#fff",
+    fontWeight: 700
+  },
+
   bloquesTitle: {
     fontSize: 13,
     color: "#8a8578",
@@ -895,7 +1628,8 @@ const styles = {
   bloquesGrid: {
     display: "flex",
     flexWrap: "wrap",
-    gap: 8
+    gap: 8,
+    marginTop: 14
   },
   bloqueChip: {
     border: "1px solid #e4ddcf",
@@ -905,5 +1639,185 @@ const styles = {
     fontSize: 13,
     color: "#4a463f",
     cursor: "pointer"
+  },
+  bloqueChipActiva: {
+    background: "#e29aa0",
+    color: "#fff",
+    borderColor: "#e29aa0"
+  },
+
+  // 🎯 botón grande de acción principal
+  ctaButton: {
+    display: "block",
+    width: "100%",
+    border: "none",
+    borderRadius: 20,
+    padding: "18px 20px",
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: 700,
+    color: "#fff",
+    background: "linear-gradient(90deg, #f2b366, #e29aa0)",
+    cursor: "pointer",
+    boxShadow: "0 8px 20px rgba(226,154,160,0.35)",
+    textAlign: "center"
+  },
+  ctaButtonDisabled: {
+    opacity: 0.45,
+    cursor: "not-allowed",
+    boxShadow: "none"
+  },
+
+  // 📊 tarjetas de estadísticas
+  statGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 10,
+    marginBottom: 20
+  },
+  statCard: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: 14,
+    textAlign: "center",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 700,
+    color: "#4a463f"
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "#8a8578",
+    marginTop: 4
+  },
+
+  // 📝 simulacro
+  simHeaderBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    flexWrap: "wrap",
+    gap: 8
+  },
+  simTimer: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#e29aa0",
+    background: "#fff",
+    padding: "6px 14px",
+    borderRadius: 20,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+  },
+  simFinalizarBtn: {
+    border: "none",
+    background: "#f3cdd2",
+    color: "#4a463f",
+    padding: "6px 14px",
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer"
+  },
+  simDotsWrap: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+    maxHeight: 110,
+    overflowY: "auto",
+    marginBottom: 18,
+    padding: 8,
+    background: "#fff",
+    borderRadius: 14,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+  },
+  simDot: {
+    width: 28,
+    height: 28,
+    borderRadius: "50%",
+    border: "1px solid #e4ddcf",
+    background: "#fff",
+    fontSize: 11,
+    color: "#8a8578",
+    cursor: "pointer"
+  },
+  simDotRespondida: {
+    background: "#d7dcc0",
+    borderColor: "#d7dcc0",
+    color: "#4a463f"
+  },
+  simDotActual: {
+    border: "2px solid #e29aa0"
+  },
+  simRespuestaBtn: {
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    padding: "14px 16px",
+    marginBottom: 10,
+    borderRadius: 14,
+    border: "1px solid #e4ddcf",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: 14
+  },
+  simRespuestaSeleccionada: {
+    background: "#f3cdd2",
+    borderColor: "#e29aa0"
+  },
+  simNavRow: {
+    display: "flex",
+    gap: 10,
+    marginTop: 16
+  },
+  simNavBtn: {
+    flex: 1,
+    border: "none",
+    borderRadius: 16,
+    padding: 14,
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+    color: "#4a463f"
+  },
+
+  // 🏁 resultados
+  resultCard: {
+    background: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 4,
+    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
+  },
+  resultRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "10px 0",
+    borderBottom: "1px solid #f0ece2",
+    fontSize: 14
   }
+};
+
+styles.placeholderContainer = {
+  ...styles.menuContainer,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center"
+};
+
+styles.placeholderCard = {
+  background: "#fff",
+  borderRadius: 20,
+  padding: "40px 30px",
+  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+  maxWidth: 320
+};
+
+styles.placeholderEmoji = {
+  fontSize: 42,
+  marginBottom: 10
 };
