@@ -4,12 +4,15 @@ import portada from "./assets/portada.jpeg";
 import video2Jugadoras from "./assets/video-2-jugadoras.mp4";
 import video3Jugadoras from "./assets/video-3-jugadoras.mp4";
 import video4Jugadoras from "./assets/video-4-jugadoras.mp4";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "./firebase";
 
 const CLAVE_STATS = "opo_stats_v1";
 const CLAVE_RACHA = "opo_racha_v1";
 const CLAVE_TIEMPOS = "opo_tiempos_v1";
 const CLAVE_FAVORITOS = "opo_favoritos_v1";
 const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
+const CLAVE_CODIGO = "opo_codigo_perfil_v1";
 
 // ⏱️ duración total del simulacro oficial (minutos). Ajusta este número si quieres otro tiempo.
 const DURACION_SIMULACRO_MINUTOS = 100;
@@ -78,6 +81,7 @@ export default function App() {
       guardarFavoritos(nuevo);
       return nuevo;
     });
+    sincronizarConNube();
   }
 
   // 🎮 estado del minijuego "Carrera por la Plaza" (independiente de las estadísticas personales)
@@ -107,6 +111,79 @@ export default function App() {
   function vaciarHistorialJuego() {
     localStorage.setItem(CLAVE_HISTORIAL_JUEGO, JSON.stringify([]));
     setRefrescoHistorial((v) => v + 1);
+  }
+
+  // ☁️ código personal para sincronizar el progreso entre dispositivos
+  const [codigo, setCodigo] = useState(
+    () => localStorage.getItem(CLAVE_CODIGO) || ""
+  );
+  const [codigoInput, setCodigoInput] = useState("");
+  const [sincronizando, setSincronizando] = useState(false);
+  const [mensajeSync, setMensajeSync] = useState("");
+
+  async function cargarDesdeNube(cod) {
+    setSincronizando(true);
+    setMensajeSync("");
+
+    try {
+      const snap = await getDoc(doc(db, "perfiles", cod));
+
+      if (snap.exists()) {
+        const datos = snap.data();
+
+        if (datos.stats) guardarStats(datos.stats);
+        if (datos.racha) localStorage.setItem(CLAVE_RACHA, JSON.stringify(datos.racha));
+        if (datos.tiempos) localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos.tiempos));
+        if (datos.favoritos) {
+          guardarFavoritos(datos.favoritos);
+          setFavoritos(datos.favoritos);
+        }
+
+        setMensajeSync("✅ Progreso cargado desde tu código.");
+      } else {
+        await sincronizarConNube(cod);
+        setMensajeSync("🆕 Código nuevo: se ha guardado tu progreso actual con este código.");
+      }
+    } catch (e) {
+      setMensajeSync("⚠️ No se pudo conectar. Comprueba tu conexión a internet.");
+    }
+
+    setSincronizando(false);
+  }
+
+  async function sincronizarConNube(codigoForzado) {
+    const cod = codigoForzado || codigo;
+    if (!cod) return;
+
+    const datos = {
+      stats: obtenerStats(),
+      racha: obtenerRacha(),
+      tiempos: obtenerTiempos(),
+      favoritos: obtenerFavoritos(),
+      actualizado: new Date().toISOString()
+    };
+
+    try {
+      await setDoc(doc(db, "perfiles", cod), datos);
+    } catch (e) {
+      // fallo silencioso: los datos siguen a salvo en localStorage
+    }
+  }
+
+  function guardarCodigo() {
+    const cod = codigoInput.trim().toLowerCase();
+    if (!cod) return;
+
+    setCodigo(cod);
+    localStorage.setItem(CLAVE_CODIGO, cod);
+    setCodigoInput("");
+    cargarDesdeNube(cod);
+  }
+
+  function borrarCodigo() {
+    setCodigo("");
+    localStorage.removeItem(CLAVE_CODIGO);
+    setMensajeSync("");
   }
 
   function cambiarNumJugadoresJuego(n) {
@@ -140,6 +217,14 @@ export default function App() {
       setPreguntasBase(datos);
     }
     init();
+  }, []);
+
+  // ☁️ si ya hay un código guardado en este dispositivo, carga el progreso al abrir la app
+  useEffect(() => {
+    if (codigo) {
+      cargarDesdeNube(codigo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pregunta = preguntas[indice];
@@ -247,6 +332,7 @@ export default function App() {
     setMostrar(false);
     setTiempoRestante(null);
     setTiempoRestanteSimulacro(null);
+    sincronizarConNube();
   }
 
   function volverProgreso() {
@@ -255,6 +341,7 @@ export default function App() {
     setAciertos(0);
     setMensaje("");
     setMostrar(false);
+    sincronizarConNube();
   }
 
   function mezclar(array) {
@@ -430,6 +517,7 @@ export default function App() {
     });
 
     setTiempoRestanteSimulacro(null);
+    sincronizarConNube();
     setPantalla("resultado-simulacro");
   }
 
@@ -1875,18 +1963,82 @@ export default function App() {
     );
   }
 
-  // ⚙️ AJUSTES
+  // ⚙️ AJUSTES — perfil y código de sincronización
   if (pantalla === "ajustes") {
     return (
-      <div style={styles.placeholderContainer}>
-        <div style={styles.placeholderCard}>
-          <div style={styles.placeholderEmoji}>⚙️</div>
-          <h2>Ajustes</h2>
-          <p style={styles.configSubLabel}>Próximamente</p>
-          <button onClick={volverMenu} style={styles.linkVolver}>
-            ⬅ Volver al menú
-          </button>
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Ajustes</h1>
+          <div style={styles.menuUnderline} />
         </div>
+
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>☁️ Tu código de progreso</p>
+
+          {codigo ? (
+            <>
+              <p style={styles.configSubLabel}>
+                Progreso vinculado al código: <b>{codigo}</b>
+              </p>
+              <p style={styles.configSubLabel}>
+                Usa este mismo código en otro dispositivo para recuperar tu
+                progreso ahí también.
+              </p>
+
+              <button
+                onClick={() => sincronizarConNube()}
+                disabled={sincronizando}
+                style={styles.ctaButton}
+              >
+                {sincronizando ? "Sincronizando..." : "🔄 Sincronizar ahora"}
+              </button>
+
+              <button onClick={borrarCodigo} style={styles.linkVolver}>
+                Dejar de usar este código en este dispositivo
+              </button>
+            </>
+          ) : (
+            <>
+              <p style={styles.configSubLabel}>
+                Ponte un código (el que quieras) para guardar tu progreso y
+                poder recuperarlo desde cualquier otro dispositivo. Si no
+                pones ninguno, tu progreso se queda solo en este dispositivo,
+                como hasta ahora.
+              </p>
+
+              <input
+                type="text"
+                value={codigoInput}
+                onChange={(e) => setCodigoInput(e.target.value)}
+                placeholder="Ej: judit1234"
+                style={styles.nombreInput}
+              />
+
+              <button
+                onClick={guardarCodigo}
+                disabled={sincronizando || !codigoInput.trim()}
+                style={{
+                  ...styles.ctaButton,
+                  ...(sincronizando || !codigoInput.trim()
+                    ? styles.ctaButtonDisabled
+                    : {})
+                }}
+              >
+                {sincronizando ? "Conectando..." : "Guardar código"}
+              </button>
+            </>
+          )}
+
+          {mensajeSync && (
+            <p style={{ ...styles.configSubLabel, marginTop: 10 }}>
+              {mensajeSync}
+            </p>
+          )}
+        </div>
+
+        <button onClick={volverMenu} style={styles.linkVolver}>
+          ⬅ Volver al menú
+        </button>
       </div>
     );
   }
