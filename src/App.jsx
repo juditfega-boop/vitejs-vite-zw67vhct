@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { cargarPreguntas } from "./cargarPreguntas";
 import portada from "./assets/portada.jpeg";
+import video2Jugadoras from "./assets/video-2-jugadoras.mp4";
+import video3Jugadoras from "./assets/video-3-jugadoras.mp4";
+import video4Jugadoras from "./assets/video-4-jugadoras.mp4";
 
 const CLAVE_STATS = "opo_stats_v1";
 const CLAVE_RACHA = "opo_racha_v1";
@@ -18,9 +21,9 @@ const FRASES_BIENVENIDA = [
   "el conocimiento también se construye en sociedad"
 ];
 
-// 🎮 frases graciosas para el minijuego "Carrera por la plaza"
+// 🎮 frases graciosas para el minijuego "Carrera por la Plaza"
 const FRASES_MINIJUEGO = [
-  "El comité técnico ha deliberado: alguien necesita repasar",
+  "El comité técnico ha deliberado: alguien necesita repasar la Ley de Dependencia 😅",
   "Esta partida generaría un informe social muy interesante",
   "Nivel de coordinación de caso: mejorable",
   "Ander-Egg estaría tomando notas de esta sesión",
@@ -77,7 +80,7 @@ export default function App() {
     });
   }
 
-  // 🎮 estado del minijuego "Carrera por la plaza" (independiente de las estadísticas personales)
+  // 🎮 estado del minijuego "Carrera por la Plaza" (independiente de las estadísticas personales)
   const [juegoNumJugadores, setJuegoNumJugadores] = useState(2);
   const [juegoNombres, setJuegoNombres] = useState(["Jugadora 1", "Jugadora 2"]);
   const [juegoTipo, setJuegoTipo] = useState("general"); // "general" | "bloques"
@@ -92,6 +95,19 @@ export default function App() {
   const [tiempoRestanteJuego, setTiempoRestanteJuego] = useState(null);
   const [piezasConfeti, setPiezasConfeti] = useState([]);
   const [fraseJuego, setFraseJuego] = useState("");
+  const [refrescoHistorial, setRefrescoHistorial] = useState(0);
+
+  function eliminarPartidaHistorial(index) {
+    const historial = obtenerHistorialJuego();
+    historial.splice(index, 1);
+    localStorage.setItem(CLAVE_HISTORIAL_JUEGO, JSON.stringify(historial));
+    setRefrescoHistorial((v) => v + 1);
+  }
+
+  function vaciarHistorialJuego() {
+    localStorage.setItem(CLAVE_HISTORIAL_JUEGO, JSON.stringify([]));
+    setRefrescoHistorial((v) => v + 1);
+  }
 
   function cambiarNumJugadoresJuego(n) {
     setJuegoNumJugadores(n);
@@ -433,7 +449,7 @@ export default function App() {
     setPantalla("quiz");
   }
 
-  // 🎮 MINIJUEGO "SESIÓN DE GRUPO" — no toca estadísticas ni memoria personal
+  // 🎮 MINIJUEGO "CARRERA POR LA PLAZA" — no toca estadísticas ni memoria personal
 
   function comenzarPartida() {
     let listaFuente = preguntasBase;
@@ -525,7 +541,7 @@ export default function App() {
       FRASES_MINIJUEGO[Math.floor(Math.random() * FRASES_MINIJUEGO.length)]
     );
     guardarPartidaHistorial(puntuacionesJuego);
-    setPantalla("juego-resultado");
+    setPantalla("juego-video");
   }
 
   function obtenerPreguntasDebiles(lista) {
@@ -1420,7 +1436,7 @@ export default function App() {
         </div>
 
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>🎮 Carrera por la plaza</p>
+          <p style={styles.configCardTitle}>🏁 Carrera por la Plaza</p>
           <p style={styles.configSubLabel}>
             De 2 a 4 personas, un solo dispositivo. Cada jugadora responde su
             propia tanda de preguntas por turnos, sin ver el resultado hasta
@@ -1477,7 +1493,7 @@ export default function App() {
         <style>{globalStyles}</style>
 
         <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>Carrera por la plaza</h1>
+          <h1 style={styles.menuTitle}>Carrera por la Plaza</h1>
           <div style={styles.menuUnderline} />
         </div>
 
@@ -1690,6 +1706,35 @@ export default function App() {
     );
   }
 
+  // 🎬 VÍDEO DE CELEBRACIÓN FINAL
+  if (pantalla === "juego-video") {
+    const videoSrc =
+      juegoNumJugadores === 2
+        ? video2Jugadoras
+        : juegoNumJugadores === 3
+        ? video3Jugadoras
+        : video4Jugadoras;
+
+    return (
+      <div style={styles.videoContainer}>
+        <video
+          src={videoSrc}
+          autoPlay
+          muted
+          playsInline
+          onEnded={() => setPantalla("juego-resultado")}
+          style={styles.videoElement}
+        />
+        <button
+          onClick={() => setPantalla("juego-resultado")}
+          style={styles.skipButton}
+        >
+          Saltar →
+        </button>
+      </div>
+    );
+  }
+
   // 🏆 RESULTADO DE "CARRERA POR LA PLAZA"
   if (pantalla === "juego-resultado") {
     const ranking = [...puntuacionesJuego].sort(
@@ -1768,6 +1813,13 @@ export default function App() {
   // 🕓 HISTORIAL DE PARTIDAS
   if (pantalla === "juego-historial") {
     const historial = obtenerHistorialJuego();
+    void refrescoHistorial; // fuerza a releer el historial tras borrar
+
+    function confirmarVaciarHistorial() {
+      if (window.confirm("¿Borrar todo el historial de partidas? Esto no se puede deshacer.")) {
+        vaciarHistorialJuego();
+      }
+    }
 
     return (
       <div style={styles.menuContainer}>
@@ -1781,24 +1833,39 @@ export default function App() {
             Todavía no habéis jugado ninguna partida.
           </p>
         ) : (
-          historial.map((partida, i) => (
-            <div key={i} style={styles.configCard}>
-              <p style={styles.configCardTitle}>{partida.fecha}</p>
-              <p style={styles.configSubLabel}>
-                {partida.ganador === "Empate"
-                  ? "Resultado: empate"
-                  : `Ganadora: ${partida.ganador}`}
-              </p>
-              {partida.jugadores.map((j, k) => (
-                <div key={k} style={{ ...styles.resultRow, fontSize: 13 }}>
-                  <span>{j.nombre}</span>
-                  <b>
-                    {j.aciertos} ✅ / {j.errores} ❌
-                  </b>
+          <>
+            <button onClick={confirmarVaciarHistorial} style={styles.linkVolver}>
+              🗑️ Vaciar historial
+            </button>
+
+            {historial.map((partida, i) => (
+              <div key={i} style={styles.configCard}>
+                <div style={styles.configRow}>
+                  <p style={styles.configCardTitle}>{partida.fecha}</p>
+                  <button
+                    onClick={() => eliminarPartidaHistorial(i)}
+                    title="Eliminar esta partida"
+                    style={styles.borrarPartidaBtn}
+                  >
+                    🗑️
+                  </button>
                 </div>
-              ))}
-            </div>
-          ))
+                <p style={styles.configSubLabel}>
+                  {partida.ganador === "Empate"
+                    ? "Resultado: empate"
+                    : `Ganadora: ${partida.ganador}`}
+                </p>
+                {partida.jugadores.map((j, k) => (
+                  <div key={k} style={{ ...styles.resultRow, fontSize: 13 }}>
+                    <span>{j.nombre}</span>
+                    <b>
+                      {j.aciertos} ✅ / {j.errores} ❌
+                    </b>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </>
         )}
 
         <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
@@ -2508,6 +2575,46 @@ const styles = {
     padding: "10px 0",
     borderBottom: "1px solid #f0ece2",
     fontSize: 14
+  },
+
+  // 🎬 vídeo de celebración
+  videoContainer: {
+    position: "relative",
+    width: "100vw",
+    height: "100vh",
+    margin: 0,
+    overflow: "hidden",
+    background: "#faf7f2",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  videoElement: {
+    maxWidth: "100%",
+    maxHeight: "100%",
+    display: "block"
+  },
+  skipButton: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    border: "none",
+    background: "rgba(255,255,255,0.85)",
+    color: "#4a463f",
+    padding: "8px 16px",
+    borderRadius: 20,
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+  },
+  borrarPartidaBtn: {
+    border: "none",
+    background: "transparent",
+    fontSize: 16,
+    cursor: "pointer",
+    padding: 4,
+    lineHeight: 1
   }
 };
 
