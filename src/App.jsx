@@ -5,6 +5,8 @@ import portada from "./assets/portada.jpeg";
 const CLAVE_STATS = "opo_stats_v1";
 const CLAVE_RACHA = "opo_racha_v1";
 const CLAVE_TIEMPOS = "opo_tiempos_v1";
+const CLAVE_FAVORITOS = "opo_favoritos_v1";
+const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
 
 // ⏱️ duración total del simulacro oficial (minutos). Ajusta este número si quieres otro tiempo.
 const DURACION_SIMULACRO_MINUTOS = 100;
@@ -14,6 +16,16 @@ const FRASES_BIENVENIDA = [
   "venimos de personas que con la poesía cambiaron el mundo",
   "me declaro aprendiz imperecedera",
   "el conocimiento también se construye en sociedad"
+];
+
+// 🎮 frases graciosas para el minijuego "Carrera por la plaza"
+const FRASES_MINIJUEGO = [
+  "El comité técnico ha deliberado: alguien necesita repasar",
+  "Esta partida generaría un informe social muy interesante",
+  "Nivel de coordinación de caso: mejorable",
+  "Ander-Egg estaría tomando notas de esta sesión",
+  "Recordad: el trabajo en equipo también puntúa (aunque aquí no)",
+  "La derivación de este grupo está clara: a estudiar toca"
 ];
 
 export default function App() {
@@ -51,6 +63,61 @@ export default function App() {
   // ⏱️ instante en que se mostró la pregunta actual (para tiempo medio)
   const [inicioPregunta, setInicioPregunta] = useState(null);
 
+  // ⭐ favoritos (persisten en localStorage, no afectan a la lógica del quiz)
+  const [favoritos, setFavoritos] = useState(() => obtenerFavoritos());
+
+  function toggleFavorito(id) {
+    setFavoritos((prev) => {
+      const idStr = String(id);
+      const nuevo = prev.includes(idStr)
+        ? prev.filter((f) => f !== idStr)
+        : [...prev, idStr];
+      guardarFavoritos(nuevo);
+      return nuevo;
+    });
+  }
+
+  // 🎮 estado del minijuego "Carrera por la plaza" (independiente de las estadísticas personales)
+  const [juegoNumJugadores, setJuegoNumJugadores] = useState(2);
+  const [juegoNombres, setJuegoNombres] = useState(["Jugadora 1", "Jugadora 2"]);
+  const [juegoTipo, setJuegoTipo] = useState("general"); // "general" | "bloques"
+  const [juegoBloquesSeleccionados, setJuegoBloquesSeleccionados] = useState([]);
+  const [juegoNumPreguntas, setJuegoNumPreguntas] = useState(10);
+  const [juegoCronometroActivo, setJuegoCronometroActivo] = useState(false);
+
+  const [preguntasJuego, setPreguntasJuego] = useState([]);
+  const [puntuacionesJuego, setPuntuacionesJuego] = useState([]);
+  const [turnoActual, setTurnoActual] = useState(0);
+  const [respuestaSeleccionadaJuego, setRespuestaSeleccionadaJuego] = useState(null);
+  const [tiempoRestanteJuego, setTiempoRestanteJuego] = useState(null);
+  const [piezasConfeti, setPiezasConfeti] = useState([]);
+  const [fraseJuego, setFraseJuego] = useState("");
+
+  function cambiarNumJugadoresJuego(n) {
+    setJuegoNumJugadores(n);
+    setJuegoNombres((prev) => {
+      const nuevo = [...prev];
+      while (nuevo.length < n) nuevo.push(`Jugadora ${nuevo.length + 1}`);
+      return nuevo.slice(0, n);
+    });
+  }
+
+  function actualizarNombreJugador(i, valor) {
+    setJuegoNombres((prev) => {
+      const copia = [...prev];
+      copia[i] = valor;
+      return copia;
+    });
+  }
+
+  function toggleBloqueJuego(nombre) {
+    setJuegoBloquesSeleccionados((prev) =>
+      prev.includes(nombre)
+        ? prev.filter((b) => b !== nombre)
+        : [...prev, nombre]
+    );
+  }
+
   useEffect(() => {
     async function init() {
       const datos = await cargarPreguntas();
@@ -60,6 +127,14 @@ export default function App() {
   }, []);
 
   const pregunta = preguntas[indice];
+
+  // 🎮 turno actual del minijuego (rota entre jugadores)
+  const totalTurnosJuego = juegoNumJugadores * juegoNumPreguntas;
+  const jugadorActualIndice = turnoActual % juegoNumJugadores;
+  const rondaActualJuego = Math.floor(turnoActual / juegoNumJugadores);
+  const preguntaJuego =
+    preguntasJuego[jugadorActualIndice] &&
+    preguntasJuego[jugadorActualIndice][rondaActualJuego];
 
   const stats = obtenerStats();
   const totalRespondidas = Object.values(stats).reduce(
@@ -114,6 +189,39 @@ export default function App() {
 
     return () => clearTimeout(id);
   }, [pantalla, tiempoRestanteSimulacro]);
+
+  // ⏱️ cuenta atrás del minijuego (1 min por turno, si el cronómetro está activo)
+  useEffect(() => {
+    if (
+      pantalla !== "juego-jugando" ||
+      !juegoCronometroActivo ||
+      tiempoRestanteJuego === null
+    )
+      return;
+
+    if (tiempoRestanteJuego <= 0) {
+      if (respuestaSeleccionadaJuego === null) {
+        setPuntuacionesJuego((prev) => {
+          const copia = [...prev];
+          if (copia[jugadorActualIndice]) {
+            copia[jugadorActualIndice] = {
+              ...copia[jugadorActualIndice],
+              errores: copia[jugadorActualIndice].errores + 1
+            };
+          }
+          return copia;
+        });
+      }
+      avanzarTurno();
+      return;
+    }
+
+    const id = setTimeout(() => {
+      setTiempoRestanteJuego((t) => (t !== null ? t - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(id);
+  }, [pantalla, tiempoRestanteJuego, juegoCronometroActivo, turnoActual]);
 
   function volverMenu() {
     setPantalla("inicio");
@@ -325,6 +433,101 @@ export default function App() {
     setPantalla("quiz");
   }
 
+  // 🎮 MINIJUEGO "SESIÓN DE GRUPO" — no toca estadísticas ni memoria personal
+
+  function comenzarPartida() {
+    let listaFuente = preguntasBase;
+
+    if (juegoTipo === "bloques") {
+      listaFuente = preguntasBase.filter((p) =>
+        juegoBloquesSeleccionados.includes(p.bloque || "Sin bloque")
+      );
+    }
+
+    const totalNecesarias = juegoNumJugadores * juegoNumPreguntas;
+    const pool = mezclar(listaFuente)
+      .slice(0, totalNecesarias)
+      .map(prepararPregunta);
+
+    const porJugador = [];
+    for (let j = 0; j < juegoNumJugadores; j++) {
+      porJugador.push(
+        pool.slice(j * juegoNumPreguntas, (j + 1) * juegoNumPreguntas)
+      );
+    }
+
+    setPreguntasJuego(porJugador);
+    setPuntuacionesJuego(
+      juegoNombres.slice(0, juegoNumJugadores).map((nombre) => ({
+        nombre: nombre.trim() || "Jugadora",
+        aciertos: 0,
+        errores: 0
+      }))
+    );
+    setTurnoActual(0);
+    setRespuestaSeleccionadaJuego(null);
+    setPantalla("juego-transicion");
+  }
+
+  function comenzarTurno() {
+    setRespuestaSeleccionadaJuego(null);
+    setTiempoRestanteJuego(juegoCronometroActivo ? 60 : null);
+    setPantalla("juego-jugando");
+  }
+
+  function responderJuego(i) {
+    if (respuestaSeleccionadaJuego !== null || !preguntaJuego) return;
+
+    setRespuestaSeleccionadaJuego(i);
+
+    const esCorrecta = i === preguntaJuego.correcta;
+
+    setPuntuacionesJuego((prev) => {
+      const copia = [...prev];
+      copia[jugadorActualIndice] = {
+        ...copia[jugadorActualIndice],
+        aciertos: copia[jugadorActualIndice].aciertos + (esCorrecta ? 1 : 0),
+        errores: copia[jugadorActualIndice].errores + (esCorrecta ? 0 : 1)
+      };
+      return copia;
+    });
+  }
+
+  function avanzarTurno() {
+    const siguienteTurno = turnoActual + 1;
+
+    if (siguienteTurno >= totalTurnosJuego) {
+      finalizarJuego();
+    } else {
+      setTurnoActual(siguienteTurno);
+      setRespuestaSeleccionadaJuego(null);
+      setPantalla("juego-transicion");
+    }
+  }
+
+  function generarConfeti() {
+    const colores = ["#f2b366", "#e29aa0", "#d9cdf0", "#d7dcc0", "#f3cdd2"];
+
+    return Array.from({ length: 40 }, (_, i) => ({
+      id: i,
+      izquierda: Math.random() * 100,
+      retraso: Math.random() * 0.6,
+      duracion: 2.2 + Math.random() * 1.6,
+      color: colores[i % colores.length],
+      giro: Math.round(Math.random() * 360)
+    }));
+  }
+
+  function finalizarJuego() {
+    setTiempoRestanteJuego(null);
+    setPiezasConfeti(generarConfeti());
+    setFraseJuego(
+      FRASES_MINIJUEGO[Math.floor(Math.random() * FRASES_MINIJUEGO.length)]
+    );
+    guardarPartidaHistorial(puntuacionesJuego);
+    setPantalla("juego-resultado");
+  }
+
   function obtenerPreguntasDebiles(lista) {
     const stats = obtenerStats();
 
@@ -461,9 +664,9 @@ export default function App() {
         <button
           className="menu-btn"
           onClick={() => setPantalla("minijuegos")}
-          style={{ ...styles.menuButton, ...styles.btnMuted }}
+          style={{ ...styles.menuButton, ...styles.btnMint }}
         >
-          🎮 Minijuegos <span style={styles.badgeProximamente}>Próximamente</span>
+          🎮 Minijuegos
         </button>
 
         <button
@@ -860,8 +1063,58 @@ export default function App() {
           ⭐ Repasar errores ({pendientesErrores})
         </button>
 
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("favoritos")}
+          style={{ ...styles.menuButton, ...styles.btnOlive }}
+        >
+          ❤️ Favoritas ({favoritos.length})
+        </button>
+
         <button onClick={volverMenu} style={styles.linkVolver}>
           ⬅ Volver al menú
+        </button>
+      </div>
+    );
+  }
+
+  // ❤️ PREGUNTAS FAVORITAS
+  if (pantalla === "favoritos") {
+    const listaFavoritas = preguntasBase.filter((p) =>
+      favoritos.includes(String(p.id))
+    );
+
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>❤️ Favoritas</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        {listaFavoritas.length === 0 ? (
+          <p style={styles.configSubLabel}>
+            Aún no has marcado ninguna pregunta con ⭐. Puedes hacerlo desde
+            cualquier pregunta durante el estudio.
+          </p>
+        ) : (
+          <>
+            <p style={styles.configSubLabel}>
+              Tienes {listaFavoritas.length} pregunta
+              {listaFavoritas.length === 1 ? "" : "s"} guardada
+              {listaFavoritas.length === 1 ? "" : "s"}.
+            </p>
+
+            <button
+              onClick={() => iniciarBloque(listaFavoritas)}
+              style={styles.ctaButton}
+            >
+              Repasar favoritas
+            </button>
+          </>
+        )}
+
+        <button onClick={volverProgreso} style={styles.linkVolver}>
+          ⬅ Volver
         </button>
       </div>
     );
@@ -911,11 +1164,11 @@ export default function App() {
           borderRadius:10
         }}>
           <h3>
-            🔴 Muy olvidadas ({muyOlvidadas.length})
+            🔴 Casos prioritarios ({muyOlvidadas.length})
           </h3>
 
           <p>
-            Estas preguntas viven de alquiler en tu cabeza 👀
+            Estas preguntas requieren de intervención urgente
           </p>
 
           <button
@@ -935,11 +1188,11 @@ export default function App() {
           borderRadius:10
         }}>
           <h3>
-            🟡 Pendientes ({pendientes.length})
+            🟡 Casos en seguimiento ({pendientes.length})
           </h3>
 
           <p>
-            Aún te la están colando 😅
+            Sigues con el expediente abierto
           </p>
 
           <button
@@ -959,11 +1212,11 @@ export default function App() {
           borderRadius:10
         }}>
           <h3>
-            🟢 Recuperadas ({recuperadas.length})
+            🟢 Casos resueltos ({recuperadas.length})
           </h3>
 
           <p>
-            Antes daban guerra, ahora tiemblan 💪
+            Intervención finalizada: autonomía conseguida
           </p>
 
           <button
@@ -1009,21 +1262,21 @@ export default function App() {
     function mensajeBloque(p) {
 
       if (p >= 90)
-        return "🔥 ¿Necesitas una plaza o sustituir al tribunal?";
+        return "🎓 Nivel Jane Addams: podrías montar tu propia Hull House";
 
       if (p >= 75)
-        return "😎 En esto estás sobrada";
+        return "💪 Caso con alta autonomía, casi de alta";
 
       if (p >= 60)
-        return "🙂 Vas bien, pero aún hay preguntas que te vacilan";
+        return "🙂 Vas bien, aunque el expediente aún tiene puntos abiertos";
 
       if (p >= 40)
-        return "⚠️ Este tema te está haciendo una llave de judo";
+        return "⚠️ Este bloque necesita un plan de intervención en condiciones";
 
       if (p >= 20)
-        return "🍺 Deja la cerveza y estudia, que este tema lo estás viendo menos que Stevie Wonder";
+        return "🚨 Caso de alta vulnerabilidad — hay que reforzar la red de apoyo (o sea, estudiar más)";
 
-      return "🚨 Si este tema sale en el examen toca invocar fuerzas superiores";
+      return "🆘 Esto es una urgencia social: deriva este bloque a estudio inmediato";
     }
 
     const ordenados = Object.entries(bloques)
@@ -1155,18 +1408,402 @@ export default function App() {
     );
   }
 
-  // 🎮 MINIJUEGOS (próximamente)
+  // 🎮 HUB DE MINIJUEGOS
   if (pantalla === "minijuegos") {
+    return (
+      <div style={styles.menuContainer}>
+        <style>{globalStyles}</style>
+
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Minijuegos</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>🎮 Carrera por la plaza</p>
+          <p style={styles.configSubLabel}>
+            De 2 a 4 personas, un solo dispositivo. Cada jugadora responde su
+            propia tanda de preguntas por turnos, sin ver el resultado hasta
+            el final. Gana quien más aciertos consiga.
+          </p>
+          <button
+            onClick={() => setPantalla("juego-config")}
+            style={styles.ctaButton}
+          >
+            Jugar
+          </button>
+        </div>
+
+        <button
+          onClick={() => setPantalla("juego-historial")}
+          style={styles.linkVolver}
+        >
+          🕓 Ver historial de partidas
+        </button>
+
+        <button onClick={volverMenu} style={styles.linkVolver}>
+          ⬅ Volver al menú
+        </button>
+      </div>
+    );
+  }
+
+  // ⚙️ CONFIGURACIÓN DE "CARRERA POR LA PLAZA"
+  if (pantalla === "juego-config") {
+    const bloquesDisponiblesJuego = Object.keys(
+      agruparPorBloques(preguntasBase)
+    );
+
+    let listaFuenteJuego = preguntasBase;
+    if (juegoTipo === "bloques") {
+      listaFuenteJuego = preguntasBase.filter((p) =>
+        juegoBloquesSeleccionados.includes(p.bloque || "Sin bloque")
+      );
+    }
+
+    const necesariasJuego = juegoNumJugadores * juegoNumPreguntas;
+    const disponiblesJuego = listaFuenteJuego.length;
+    const hayPreguntasSuficientes = disponiblesJuego >= necesariasJuego;
+
+    const puedeEmpezarJuego =
+      (juegoTipo === "general" || juegoBloquesSeleccionados.length > 0) &&
+      juegoNombres
+        .slice(0, juegoNumJugadores)
+        .every((n) => n.trim().length > 0) &&
+      hayPreguntasSuficientes;
+
+    return (
+      <div style={styles.menuContainer}>
+        <style>{globalStyles}</style>
+
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Carrera por la plaza</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Número de jugadoras</p>
+          <div style={styles.pillGroup}>
+            {[2, 3, 4].map((n) => (
+              <button
+                key={n}
+                className="pill"
+                onClick={() => cambiarNumJugadoresJuego(n)}
+                style={{
+                  ...styles.pillBtn,
+                  ...(juegoNumJugadores === n ? styles.pillBtnActiva : {})
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Nombres</p>
+          {juegoNombres.slice(0, juegoNumJugadores).map((nombre, i) => (
+            <input
+              key={i}
+              type="text"
+              value={nombre}
+              onChange={(e) => actualizarNombreJugador(i, e.target.value)}
+              placeholder={`Jugadora ${i + 1}`}
+              style={styles.nombreInput}
+            />
+          ))}
+        </div>
+
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Preguntas</p>
+          <div style={styles.pillGroup}>
+            <button
+              className="pill"
+              onClick={() => setJuegoTipo("general")}
+              style={{
+                ...styles.pillBtn,
+                ...(juegoTipo === "general" ? styles.pillBtnActiva : {})
+              }}
+            >
+              General
+            </button>
+            <button
+              className="pill"
+              onClick={() => setJuegoTipo("bloques")}
+              style={{
+                ...styles.pillBtn,
+                ...(juegoTipo === "bloques" ? styles.pillBtnActiva : {})
+              }}
+            >
+              Por bloques
+            </button>
+          </div>
+
+          {juegoTipo === "bloques" && (
+            <div style={styles.bloquesGrid}>
+              {bloquesDisponiblesJuego.map((b) => (
+                <button
+                  key={b}
+                  className="bloque-chip"
+                  onClick={() => toggleBloqueJuego(b)}
+                  style={{
+                    ...styles.bloqueChip,
+                    ...(juegoBloquesSeleccionados.includes(b)
+                      ? styles.bloqueChipActiva
+                      : {})
+                  }}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Preguntas por jugadora</p>
+          <div style={styles.pillGroup}>
+            {[5, 10, 15, 20].map((n) => (
+              <button
+                key={n}
+                className="pill"
+                onClick={() => setJuegoNumPreguntas(n)}
+                style={{
+                  ...styles.pillBtn,
+                  ...(juegoNumPreguntas === n ? styles.pillBtnActiva : {})
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          {!hayPreguntasSuficientes && (
+            <p style={{ ...styles.configSubLabel, color: "#c96a6a", marginTop: 8 }}>
+              No hay preguntas suficientes para esta configuración
+              ({disponiblesJuego} disponibles, se necesitan {necesariasJuego}).
+              Baja el número de preguntas o elige más bloques.
+            </p>
+          )}
+        </div>
+
+        <div style={styles.configCard}>
+          <div style={styles.configRow}>
+            <p style={styles.configCardTitle}>Activar cronómetro (1 min / pregunta)</p>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={juegoCronometroActivo}
+                onChange={() => setJuegoCronometroActivo((v) => !v)}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <button
+          onClick={comenzarPartida}
+          disabled={!puedeEmpezarJuego}
+          style={{
+            ...styles.ctaButton,
+            ...(puedeEmpezarJuego ? {} : styles.ctaButtonDisabled)
+          }}
+        >
+          Empezar partida
+        </button>
+
+        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+          ⬅ Volver
+        </button>
+      </div>
+    );
+  }
+
+  // 🔄 PANTALLA DE TRANSICIÓN ENTRE JUGADORAS
+  if (pantalla === "juego-transicion") {
+    const nombreActual =
+      puntuacionesJuego[jugadorActualIndice]?.nombre || "Jugadora";
+
     return (
       <div style={styles.placeholderContainer}>
         <div style={styles.placeholderCard}>
-          <div style={styles.placeholderEmoji}>🎮</div>
-          <h2>Minijuegos</h2>
-          <p style={styles.configSubLabel}>Próximamente</p>
-          <button onClick={volverMenu} style={styles.linkVolver}>
-            ⬅ Volver al menú
+          <div style={styles.placeholderEmoji}>📱</div>
+          <h2>Ahora juega {nombreActual}</h2>
+          <p style={styles.configSubLabel}>
+            Pasa el dispositivo a {nombreActual} y pulsa comenzar cuando
+            esté listo/a.
+          </p>
+          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
+            Pregunta {rondaActualJuego + 1} / {juegoNumPreguntas}
+          </p>
+          <button onClick={comenzarTurno} style={styles.ctaButton}>
+            Comenzar
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // 🎮 TURNO EN CURSO
+  if (pantalla === "juego-jugando" && preguntaJuego) {
+    const nombreActual =
+      puntuacionesJuego[jugadorActualIndice]?.nombre || "Jugadora";
+
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.simHeaderBar}>
+          <span style={styles.simTimer}>👤 {nombreActual}</span>
+          {juegoCronometroActivo && (
+            <span style={styles.simTimer}>
+              ⏱ {formatearTiempo(tiempoRestanteJuego || 0)}
+            </span>
+          )}
+        </div>
+
+        <p style={styles.configSubLabel}>
+          Pregunta {rondaActualJuego + 1} / {juegoNumPreguntas}
+        </p>
+
+        <h3>{preguntaJuego.pregunta}</h3>
+
+        {preguntaJuego.respuestas.map((r, i) => (
+          <button
+            key={i}
+            onClick={() => responderJuego(i)}
+            disabled={respuestaSeleccionadaJuego !== null}
+            style={{
+              ...styles.simRespuestaBtn,
+              ...(respuestaSeleccionadaJuego === i
+                ? styles.simRespuestaSeleccionada
+                : {})
+            }}
+          >
+            {r}
+          </button>
+        ))}
+
+        {respuestaSeleccionadaJuego !== null && (
+          <button onClick={avanzarTurno} style={styles.ctaButton}>
+            Pasar al siguiente jugador
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // 🏆 RESULTADO DE "CARRERA POR LA PLAZA"
+  if (pantalla === "juego-resultado") {
+    const ranking = [...puntuacionesJuego].sort(
+      (a, b) => b.aciertos - a.aciertos
+    );
+    const maxAciertos = ranking.length > 0 ? ranking[0].aciertos : 0;
+    const ganadoras = ranking.filter((j) => j.aciertos === maxAciertos);
+    const hayEmpate = ganadoras.length > 1;
+
+    return (
+      <div style={styles.menuContainer}>
+        <style>{globalStyles}</style>
+
+        {piezasConfeti.map((p) => (
+          <span
+            key={p.id}
+            className="confeti-pieza"
+            style={{
+              left: `${p.izquierda}%`,
+              background: p.color,
+              animationDelay: `${p.retraso}s`,
+              animationDuration: `${p.duracion}s`,
+              transform: `rotate(${p.giro}deg)`
+            }}
+          />
+        ))}
+
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>🏆 Clasificación</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <p style={{ textAlign: "center", fontWeight: 700, color: "#4a463f" }}>
+          {hayEmpate
+            ? `¡Empate entre ${ganadoras.map((g) => g.nombre).join(" y ")}!`
+            : `🥇 Gana ${ganadoras[0]?.nombre}`}
+        </p>
+
+        <div style={styles.resultCard}>
+          {ranking.map((j, i) => (
+            <div key={j.nombre + i} style={styles.resultRow}>
+              <span>
+                {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "•"} {j.nombre}
+              </span>
+              <b>
+                {j.aciertos} ✅ / {j.errores} ❌
+              </b>
+            </div>
+          ))}
+        </div>
+
+        {fraseJuego && (
+          <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 14 }}>
+            {fraseJuego}
+          </p>
+        )}
+
+        <button onClick={comenzarPartida} style={styles.ctaButton}>
+          Jugar otra vez
+        </button>
+
+        <button
+          onClick={() => setPantalla("juego-historial")}
+          style={styles.linkVolver}
+        >
+          🕓 Ver historial
+        </button>
+
+        <button onClick={volverMenu} style={styles.linkVolver}>
+          ⬅ Volver al menú
+        </button>
+      </div>
+    );
+  }
+
+  // 🕓 HISTORIAL DE PARTIDAS
+  if (pantalla === "juego-historial") {
+    const historial = obtenerHistorialJuego();
+
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Historial de partidas</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        {historial.length === 0 ? (
+          <p style={styles.configSubLabel}>
+            Todavía no habéis jugado ninguna partida.
+          </p>
+        ) : (
+          historial.map((partida, i) => (
+            <div key={i} style={styles.configCard}>
+              <p style={styles.configCardTitle}>{partida.fecha}</p>
+              <p style={styles.configSubLabel}>
+                {partida.ganador === "Empate"
+                  ? "Resultado: empate"
+                  : `Ganadora: ${partida.ganador}`}
+              </p>
+              {partida.jugadores.map((j, k) => (
+                <div key={k} style={{ ...styles.resultRow, fontSize: 13 }}>
+                  <span>{j.nombre}</span>
+                  <b>
+                    {j.aciertos} ✅ / {j.errores} ❌
+                  </b>
+                </div>
+              ))}
+            </div>
+          ))
+        )}
+
+        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+          ⬅ Volver
+        </button>
       </div>
     );
   }
@@ -1205,7 +1842,22 @@ export default function App() {
           Pregunta {indice + 1} / {preguntas.length}
         </p>
 
-        <h3>{pregunta.pregunta}</h3>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center" }}>
+          <h3 style={{ margin: 0 }}>{pregunta.pregunta}</h3>
+          <button
+            onClick={() => toggleFavorito(pregunta.id)}
+            title="Marcar como favorita"
+            style={{
+              border: "none",
+              background: "transparent",
+              fontSize: 20,
+              cursor: "pointer",
+              lineHeight: 1
+            }}
+          >
+            {favoritos.includes(String(pregunta.id)) ? "⭐" : "☆"}
+          </button>
+        </div>
 
         <p style={{ fontSize: 12 }}>{pregunta.tema}</p>
 
@@ -1240,7 +1892,7 @@ export default function App() {
               if (s.errores >= 5) {
                 return (
                   <p>
-                    💀 Esta pregunta te persigue desde hace tiempo...
+                    💀 Deja las cervezas y ponte a estudiar.
                   </p>
                 );
               }
@@ -1259,7 +1911,7 @@ export default function App() {
               ) {
                 return (
                   <p>
-                    🏆 Recuperada. Antes te ganaba ella.
+                    🏆 Mary Richmond estaría orgullosa de tu constancia.
                   </p>
                 );
               }
@@ -1371,6 +2023,39 @@ function registrarTiempoPregunta(segundos) {
   localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos));
 }
 
+// ⭐ favoritos
+function obtenerFavoritos() {
+  return JSON.parse(localStorage.getItem(CLAVE_FAVORITOS)) || [];
+}
+
+function guardarFavoritos(lista) {
+  localStorage.setItem(CLAVE_FAVORITOS, JSON.stringify(lista));
+}
+
+// 🎮 historial de partidas del minijuego (independiente de las estadísticas personales)
+function obtenerHistorialJuego() {
+  return JSON.parse(localStorage.getItem(CLAVE_HISTORIAL_JUEGO)) || [];
+}
+
+function guardarPartidaHistorial(puntuaciones) {
+  const historial = obtenerHistorialJuego();
+
+  const maxAciertos = Math.max(...puntuaciones.map((p) => p.aciertos));
+  const ganadoras = puntuaciones
+    .filter((p) => p.aciertos === maxAciertos)
+    .map((p) => p.nombre);
+  const ganador = ganadoras.length > 1 ? "Empate" : ganadoras[0];
+
+  const nuevaPartida = {
+    fecha: new Date().toLocaleString(),
+    jugadores: puntuaciones,
+    ganador
+  };
+
+  const actualizado = [nuevaPartida, ...historial].slice(0, 20);
+  localStorage.setItem(CLAVE_HISTORIAL_JUEGO, JSON.stringify(actualizado));
+}
+
 function formatearTiempo(segundosTotales) {
   const m = Math.floor(segundosTotales / 60);
   const s = segundosTotales % 60;
@@ -1423,6 +2108,21 @@ const globalStyles = `
   }
   .switch input:checked + .slider:before {
     transform: translateX(20px);
+  }
+  @keyframes caerConfeti {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0.9; }
+  }
+  .confeti-pieza {
+    position: fixed;
+    top: 0;
+    width: 8px;
+    height: 14px;
+    animation-name: caerConfeti;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+    pointer-events: none;
+    z-index: 999;
   }
 `;
 
@@ -1539,6 +2239,7 @@ const styles = {
   btnPurple: { background: "#d9cdf0" },
   btnPink: { background: "#f3cdd2" },
   btnOlive: { background: "#d7dcc0" },
+  btnMint: { background: "#c9e4d0" },
   btnMuted: { background: "#efece4", color: "#a39d8e" },
   badgeProximamente: {
     float: "right",
@@ -1592,6 +2293,16 @@ const styles = {
     padding: "8px 12px",
     fontSize: 14,
     width: 80
+  },
+  nombreInput: {
+    display: "block",
+    width: "100%",
+    boxSizing: "border-box",
+    border: "1px solid #e4ddcf",
+    borderRadius: 10,
+    padding: "10px 12px",
+    fontSize: 14,
+    marginBottom: 8
   },
 
   // 🔘 pills genéricas reutilizables
