@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cargarPreguntas } from "./cargarPreguntas";
 import portada from "./assets/portada.jpeg";
 import video2Jugadoras from "./assets/video-2-jugadoras.mp4";
@@ -33,6 +33,26 @@ const FRASES_MINIJUEGO = [
   "Recordad: el trabajo en equipo también puntúa (aunque aquí no)",
   "La derivación de este grupo está clara: a estudiar toca"
 ];
+
+// 🎬 posiciones medidas (top/left en %) de cada carril en el segundo 5 del vídeo,
+// ordenadas de 1ª a última posición según el vídeo correspondiente
+const POSICIONES_VIDEO = {
+  2: [
+    { top: 13.7, left: 41.8 },
+    { top: 18.1, left: 62.1 }
+  ],
+  3: [
+    { top: 9.5, left: 82.0 },
+    { top: 13.7, left: 42.8 },
+    { top: 18.1, left: 61.3 }
+  ],
+  4: [
+    { top: 9.5, left: 82.2 },
+    { top: 13.7, left: 40.1 },
+    { top: 18.1, left: 59.8 },
+    { top: 23.2, left: 16.5 }
+  ]
+};
 
 export default function App() {
   const [preguntasBase, setPreguntasBase] = useState([]);
@@ -99,6 +119,9 @@ export default function App() {
   const [tiempoRestanteJuego, setTiempoRestanteJuego] = useState(null);
   const [piezasConfeti, setPiezasConfeti] = useState([]);
   const [fraseJuego, setFraseJuego] = useState("");
+  const [inicioTurno, setInicioTurno] = useState(null);
+  const [jugadoraExpandida, setJugadoraExpandida] = useState(null);
+  const [mostrarNombresVideo, setMostrarNombresVideo] = useState(false);
   const [refrescoHistorial, setRefrescoHistorial] = useState(0);
 
   function eliminarPartidaHistorial(index) {
@@ -302,12 +325,26 @@ export default function App() {
 
     if (tiempoRestanteJuego <= 0) {
       if (respuestaSeleccionadaJuego === null) {
+        const tiempoUsado = inicioTurno ? Date.now() - inicioTurno : 60000;
+
         setPuntuacionesJuego((prev) => {
           const copia = [...prev];
           if (copia[jugadorActualIndice]) {
+            const actual = copia[jugadorActualIndice];
             copia[jugadorActualIndice] = {
-              ...copia[jugadorActualIndice],
-              errores: copia[jugadorActualIndice].errores + 1
+              ...actual,
+              errores: actual.errores + 1,
+              tiempoTotal: (actual.tiempoTotal || 0) + tiempoUsado,
+              fallos: [
+                ...actual.fallos,
+                {
+                  pregunta: preguntaJuego ? preguntaJuego.pregunta : "",
+                  respuestaDada: "(sin responder a tiempo)",
+                  correcta: preguntaJuego
+                    ? preguntaJuego.respuestas[preguntaJuego.correcta]
+                    : ""
+                }
+              ]
             };
           }
           return copia;
@@ -565,17 +602,22 @@ export default function App() {
       juegoNombres.slice(0, juegoNumJugadores).map((nombre) => ({
         nombre: nombre.trim() || "Jugadora",
         aciertos: 0,
-        errores: 0
+        errores: 0,
+        tiempoTotal: 0,
+        fallos: []
       }))
     );
     setTurnoActual(0);
     setRespuestaSeleccionadaJuego(null);
+    setJugadoraExpandida(null);
+    setMostrarNombresVideo(false);
     setPantalla("juego-transicion");
   }
 
   function comenzarTurno() {
     setRespuestaSeleccionadaJuego(null);
     setTiempoRestanteJuego(juegoCronometroActivo ? 60 : null);
+    setInicioTurno(Date.now());
     setPantalla("juego-jugando");
   }
 
@@ -585,13 +627,26 @@ export default function App() {
     setRespuestaSeleccionadaJuego(i);
 
     const esCorrecta = i === preguntaJuego.correcta;
+    const tiempoUsado = inicioTurno ? Date.now() - inicioTurno : 0;
 
     setPuntuacionesJuego((prev) => {
       const copia = [...prev];
+      const actual = copia[jugadorActualIndice];
       copia[jugadorActualIndice] = {
-        ...copia[jugadorActualIndice],
-        aciertos: copia[jugadorActualIndice].aciertos + (esCorrecta ? 1 : 0),
-        errores: copia[jugadorActualIndice].errores + (esCorrecta ? 0 : 1)
+        ...actual,
+        aciertos: actual.aciertos + (esCorrecta ? 1 : 0),
+        errores: actual.errores + (esCorrecta ? 0 : 1),
+        tiempoTotal: (actual.tiempoTotal || 0) + tiempoUsado,
+        fallos: esCorrecta
+          ? actual.fallos
+          : [
+              ...actual.fallos,
+              {
+                pregunta: preguntaJuego.pregunta,
+                respuestaDada: preguntaJuego.respuestas[i],
+                correcta: preguntaJuego.respuestas[preguntaJuego.correcta]
+              }
+            ]
       };
       return copia;
     });
@@ -629,7 +684,8 @@ export default function App() {
       FRASES_MINIJUEGO[Math.floor(Math.random() * FRASES_MINIJUEGO.length)]
     );
     guardarPartidaHistorial(puntuacionesJuego);
-    setPantalla("juego-video");
+    setMostrarNombresVideo(false);
+    setPantalla("juego-resultado");
   }
 
   function obtenerPreguntasDebiles(lista) {
@@ -778,7 +834,7 @@ export default function App() {
           onClick={() => setPantalla("ajustes")}
           style={{ ...styles.menuButton, ...styles.btnOlive }}
         >
-          ⚙️ Ajustes
+          👤 Mi perfil
         </button>
       </div>
     );
@@ -1794,8 +1850,8 @@ export default function App() {
     );
   }
 
-  // 🎬 VÍDEO DE CELEBRACIÓN FINAL
-  if (pantalla === "juego-video") {
+  // 🏆🎬 VÍDEO + RESULTADO DE "CARRERA POR LA PLAZA" (fusionados)
+  if (pantalla === "juego-resultado") {
     const videoSrc =
       juegoNumJugadores === 2
         ? video2Jugadoras
@@ -1803,34 +1859,26 @@ export default function App() {
         ? video3Jugadoras
         : video4Jugadoras;
 
-    return (
-      <div style={styles.videoContainer}>
-        <video
-          src={videoSrc}
-          autoPlay
-          muted
-          playsInline
-          onEnded={() => setPantalla("juego-resultado")}
-          style={styles.videoElement}
-        />
-        <button
-          onClick={() => setPantalla("juego-resultado")}
-          style={styles.skipButton}
-        >
-          Saltar →
-        </button>
-      </div>
-    );
-  }
+    const ranking = [...puntuacionesJuego].sort((a, b) => {
+      if (b.aciertos !== a.aciertos) return b.aciertos - a.aciertos;
+      return (a.tiempoTotal || 0) - (b.tiempoTotal || 0);
+    });
 
-  // 🏆 RESULTADO DE "CARRERA POR LA PLAZA"
-  if (pantalla === "juego-resultado") {
-    const ranking = [...puntuacionesJuego].sort(
-      (a, b) => b.aciertos - a.aciertos
-    );
     const maxAciertos = ranking.length > 0 ? ranking[0].aciertos : 0;
-    const ganadoras = ranking.filter((j) => j.aciertos === maxAciertos);
+    const minTiempoGanadoras =
+      ranking.length > 0
+        ? Math.min(
+            ...ranking
+              .filter((j) => j.aciertos === maxAciertos)
+              .map((j) => j.tiempoTotal || 0)
+          )
+        : 0;
+    const ganadoras = ranking.filter(
+      (j) => j.aciertos === maxAciertos && (j.tiempoTotal || 0) === minTiempoGanadoras
+    );
     const hayEmpate = ganadoras.length > 1;
+
+    const posiciones = POSICIONES_VIDEO[juegoNumJugadores] || [];
 
     return (
       <div style={styles.menuContainer}>
@@ -1855,6 +1903,37 @@ export default function App() {
           <div style={styles.menuUnderline} />
         </div>
 
+        <div style={styles.videoResultadoWrap}>
+          <video
+            src={videoSrc}
+            autoPlay
+            muted
+            playsInline
+            onTimeUpdate={(e) => {
+              if (e.target.currentTime >= 5 && !mostrarNombresVideo) {
+                setMostrarNombresVideo(true);
+              }
+            }}
+            style={styles.videoElementInline}
+          />
+
+          {mostrarNombresVideo &&
+            ranking.map((j, i) =>
+              posiciones[i] ? (
+                <span
+                  key={j.nombre + i}
+                  style={{
+                    ...styles.etiquetaNombreVideo,
+                    top: `${posiciones[i].top}%`,
+                    left: `${posiciones[i].left}%`
+                  }}
+                >
+                  {j.nombre}
+                </span>
+              ) : null
+            )}
+        </div>
+
         <p style={{ textAlign: "center", fontWeight: 700, color: "#4a463f" }}>
           {hayEmpate
             ? `¡Empate entre ${ganadoras.map((g) => g.nombre).join(" y ")}!`
@@ -1863,13 +1942,43 @@ export default function App() {
 
         <div style={styles.resultCard}>
           {ranking.map((j, i) => (
-            <div key={j.nombre + i} style={styles.resultRow}>
-              <span>
-                {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "•"} {j.nombre}
-              </span>
-              <b>
-                {j.aciertos} ✅ / {j.errores} ❌
-              </b>
+            <div key={j.nombre + i}>
+              <button
+                onClick={() =>
+                  setJugadoraExpandida(jugadoraExpandida === i ? null : i)
+                }
+                style={styles.filaJugadoraBtn}
+              >
+                <span>
+                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "•"} {j.nombre}
+                </span>
+                <b>
+                  {j.aciertos} ✅ / {j.errores} ❌{" "}
+                  {jugadoraExpandida === i ? "▲" : "▼"}
+                </b>
+              </button>
+
+              {jugadoraExpandida === i && (
+                <div style={styles.fallosWrap}>
+                  {j.fallos.length === 0 ? (
+                    <p style={styles.configSubLabel}>Sin fallos. Perfecto 🎯</p>
+                  ) : (
+                    j.fallos.map((f, k) => (
+                      <div key={k} style={styles.falloItem}>
+                        <p style={{ fontWeight: 700, marginBottom: 4 }}>
+                          {f.pregunta}
+                        </p>
+                        <p style={{ color: "#c96a6a", margin: 0 }}>
+                          Respondió: {f.respuestaDada}
+                        </p>
+                        <p style={{ color: "#6a9a6a", margin: 0 }}>
+                          Correcta: {f.correcta}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1968,7 +2077,7 @@ export default function App() {
     return (
       <div style={styles.menuContainer}>
         <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>Ajustes</h1>
+          <h1 style={styles.menuTitle}>👤 Mi perfil</h1>
           <div style={styles.menuUnderline} />
         </div>
 
@@ -2694,8 +2803,8 @@ const styles = {
     fontSize: 14
   },
   simRespuestaSeleccionada: {
-    background: "#f3cdd2",
-    borderColor: "#e29aa0"
+    background: "#d9cdf0",
+    borderColor: "#a992d9"
   },
   simNavRow: {
     display: "flex",
@@ -2767,6 +2876,62 @@ const styles = {
     cursor: "pointer",
     padding: 4,
     lineHeight: 1
+  },
+
+  // 🎬 vídeo fusionado dentro de la pantalla de resultado
+  videoResultadoWrap: {
+    position: "relative",
+    width: "100%",
+    borderRadius: 20,
+    overflow: "hidden",
+    marginBottom: 18,
+    background: "#faf7f2",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
+  },
+  videoElementInline: {
+    width: "100%",
+    display: "block"
+  },
+  etiquetaNombreVideo: {
+    position: "absolute",
+    transform: "translate(-50%, -100%)",
+    background: "#fff",
+    color: "#4a463f",
+    fontSize: 11,
+    fontWeight: 700,
+    padding: "3px 8px",
+    borderRadius: 10,
+    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+    whiteSpace: "nowrap",
+    pointerEvents: "none"
+  },
+
+  // 🥇 fila de jugadora desplegable con sus fallos
+  filaJugadoraBtn: {
+    display: "flex",
+    width: "100%",
+    justifyContent: "space-between",
+    alignItems: "center",
+    border: "none",
+    background: "transparent",
+    padding: "10px 0",
+    borderBottom: "1px solid #f0ece2",
+    fontSize: 14,
+    cursor: "pointer",
+    color: "#4a463f",
+    fontFamily: "Arial"
+  },
+  fallosWrap: {
+    padding: "8px 4px 14px",
+    borderBottom: "1px solid #f0ece2"
+  },
+  falloItem: {
+    background: "#faf7f2",
+    borderRadius: 10,
+    padding: "10px 12px",
+    marginBottom: 8,
+    fontSize: 13,
+    textAlign: "left"
   }
 };
 
