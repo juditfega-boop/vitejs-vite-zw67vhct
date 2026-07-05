@@ -2086,12 +2086,12 @@ Empezar partida
     );
   }
 
-  // ☠️ SALVA A TU TRABAJADORA SOCIAL — EN CURSO
-  if (pantalla === "muerte-jugando" && muertePreguntas[muerteIndice]) {
-    const preguntaMuerte = muertePreguntas[muerteIndice];
+// ☠️ SALVA A TU TRABAJADORA SOCIAL — EN CURSO
+if (pantalla === "muerte-jugando" && muertePreguntas[muerteIndice]) {
+  const preguntaMuerte = muertePreguntas[muerteIndice];
 
-    return (
-      <div style={styles.menuContainer}>
+  return (
+    <div style={styles.muerteJugandoContainer}>
         <div style={styles.simHeaderBar}>
           <span style={styles.simTimer}>
             Pregunta {muerteIndice + 1} / {muertePreguntas.length}
@@ -2978,6 +2978,15 @@ const styles = {
     background: "linear-gradient(180deg, #faf7f2 0%, #f2ece0 100%)",
     boxSizing: "border-box"
   },
+  muerteJugandoContainer: {
+    maxWidth: 960,
+    margin: "0 auto",
+    minHeight: "100vh",
+    padding: "40px 12px 60px 4px",
+    fontFamily: "Arial",
+    background: "linear-gradient(180deg, #faf7f2 0%, #f2ece0 100%)",
+    boxSizing: "border-box"
+  },
   menuHeader: {
     textAlign: "center",
     marginBottom: 28
@@ -3385,7 +3394,7 @@ etiquetaNombreVideo: {
     textAlign: "left"
   },
 
-// ☠️ layout de "Salva a tu trabajadora social" (pregunta arriba, imagen y respuestas a la misma altura)
+// ☠️ layout de "Salva a tu trabajadora social" (pregunta arriba, imagen fija a la izquierda, respuestas a la derecha)
 muertePreguntaTitulo: {
   textAlign: "center",
   marginBottom: 14
@@ -3393,26 +3402,21 @@ muertePreguntaTitulo: {
 muerteLayout: {
   display: "flex",
   flexDirection: "row",
-  alignItems: "stretch",
-  gap: 10
+  alignItems: "flex-start",
+  gap: 6
 },
 muerteImagenCol: {
-  flex: "0 0 40%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
+  flex: "0 0 30%",
   background: "transparent",
   boxShadow: "none",
-  borderRadius: 0,
-  overflow: "visible"
+  borderRadius: 0
 },
 muerteImagen: {
-  height: "100%",
-  width: "auto",
-  maxWidth: "none",
-  objectFit: "contain",
+  width: "100%",
+  height: "auto",
   display: "block",
-  transform: "scale(1.15)"
+  transform: "scale(2.3)",
+  transformOrigin: "top center"
 },
 muertePreguntaCol: {
   flex: 1,
