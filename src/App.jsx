@@ -199,14 +199,13 @@ export default function App() {
     registrarRespuesta(pregunta, esCorrecta);
     actualizarRacha();
 
-    setMuerteRespuestaSeleccionada(i);
-    setMuerteMostrar(true);
-
     if (esCorrecta) {
+      setMuerteRespuestaSeleccionada(i);
+      setMuerteMostrar(true);
       setMuerteMensaje("✅ Correcto");
       setMuerteAciertos((a) => a + 1);
     } else {
-      setMuerteMensaje("❌ Incorrecto");
+      perderMuerte();
     }
   }
 
@@ -1748,14 +1747,6 @@ export default function App() {
           <div style={styles.menuUnderline} />
         </div>
 
-        <div style={styles.videoResultadoWrap}>
-          <img
-            src={miniaturaCarreraPlaza}
-            alt="Carrera por la Plaza"
-            style={styles.videoElementInline}
-          />
-        </div>
-
         <p style={styles.configSubLabel}>
           De 2 a 4 personas, un solo dispositivo. Cada jugadora responde su
           propia tanda de preguntas por turnos, sin ver el resultado hasta
@@ -1790,14 +1781,6 @@ export default function App() {
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>☠️ Salva a tu trabajadora social</h1>
           <div style={styles.menuUnderline} />
-        </div>
-
-        <div style={styles.videoResultadoWrap}>
-          <img
-            src={muerteImg0}
-            alt="Salva a tu trabajadora social"
-            style={styles.videoElementInline}
-          />
         </div>
 
         <p style={styles.configSubLabel}>
@@ -2106,7 +2089,6 @@ Empezar partida
   // ☠️ SALVA A TU TRABAJADORA SOCIAL — EN CURSO
   if (pantalla === "muerte-jugando" && muertePreguntas[muerteIndice]) {
     const preguntaMuerte = muertePreguntas[muerteIndice];
-    const acertoLaUltima = muerteRespuestaSeleccionada === preguntaMuerte.correcta;
 
     return (
       <div style={styles.menuContainer}>
@@ -2133,14 +2115,9 @@ Empezar partida
           <div style={styles.muertePreguntaCol}>
             <h3>{preguntaMuerte.pregunta}</h3>
 
-            <p style={{ fontSize: 12 }}>{preguntaMuerte.tema}</p>
-
             {preguntaMuerte.respuestas.map((r, i) => {
               let bg = "#fff";
-              if (muerteMostrar) {
-                if (i === preguntaMuerte.correcta) bg = "#d4edda";
-                else if (i === muerteRespuestaSeleccionada) bg = "#f8d7da";
-              }
+              if (muerteMostrar && i === preguntaMuerte.correcta) bg = "#d4edda";
 
               return (
                 <button
@@ -2154,7 +2131,7 @@ Empezar partida
               );
             })}
 
-            {muerteMostrar && acertoLaUltima && (
+            {muerteMostrar && (
               <>
                 <p>{muerteMensaje}</p>
 
@@ -2167,39 +2144,33 @@ Empezar partida
                 </button>
               </>
             )}
-
-            {muerteMostrar && !acertoLaUltima && (
-              <button onClick={perderMuerte} style={styles.button}>
-                Ver qué pasó
-              </button>
-            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // ☠️ DERROTA EN "SALVA A TU TRABAJADORA SOCIAL"
-  if (pantalla === "muerte-derrota") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.videoResultadoWrap}>
-          <img
-            src={muerteImgDerrota}
-            alt="La burocracia gana"
-            style={styles.videoElementInline}
-          />
-        </div>
+// ☠️ DERROTA EN "SALVA A TU TRABAJADORA SOCIAL"
+if (pantalla === "muerte-derrota") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.muerteImagenCol}>
+        <img
+          src={muerteImgDerrota}
+          alt="La burocracia gana"
+          style={styles.muerteImagen}
+        />
+      </div>
 
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>💥 Fin de la partida</h1>
-          <div style={styles.menuUnderline} />
-        </div>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>💥 Fin de la partida</h1>
+        <div style={styles.menuUnderline} />
+      </div>
 
-        <p style={{ textAlign: "center", fontWeight: 700, color: "#4a463f" }}>
-          LA BUROCRACIA ACABÓ CON MARY ELLEN RICHMOND Y TÚ ERES RESPONSABLE
-          POR NO HABER ESTUDIADO
-        </p>
+      <p style={{ textAlign: "center", fontWeight: 700, color: "#c0392b" }}>
+        LA BUROCRACIA ACABÓ CON MARY ELLEN RICHMOND Y TÚ ERES RESPONSABLE
+        POR NO HABER ESTUDIADO
+      </p>
 
         <p style={{ textAlign: "center", color: "#8a8578" }}>{fraseDerrota}</p>
 
@@ -2227,17 +2198,17 @@ Empezar partida
     );
   }
 
-  // 🎉 VICTORIA EN "SALVA A TU TRABAJADORA SOCIAL"
-  if (pantalla === "muerte-victoria") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.videoResultadoWrap}>
-          <img
-            src={muerteImg4}
-            alt="Has sobrevivido"
-            style={styles.videoElementInline}
-          />
-        </div>
+// 🎉 VICTORIA EN "SALVA A TU TRABAJADORA SOCIAL"
+if (pantalla === "muerte-victoria") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.muerteImagenCol}>
+        <img
+          src={muerteImg4}
+          alt="Has sobrevivido"
+          style={styles.muerteImagen}
+        />
+      </div>
 
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>🎉 ¡Has sobrevivido!</h1>
@@ -2676,8 +2647,6 @@ Empezar partida
           </button>
         </div>
 
-        <p style={{ fontSize: 12 }}>{pregunta.tema}</p>
-
         {pregunta.respuestas.map((r, i) => {
           let bg = "#fff";
 
@@ -2959,6 +2928,7 @@ const styles = {
     borderRadius: 8,
     border: "1px solid #ccc",
     background: "#fff",
+    color: "#333",
     cursor: "pointer"
   },
 
@@ -3427,29 +3397,27 @@ etiquetaNombreVideo: {
     textAlign: "left"
   },
 
-  // ☠️ layout de "Salva a tu trabajadora social" (imagen izquierda, pregunta derecha)
-  muerteLayout: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 16,
-    alignItems: "flex-start"
-  },
-  muerteImagenCol: {
-    flex: "1 1 160px",
-    maxWidth: 220,
-    borderRadius: 20,
-    overflow: "hidden",
-    background: "#faf7f2",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
-  },
-  muerteImagen: {
-    width: "100%",
-    display: "block"
-  },
-  muertePreguntaCol: {
-    flex: "2 1 220px",
-    minWidth: 0
-  },
+ // ☠️ layout de "Salva a tu trabajadora social" (imagen fusionada con el fondo, más grande)
+ muerteLayout: {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 4
+},
+muerteImagenCol: {
+  width: "100%",
+  maxWidth: 340,
+  background: "transparent",
+  boxShadow: "none",
+  borderRadius: 0
+},
+muerteImagen: {
+  width: "100%",
+  display: "block"
+},
+muertePreguntaCol: {
+  width: "100%"
+},
 
   // 🎮 fila de minijuego con miniatura, en el hub de Minijuegos
   filaMinijuegoBtn: {
