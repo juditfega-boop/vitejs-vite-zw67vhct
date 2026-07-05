@@ -6,12 +6,12 @@ import video3Jugadoras from "./assets/carrera-video-3.mp4";
 import video4Jugadoras from "./assets/carrera-video-4.mp4";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import muerteImg0 from "./assets/trabajadora-0.jpeg";
-import muerteImg1 from "./assets/trabajadora-1.jpeg";
-import muerteImg2 from "./assets/trabajadora-2.jpeg";
-import muerteImg3 from "./assets/trabajadora-3.jpeg";
-import muerteImg4 from "./assets/trabajadora-4.jpeg";
-import muerteImgDerrota from "./assets/trabajadora-derrota.jpeg";
+import muerteImg0 from "./assets/trabajadora-0.png";
+import muerteImg1 from "./assets/trabajadora-1.png";
+import muerteImg2 from "./assets/trabajadora-2.png";
+import muerteImg3 from "./assets/trabajadora-3.png";
+import muerteImg4 from "./assets/trabajadora-4.png";
+import muerteImgDerrota from "./assets/trabajadora-derrota.png";
 import miniaturaCarreraPlaza from "./assets/carrera-miniatura.jpg";
 
 const CLAVE_STATS = "opo_stats_v1";
