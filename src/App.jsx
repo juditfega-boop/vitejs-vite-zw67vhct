@@ -10,8 +10,8 @@ import muerteImg0 from "./assets/trabajadora-0.png";
 import muerteImg1 from "./assets/trabajadora-1.png";
 import muerteImg2 from "./assets/trabajadora-2.png";
 import muerteImg3 from "./assets/trabajadora-3.png";
-import muerteImg4 from "./assets/trabajadora-4.png";
 import muerteImgDerrota from "./assets/trabajadora-derrota.png";
+import muerteImgVictoria from "./assets/trabajadora-victoria.png";
 import miniaturaCarreraPlaza from "./assets/carrera-miniatura.jpg";
 
 const CLAVE_STATS = "opo_stats_v1";
@@ -160,8 +160,8 @@ export default function App() {
   }
 
   function imagenMuerteSubita(aciertos) {
-    const etapa = Math.min(4, Math.floor(aciertos / 5));
-    return [muerteImg0, muerteImg1, muerteImg2, muerteImg3, muerteImg4][etapa];
+    const etapa = Math.min(3, Math.floor(aciertos / 5));
+    return [muerteImg0, muerteImg1, muerteImg2, muerteImg3][etapa];
   }
 
   function comenzarMuerteSubita() {
@@ -2203,12 +2203,12 @@ if (pantalla === "muerte-victoria") {
   return (
     <div style={styles.menuContainer}>
       <div style={styles.muerteImagenCol}>
-        <img
-          src={muerteImg4}
-          alt="Has sobrevivido"
-          style={styles.muerteImagen}
-        />
-      </div>
+          <img
+            src={muerteImgVictoria}
+            alt="Has sobrevivido"
+            style={styles.muerteImagen}
+          />
+        </div>
 
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>🎉 ¡Has sobrevivido!</h1>
