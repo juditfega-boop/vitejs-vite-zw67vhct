@@ -138,6 +138,93 @@ export default function App() {
   const [mostrarNombresVideo, setMostrarNombresVideo] = useState(false);
   const [refrescoHistorial, setRefrescoHistorial] = useState(0);
 
+  // ☠️ estado del minijuego "Salva a tu trabajadora social" (una sola jugadora, una sola vida)
+  const [muerteTipo, setMuerteTipo] = useState("general"); // "general" | "bloques"
+  const [muerteBloquesSeleccionados, setMuerteBloquesSeleccionados] = useState([]);
+  const [muerteCronometroActivo, setMuerteCronometroActivo] = useState(false);
+  const [muertePreguntas, setMuertePreguntas] = useState([]);
+  const [muerteIndice, setMuerteIndice] = useState(0);
+  const [muerteAciertos, setMuerteAciertos] = useState(0);
+  const [muerteMensaje, setMuerteMensaje] = useState("");
+  const [muerteMostrar, setMuerteMostrar] = useState(false);
+  const [muerteTiempoRestante, setMuerteTiempoRestante] = useState(null);
+  const [muerteRespuestaSeleccionada, setMuerteRespuestaSeleccionada] = useState(null);
+  const [fraseDerrota, setFraseDerrota] = useState("");
+
+  function toggleBloqueMuerte(nombre) {
+    setMuerteBloquesSeleccionados((prev) =>
+      prev.includes(nombre)
+        ? prev.filter((b) => b !== nombre)
+        : [...prev, nombre]
+    );
+  }
+
+  function imagenMuerteSubita(aciertos) {
+    const etapa = Math.min(4, Math.floor(aciertos / 5));
+    return [muerteImg0, muerteImg1, muerteImg2, muerteImg3, muerteImg4][etapa];
+  }
+
+  function comenzarMuerteSubita() {
+    let listaFuente = preguntasBase;
+
+    if (muerteTipo === "bloques") {
+      listaFuente = preguntasBase.filter((p) =>
+        muerteBloquesSeleccionados.includes(p.bloque || "Sin bloque")
+      );
+    }
+
+    const base = mezclar(listaFuente).slice(0, 20).map(prepararPregunta);
+
+    setMuertePreguntas(base);
+    setMuerteIndice(0);
+    setMuerteAciertos(0);
+    setMuerteMensaje("");
+    setMuerteMostrar(false);
+    setMuerteRespuestaSeleccionada(null);
+    setMuerteTiempoRestante(muerteCronometroActivo ? 60 : null);
+    setPantalla("muerte-jugando");
+  }
+
+  function perderMuerte() {
+    setFraseDerrota(
+      FRASES_DERROTA_MUERTE[Math.floor(Math.random() * FRASES_DERROTA_MUERTE.length)]
+    );
+    setPantalla("muerte-derrota");
+  }
+
+  function comprobarMuerte(i) {
+    const pregunta = muertePreguntas[muerteIndice];
+    const esCorrecta = i === pregunta.correcta;
+
+    registrarRespuesta(pregunta, esCorrecta);
+    actualizarRacha();
+
+    setMuerteRespuestaSeleccionada(i);
+    setMuerteMostrar(true);
+
+    if (esCorrecta) {
+      setMuerteMensaje("✅ Correcto");
+      setMuerteAciertos((a) => a + 1);
+    } else {
+      setMuerteMensaje("❌ Incorrecto");
+    }
+  }
+
+  function siguienteMuerte() {
+    setMuerteMensaje("");
+    setMuerteMostrar(false);
+    setMuerteRespuestaSeleccionada(null);
+
+    const siguienteIndice = muerteIndice + 1;
+
+    if (siguienteIndice >= muertePreguntas.length) {
+      setPantalla("muerte-victoria");
+    } else {
+      setMuerteIndice(siguienteIndice);
+      setMuerteTiempoRestante(muerteCronometroActivo ? 60 : null);
+    }
+  }
+
   function eliminarPartidaHistorial(index) {
     const historial = obtenerHistorialJuego();
     historial.splice(index, 1);
