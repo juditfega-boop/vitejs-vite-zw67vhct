@@ -2103,19 +2103,19 @@ Empezar partida
           )}
         </div>
 
-        <div style={styles.muerteLayout}>
-          <div style={styles.muerteImagenCol}>
-            <img
-              src={imagenMuerteSubita(muerteAciertos)}
-              alt="Tu trabajadora social"
-              style={styles.muerteImagen}
-            />
-          </div>
+        <h3 style={styles.muertePreguntaTitulo}>{preguntaMuerte.pregunta}</h3>
 
-          <div style={styles.muertePreguntaCol}>
-            <h3>{preguntaMuerte.pregunta}</h3>
+<div style={styles.muerteLayout}>
+  <div style={styles.muerteImagenCol}>
+    <img
+      src={imagenMuerteSubita(muerteAciertos)}
+      alt="Tu trabajadora social"
+      style={styles.muerteImagen}
+    />
+  </div>
 
-            {preguntaMuerte.respuestas.map((r, i) => {
+  <div style={styles.muertePreguntaCol}>
+    {preguntaMuerte.respuestas.map((r, i) => {
               let bg = "#fff";
               if (muerteMostrar && i === preguntaMuerte.correcta) bg = "#d4edda";
 
@@ -2153,50 +2153,38 @@ Empezar partida
 // ☠️ DERROTA EN "SALVA A TU TRABAJADORA SOCIAL"
 if (pantalla === "muerte-derrota") {
   return (
-    <div style={styles.menuContainer}>
-      <div style={styles.muerteImagenCol}>
-        <img
-          src={muerteImgDerrota}
-          alt="La burocracia gana"
-          style={styles.muerteImagen}
-        />
-      </div>
+    <div style={styles.derrotaContainer}>
+      <img
+        src={muerteImgDerrota}
+        alt="La burocracia gana"
+        style={styles.derrotaImagenFondo}
+      />
 
-      <div style={styles.menuHeader}>
-        <h1 style={styles.menuTitle}>💥 Fin de la partida</h1>
-        <div style={styles.menuUnderline} />
-      </div>
-
-      <p style={{ textAlign: "center", fontWeight: 700, color: "#c0392b" }}>
+      <p style={styles.derrotaTituloTop}>
         LA BUROCRACIA ACABÓ CON MARY ELLEN RICHMOND Y TÚ ERES RESPONSABLE
         POR NO HABER ESTUDIADO
       </p>
 
-        <p style={{ textAlign: "center", color: "#8a8578" }}>{fraseDerrota}</p>
-
-        <div style={styles.resultCard}>
-          <div style={{ ...styles.resultRow, borderBottom: "none" }}>
-            <span>Llegaste a la pregunta</span>
-            <b>
-              {muerteIndice + 1} / {muertePreguntas.length}
-            </b>
-          </div>
-        </div>
-
-        <button onClick={comenzarMuerteSubita} style={styles.ctaButton}>
-          Intentarlo de nuevo
+      <div style={styles.derrotaOverlayInferior}>
+        <button onClick={comenzarMuerteSubita} style={styles.derrotaBoton}>
+          Inténtalo de nuevo
         </button>
 
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+        <p style={styles.derrotaSubtitulo}>
+          Llegaste a la pregunta {muerteIndice + 1} / {muertePreguntas.length}
+        </p>
+
+        <button onClick={() => setPantalla("minijuegos")} style={styles.derrotaLinkVolver}>
           ⬅ Volver a minijuegos
         </button>
 
-        <button onClick={volverMenu} style={styles.linkVolver}>
+        <button onClick={volverMenu} style={styles.derrotaLinkVolver}>
           ⬅ Volver al menú
         </button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
 // 🎉 VICTORIA EN "SALVA A TU TRABAJADORA SOCIAL"
 if (pantalla === "muerte-victoria") {
@@ -3397,26 +3385,38 @@ etiquetaNombreVideo: {
     textAlign: "left"
   },
 
- // ☠️ layout de "Salva a tu trabajadora social" (imagen fusionada con el fondo, más grande)
- muerteLayout: {
+// ☠️ layout de "Salva a tu trabajadora social" (pregunta arriba, imagen y respuestas a la misma altura)
+muertePreguntaTitulo: {
+  textAlign: "center",
+  marginBottom: 14
+},
+muerteLayout: {
   display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: 4
+  flexDirection: "row",
+  alignItems: "stretch",
+  gap: 10
 },
 muerteImagenCol: {
-  width: "100%",
-  maxWidth: 340,
+  flex: "0 0 40%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   background: "transparent",
   boxShadow: "none",
-  borderRadius: 0
+  borderRadius: 0,
+  overflow: "visible"
 },
 muerteImagen: {
-  width: "100%",
-  display: "block"
+  height: "100%",
+  width: "auto",
+  maxWidth: "none",
+  objectFit: "contain",
+  display: "block",
+  transform: "scale(1.15)"
 },
 muertePreguntaCol: {
-  width: "100%"
+  flex: 1,
+  minWidth: 0
 },
 
   // 🎮 fila de minijuego con miniatura, en el hub de Minijuegos
@@ -3447,6 +3447,83 @@ muertePreguntaCol: {
     fontSize: 15,
     fontWeight: 600,
     color: "#4a463f"
+  },
+
+// ☠️ pantalla de derrota: imagen de fondo fija (como la portada) + overlay que nunca se corta
+derrotaContainer: {
+  position: "relative",
+  width: "100vw",
+  minHeight: "100vh",
+  background: "#f5f1ea",
+  overflow: "visible"
+},
+derrotaImagenFondo: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100vh",
+  objectFit: "contain",
+  display: "block"
+},
+derrotaTituloTop: {
+  position: "absolute",
+  top: "6%",
+  left: 0,
+  right: 0,
+  padding: "0 24px",
+  fontSize: 16,
+  fontWeight: 800,
+  color: "#c0392b",
+  lineHeight: 1.35,
+  letterSpacing: 0.2,
+  textAlign: "center",
+  textShadow: "0 1px 4px rgba(255,255,255,0.85)"
+},
+derrotaOverlayInferior: {
+  position: "relative",
+  marginTop: "78vh",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  padding: "0 24px 24px",
+  boxSizing: "border-box"
+},
+  derrotaSubtitulo: {
+    color: "#5a5147",
+    fontSize: 12,
+    textAlign: "center",
+    marginBottom: 14,
+    textShadow: "0 1px 4px rgba(255,255,255,0.75)"
+  },
+  derrotaBoton: {
+    display: "block",
+    width: "100%",
+    maxWidth: 320,
+    border: "none",
+    borderRadius: 20,
+    padding: "16px 20px",
+    fontSize: 16,
+    fontWeight: 700,
+    color: "#fff",
+    background: "linear-gradient(90deg, #f2b366, #e29aa0)",
+    cursor: "pointer",
+    marginTop: 6,
+    boxShadow: "0 8px 20px rgba(226,154,160,0.35)"
+  },
+  derrotaLinkVolver: {
+    display: "block",
+    width: "100%",
+    maxWidth: 320,
+    textAlign: "center",
+    border: "none",
+    background: "transparent",
+    color: "#5a5147",
+    fontSize: 13,
+    padding: 10,
+    marginTop: 4,
+    cursor: "pointer",
+    textShadow: "0 1px 4px rgba(255,255,255,0.75)"
   }
 };
 
