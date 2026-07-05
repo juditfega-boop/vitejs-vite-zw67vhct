@@ -26,31 +26,31 @@ const FRASES_BIENVENIDA = [
 
 // 🎮 frases graciosas para el minijuego "Carrera por la Plaza"
 const FRASES_MINIJUEGO = [
-  "El comité técnico ha deliberado: alguien necesita repasar la Ley de Dependencia 😅",
+  "El comité técnico ha deliberado: alguien necesita repasar la Ley 😅",
   "Esta partida generaría un informe social muy interesante",
   "Nivel de coordinación de caso: mejorable",
-  "Ander-Egg estaría tomando notas de esta sesión",
-  "Recordad: el trabajo en equipo también puntúa (aunque aquí no)",
-  "La derivación de este grupo está clara: a estudiar toca"
+  "Ander-Egg estaría tomando notas de esta sesión, y sugeriría que os pusieráis a estudiar",
+  "Recordad: Debéis una cerveza a quién haya ganado",
+  "La derivación de este grupo está clara: ¡Toca estudiar!"
 ];
 
 // 🎬 posiciones medidas (top/left en %) de cada carril en el segundo 5 del vídeo,
 // ordenadas de 1ª a última posición según el vídeo correspondiente
 const POSICIONES_VIDEO = {
   2: [
-    { top: 55, left: 35 },
-    { top: 55, left: 65 }
+    { top: 15, left: 6 },
+    { top: 32, left: 6 }
   ],
   3: [
-    { top: 55, left: 25 },
-    { top: 55, left: 50 },
-    { top: 55, left: 75 }
+    { top: 15, left: 6 },
+    { top: 32, left: 6 },
+    { top: 49, left: 6 }
   ],
   4: [
-    { top: 55, left: 20 },
-    { top: 55, left: 40 },
-    { top: 55, left: 60 },
-    { top: 55, left: 80 }
+    { top: 15, left: 6 },
+    { top: 32, left: 6 },
+    { top: 49, left: 6 },
+    { top: 66, left: 6 }
   ]
 };
 
@@ -1914,7 +1914,7 @@ export default function App() {
               if (v.currentTime >= 5 && !mostrarNombresVideo) {
                 setMostrarNombresVideo(true);
               }
-              if (v.duration && v.currentTime >= v.duration - 0.4) {
+              if (v.duration && v.currentTime >= v.duration - 2) {
                 v.pause();
               }
             }}
@@ -1954,7 +1954,7 @@ export default function App() {
                 style={styles.filaJugadoraBtn}
               >
                 <span>
-                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "•"} {j.nombre}
+                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🥉"} {j.nombre}
                 </span>
                 <b>
                   {j.aciertos} ✅ / {j.errores} ❌{" "}
@@ -2902,8 +2902,7 @@ videoElementInline: {
 },
 etiquetaNombreVideo: {
   position: "absolute",
-  transform: "translate(-100%, -100%)",
-  marginLeft: -6,
+  transform: "translateY(-100%)",
   background: "#fff",
   color: "#4a463f",
   fontSize: 11,
