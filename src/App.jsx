@@ -38,19 +38,19 @@ const FRASES_MINIJUEGO = [
 // ordenadas de 1ª a última posición según el vídeo correspondiente
 const POSICIONES_VIDEO = {
   2: [
-    { top: 13.7, left: 41.8 },
-    { top: 18.1, left: 62.1 }
+    { top: 55, left: 35 },
+    { top: 55, left: 65 }
   ],
   3: [
-    { top: 9.5, left: 82.0 },
-    { top: 13.7, left: 42.8 },
-    { top: 18.1, left: 61.3 }
+    { top: 55, left: 25 },
+    { top: 55, left: 50 },
+    { top: 55, left: 75 }
   ],
   4: [
-    { top: 9.5, left: 82.2 },
-    { top: 13.7, left: 40.1 },
-    { top: 18.1, left: 59.8 },
-    { top: 23.2, left: 16.5 }
+    { top: 55, left: 20 },
+    { top: 55, left: 40 },
+    { top: 55, left: 60 },
+    { top: 55, left: 80 }
   ]
 };
 
@@ -1904,14 +1904,18 @@ export default function App() {
         </div>
 
         <div style={styles.videoResultadoWrap}>
-          <video
+        <video
             src={videoSrc}
             autoPlay
             muted
             playsInline
             onTimeUpdate={(e) => {
-              if (e.target.currentTime >= 5 && !mostrarNombresVideo) {
+              const v = e.target;
+              if (v.currentTime >= 5 && !mostrarNombresVideo) {
                 setMostrarNombresVideo(true);
+              }
+              if (v.duration && v.currentTime >= v.duration - 0.4) {
+                v.pause();
               }
             }}
             style={styles.videoElementInline}
@@ -2878,33 +2882,38 @@ const styles = {
     lineHeight: 1
   },
 
-  // 🎬 vídeo fusionado dentro de la pantalla de resultado
-  videoResultadoWrap: {
-    position: "relative",
-    width: "100%",
-    borderRadius: 20,
-    overflow: "hidden",
-    marginBottom: 18,
-    background: "#faf7f2",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
-  },
-  videoElementInline: {
-    width: "100%",
-    display: "block"
-  },
-  etiquetaNombreVideo: {
-    position: "absolute",
-    transform: "translate(-50%, -100%)",
-    background: "#fff",
-    color: "#4a463f",
-    fontSize: 11,
-    fontWeight: 700,
-    padding: "3px 8px",
-    borderRadius: 10,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-    whiteSpace: "nowrap",
-    pointerEvents: "none"
-  },
+// 🎬 vídeo fusionado dentro de la pantalla de resultado
+videoResultadoWrap: {
+  position: "relative",
+  width: "100%",
+  aspectRatio: "16 / 9",
+  borderRadius: 20,
+  overflow: "hidden",
+  marginBottom: 18,
+  background: "#faf7f2",
+  boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
+},
+videoElementInline: {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  objectPosition: "top",
+  display: "block"
+},
+etiquetaNombreVideo: {
+  position: "absolute",
+  transform: "translate(-100%, -100%)",
+  marginLeft: -6,
+  background: "#fff",
+  color: "#4a463f",
+  fontSize: 11,
+  fontWeight: 700,
+  padding: "3px 8px",
+  borderRadius: 10,
+  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+  whiteSpace: "nowrap",
+  pointerEvents: "none"
+},
 
   // 🥇 fila de jugadora desplegable con sus fallos
   filaJugadoraBtn: {
