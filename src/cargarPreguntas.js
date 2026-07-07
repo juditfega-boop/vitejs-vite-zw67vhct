@@ -1,15 +1,18 @@
-// 🧩 Parser de CSV robusto: entiende comillas y comas correctamente,
-// tanto si el texto lleva comillas como si no.
-function parsearLineaCSV(linea) {
-  const resultado = [];
+// 🧩 Parser de CSV completo y robusto: entiende comillas, comas Y saltos de
+// línea dentro de una misma celda (por ejemplo, una explicación larga con
+// varios párrafos escrita dentro de una sola casilla del Sheet).
+function parsearCSVCompleto(texto) {
+  const filas = [];
+  let fila = [];
   let actual = "";
   let dentroComillas = false;
 
-  for (let i = 0; i < linea.length; i++) {
-    const char = linea[i];
+  for (let i = 0; i < texto.length; i++) {
+    const char = texto[i];
+    const siguiente = texto[i + 1];
 
     if (char === '"') {
-      if (dentroComillas && linea[i + 1] === '"') {
+      if (dentroComillas && siguiente === '"') {
         // comilla escapada ("") dentro de un campo entrecomillado
         actual += '"';
         i++;
@@ -17,15 +20,29 @@ function parsearLineaCSV(linea) {
         dentroComillas = !dentroComillas;
       }
     } else if (char === "," && !dentroComillas) {
-      resultado.push(actual);
+      fila.push(actual);
+      actual = "";
+    } else if ((char === "\n" || char === "\r") && !dentroComillas) {
+      // fin de fila real (solo si NO estamos dentro de una celda con comillas)
+      if (char === "\r" && siguiente === "\n") i++; // evita doble salto \r\n
+      fila.push(actual);
+      filas.push(fila);
+      fila = [];
       actual = "";
     } else {
       actual += char;
     }
   }
 
-  resultado.push(actual);
-  return resultado.map((v) => v.trim());
+  // por si el archivo no termina con un salto de línea
+  if (actual.length > 0 || fila.length > 0) {
+    fila.push(actual);
+    filas.push(fila);
+  }
+
+  return filas
+    .map((f) => f.map((v) => v.trim()))
+    .filter((f) => !(f.length === 1 && f[0] === ""));
 }
 
 export async function cargarPreguntas() {
@@ -36,25 +53,21 @@ export async function cargarPreguntas() {
     const respuesta = await fetch(URL);
     const textoCSV = await respuesta.text();
 
-    // Dividimos por líneas y limpiamos espacios o líneas vacías
-    const lineas = textoCSV.split(/\r?\n/).filter((linea) => linea.trim() !== "");
-    if (lineas.length <= 1) return [];
+    const filas = parsearCSVCompleto(textoCSV);
+    if (filas.length <= 1) return [];
 
     // Cabeceras reales de tu Sheet:
     // id, bloque, tema, pregunta, r1, r2, r3, correcta, articulo, explicacion, grupo
-    const cabeceras = parsearLineaCSV(lineas[0]).map((c) =>
+    const cabeceras = filas[0].map((c) =>
       c.replace(/"/g, "").trim().toLowerCase()
     );
 
-    const preguntasProcesadas = lineas
+    const preguntasProcesadas = filas
       .slice(1)
-      .map((linea) => {
-        const celdas = parsearLineaCSV(linea);
-
+      .map((celdas) => {
         const fila = {};
         cabeceras.forEach((cabecera, i) => {
-          let valor = celdas[i] ? celdas[i].trim() : "";
-          // Quitamos las comillas extras que añade Google Sheets a los textos largos
+          let valor = celdas[i] !== undefined ? celdas[i].trim() : "";
           if (valor.startsWith('"') && valor.endsWith('"')) {
             valor = valor.substring(1, valor.length - 1);
           }
@@ -79,7 +92,7 @@ export async function cargarPreguntas() {
           grupo: fila.grupo || ""
         };
       })
-      .filter(Boolean); // <--- eliminamos las filas vacías
+      .filter(Boolean);
 
     return preguntasProcesadas;
   } catch (error) {
