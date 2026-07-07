@@ -2115,7 +2115,7 @@ if (pantalla === "muerte-jugando" && muertePreguntas[muerteIndice]) {
   </div>
 
   <div style={styles.muertePreguntaCol}>
-    {preguntaMuerte.respuestas.map((r, i) => {
+  {preguntaMuerte.respuestas.map((r, i) => {
               let bg = "#fff";
               if (muerteMostrar && i === preguntaMuerte.correcta) bg = "#d4edda";
 
@@ -2124,9 +2124,15 @@ if (pantalla === "muerte-jugando" && muertePreguntas[muerteIndice]) {
                   key={i}
                   onClick={() => comprobarMuerte(i)}
                   disabled={muerteMostrar}
-                  style={{ ...styles.button, background: bg }}
+                  style={{
+                    ...styles.button,
+                    background: bg,
+                    textAlign: "left",
+                    lineHeight: 1.5,
+                    whiteSpace: "pre-line"
+                  }}
                 >
-                  {r}
+                  {formatearTextoLargo(r)}
                 </button>
               );
             })}
@@ -2135,9 +2141,14 @@ if (pantalla === "muerte-jugando" && muertePreguntas[muerteIndice]) {
               <>
                 <p>{muerteMensaje}</p>
 
-                <p style={{ fontSize: 13 }}>
-                  <b>Explicación:</b> {preguntaMuerte.explicacion}
-                </p>
+                <div style={styles.explicacionCaja}>
+                  <p style={{ margin: 0 }}>
+                    <b>Explicación:</b>
+                  </p>
+                  <p style={{ margin: "6px 0 0", whiteSpace: "pre-line" }}>
+                    {formatearTextoLargo(preguntaMuerte.explicacion)}
+                  </p>
+                </div>
 
                 <button onClick={siguienteMuerte} style={styles.button}>
                   Siguiente →
@@ -2647,9 +2658,15 @@ if (pantalla === "muerte-victoria") {
               key={i}
               onClick={() => comprobar(i)}
               disabled={mostrar}
-              style={{ ...styles.button, background: bg }}
+              style={{
+                ...styles.button,
+                background: bg,
+                textAlign: "left",
+                lineHeight: 1.5,
+                whiteSpace: "pre-line"
+              }}
             >
-              {r}
+              {formatearTextoLargo(r)}
             </button>
           );
         })}
@@ -2693,10 +2710,15 @@ if (pantalla === "muerte-victoria") {
               return null;
             })()}
 
-            {conExplicacion && (
-              <p style={{ fontSize: 13 }}>
-                <b>Explicación:</b> {pregunta.explicacion}
-              </p>
+{conExplicacion && (
+              <div style={styles.explicacionCaja}>
+                <p style={{ margin: 0 }}>
+                  <b>Explicación:</b>
+                </p>
+                <p style={{ margin: "6px 0 0", whiteSpace: "pre-line" }}>
+                  {formatearTextoLargo(pregunta.explicacion)}
+                </p>
+              </div>
             )}
 
             <button onClick={siguiente} style={styles.button}>
@@ -2836,6 +2858,12 @@ function formatearTiempo(segundosTotales) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+// 📖 separa frases pegadas ("...guerra.La ley...") en líneas distintas para que se lea mejor
+function formatearTextoLargo(texto) {
+  if (!texto) return "";
+  return texto.replace(/\.(?=[A-ZÁÉÍÓÚÑ])/g, ".\n");
+}
+
 const globalStyles = `
   .menu-btn, .pill, .bloque-chip {
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
@@ -2918,6 +2946,17 @@ const styles = {
     background: "#fff",
     color: "#333",
     cursor: "pointer"
+  },
+  explicacionCaja: {
+    background: "#faf7f2",
+    border: "1px solid #e4ddcf",
+    borderRadius: 10,
+    padding: "12px 14px",
+    marginTop: 10,
+    fontSize: 13,
+    lineHeight: 1.6,
+    textAlign: "left",
+    color: "#4a463f"
   },
 
   // 🌸 estilos de la portada
