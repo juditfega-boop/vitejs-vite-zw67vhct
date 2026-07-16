@@ -17,7 +17,9 @@ import { FECHAS_CONSTITUCION } from "./datosFechasConstitucion";
 import { ESTRUCTURA_CONSTITUCION } from "./construyeConstitucion";
 import miniaturaArchivos from "./assets/archivos-miniatura.png";
 import miniaturaConstruye from "./assets/construye-miniatura.png";
-import ilustracionEdificio from "./assets/construye-edificio.png";
+import construyeTecho from "./assets/construye-techo.png";
+import construyePlantaBaja from "./assets/construye-plantabaja.png";
+import construyeArchivero from "./assets/construye-archivero.png";
 import miniaturaCarreraPlaza from "./assets/carrera-miniatura.jpg";
 
 const CLAVE_STATS = "opo_stats_v1";
@@ -52,6 +54,23 @@ const FRASES_DERROTA_MUERTE = [
   "El expediente te ha vencido... por ahora.",
   "Vuelve a intentarlo, la plaza no se rinde tan fácil.",
   "Ni Mary Richmond pudo con tanto papeleo de golpe."
+];
+
+// 🗝️ frases del Archivero (mascota ficticia) en "Construye la Constitución"
+const FRASES_ARCHIVERO_FRIO = [
+  "Frío, frío... ese expediente está en otro cajón.",
+  "Nada que ver. Vuelve a mirar los números.",
+  "Ahí no es. Sigue buscando."
+];
+const FRASES_ARCHIVERO_TEMPLADO = [
+  "Templado... vas por buen camino.",
+  "Cerca, muy cerca. Solo falta un ajuste.",
+  "Casi lo tienes, revisa un número."
+];
+const FRASES_ARCHIVERO_CALIENTE = [
+  "¡Caliente, caliente! Perfecto.",
+  "Ahí está. Bien archivado.",
+  "Exacto. Ese ya está en su sitio."
 ];
 
 // 🎬 posiciones medidas (top/left en %) de cada carril en el segundo 5 del vídeo,
@@ -342,17 +361,19 @@ const [archivosPareja, setArchivosPareja] = useState([]);
 
 // 🏛️ estado del minijuego "Construye la Constitución"
 const [construyeAmbito, setConstruyeAmbito] = useState([]);
-const [construyeRespuestas, setConstruyeRespuestas] = useState({});
-const [construyeResultados, setConstruyeResultados] = useState({});
-const [construyeCompleto, setConstruyeCompleto] = useState(false);
+  const [construyeRespuestas, setConstruyeRespuestas] = useState({});
+  const [construyeResultados, setConstruyeResultados] = useState({});
+  const [construyeMensajes, setConstruyeMensajes] = useState({});
+  const [construyeCompleto, setConstruyeCompleto] = useState(false);
 
-function iniciarConstruye(ambito) {
-  setConstruyeAmbito(ambito);
-  setConstruyeRespuestas({});
-  setConstruyeResultados({});
-  setConstruyeCompleto(false);
-  setPantalla("construye-jugando");
-}
+  function iniciarConstruye(ambito) {
+    setConstruyeAmbito(ambito);
+    setConstruyeRespuestas({});
+    setConstruyeResultados({});
+    setConstruyeMensajes({});
+    setConstruyeCompleto(false);
+    setPantalla("construye-jugando");
+  }
 
 function actualizarRespuestaConstruye(id, campo, valor) {
   setConstruyeRespuestas((prev) => ({
@@ -363,25 +384,33 @@ function actualizarRespuestaConstruye(id, campo, valor) {
 
 function comprobarConstruye() {
   const resultados = {};
+  const mensajes = {};
   let todoCorrecto = true;
-
   construyeAmbito.forEach((item) => {
     const respuesta = construyeRespuestas[item.id] || {};
     const inicioOk = Number(respuesta.inicio) === item.inicio;
     const finOk = Number(respuesta.fin) === item.fin;
-
+    let estado;
     if (inicioOk && finOk) {
-      resultados[item.id] = "correcto";
+      estado = "correcto";
     } else if (inicioOk || finOk) {
-      resultados[item.id] = "parcial";
+      estado = "parcial";
       todoCorrecto = false;
     } else {
-      resultados[item.id] = "incorrecto";
+      estado = "incorrecto";
       todoCorrecto = false;
     }
+    resultados[item.id] = estado;
+    const listaFrases =
+      estado === "correcto"
+        ? FRASES_ARCHIVERO_CALIENTE
+        : estado === "parcial"
+        ? FRASES_ARCHIVERO_TEMPLADO
+        : FRASES_ARCHIVERO_FRIO;
+    mensajes[item.id] = listaFrases[Math.floor(Math.random() * listaFrases.length)];
   });
-
   setConstruyeResultados(resultados);
+  setConstruyeMensajes(mensajes);
   setConstruyeCompleto(todoCorrecto);
 }
 
@@ -2051,12 +2080,6 @@ if (pantalla === "construye-detalle") {
         <div style={styles.menuUnderline} />
       </div>
 
-      <img
-        src={ilustracionEdificio}
-        alt="Edificio de la Constitución"
-        style={styles.construyeIlustracion}
-      />
-
       <p style={styles.configSubLabel}>
           La Constitución se ha desmontado. Tu misión es volver a
           construirla, planta a planta: completa el artículo inicial y
@@ -2120,20 +2143,16 @@ if (pantalla === "construye-config") {
     );
   }
 
-// 🏛️ "CONSTRUYE LA CONSTITUCIÓN" — EN CURSO
+// 🏛️ "CONSTRUYE LA CONSTITUCIÓN" — EN CURSO (dentro del propio edificio)
 if (pantalla === "construye-jugando") {
+  const paletaFloors = ["#c9e4d0", "#f6d7ae", "#f3cdd2", "#cbe0ea"];
+
   return (
     <div style={styles.menuContainer}>
       <div style={styles.menuHeader}>
         <h1 style={styles.menuTitle}>🏛️ Construyendo...</h1>
         <div style={styles.menuUnderline} />
       </div>
-
-      <img
-        src={ilustracionEdificio}
-        alt="Edificio de la Constitución"
-        style={styles.construyeIlustracionPequena}
-      />
 
       {construyeCompleto && (
         <div style={{ ...styles.configCard, textAlign: "center" }}>
@@ -2144,67 +2163,74 @@ if (pantalla === "construye-jugando") {
         </div>
       )}
 
-      {construyeAmbito.map((item) => {
-        const resultado = construyeResultados[item.id];
-        const respuesta = construyeRespuestas[item.id] || {};
+      <div style={styles.edificioMarco}>
+        <img src={construyeTecho} alt="" style={styles.edificioTechoImg} />
 
-        const fondo =
-          resultado === "correcto"
-            ? "#d4edda"
-            : resultado === "parcial"
-            ? "#fff3cd"
-            : resultado === "incorrecto"
-            ? "#f8d7da"
-            : "#fff";
+        <div style={styles.edificioPlantasWrap}>
+          {construyeAmbito.map((item, i) => {
+            const resultado = construyeResultados[item.id];
+            const mensaje = construyeMensajes[item.id];
+            const respuesta = construyeRespuestas[item.id] || {};
+            const colorPlanta = paletaFloors[i % paletaFloors.length];
 
-        const sangria =
-          item.tipo === "Sección" ? 28 : item.tipo === "Capítulo" ? 14 : 0;
+            return (
+              <div
+                key={item.id}
+                style={{ ...styles.edificioPlanta, background: colorPlanta }}
+              >
+                <p style={styles.edificioPlantaTitulo}>
+                  {item.nombre} {resultado === "correcto" ? "✅" : ""}
+                </p>
+                <p style={styles.edificioPlantaSubtitulo}>{item.titulo}</p>
 
-        return (
-          <div
-            key={item.id}
-            style={{
-              ...styles.configCard,
-              marginLeft: sangria,
-              background: fondo
-            }}
-          >
-            <p style={styles.configCardTitle}>
-              {item.nombre} {resultado === "correcto" ? "✅" : ""}
-            </p>
-            <p style={{ ...styles.configSubLabel, marginBottom: 10 }}>{item.titulo}</p>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.configSubLabel}>Art. inicial</label>
+                    <input
+                      type="number"
+                      value={respuesta.inicio || ""}
+                      onChange={(e) =>
+                        actualizarRespuestaConstruye(item.id, "inicio", e.target.value)
+                      }
+                      style={styles.numeroInput}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.configSubLabel}>Art. final</label>
+                    <input
+                      type="number"
+                      value={respuesta.fin || ""}
+                      onChange={(e) =>
+                        actualizarRespuestaConstruye(item.id, "fin", e.target.value)
+                      }
+                      style={styles.numeroInput}
+                    />
+                  </div>
+                </div>
 
-            <div style={{ display: "flex", gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <label style={styles.configSubLabel}>Artículo inicial</label>
-                <input
-                  type="number"
-                  value={respuesta.inicio || ""}
-                  onChange={(e) =>
-                    actualizarRespuestaConstruye(item.id, "inicio", e.target.value)
-                  }
-                  style={styles.numeroInput}
-                />
+                {resultado && resultado !== "correcto" && (
+                  <div style={styles.archiveroGlobo}>
+                    🗝️ {mensaje}
+                  </div>
+                )}
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={styles.configSubLabel}>Artículo final</label>
-                <input
-                  type="number"
-                  value={respuesta.fin || ""}
-                  onChange={(e) =>
-                    actualizarRespuestaConstruye(item.id, "fin", e.target.value)
-                  }
-                  style={styles.numeroInput}
-                />
-              </div>
-            </div>
+            );
+          })}
+        </div>
+
+        <img src={construyePlantaBaja} alt="" style={styles.edificioPlantaBajaImg} />
+        </div>
+
+        <div style={styles.archiveroPresentacion}>
+          <img src={construyeArchivero} alt="Ezequiel, el Archivero" style={styles.archiveroFoto} />
+          <div style={styles.archiveroGloboPresentacion}>
+            Soy Ezequiel, el Archivero. Si necesitas ayuda con alguna puerta, avísame.
           </div>
-        );
-      })}
+        </div>
 
-      <button onClick={comprobarConstruye} style={styles.ctaButton}>
-        Comprobar
-      </button>
+        <button onClick={comprobarConstruye} style={styles.ctaButton}>
+          Comprobar
+        </button>
 
       <button
         onClick={() => setPantalla("construye-config")}
@@ -4227,17 +4253,73 @@ derrotaOverlayInferior: {
     color: "#4a463f",
     cursor: "pointer"
   },
-  construyeIlustracion: {
-    display: "block",
-    width: "100%",
-    maxWidth: 260,
+  edificioMarcoDetalle: {
+    maxWidth: 220,
     margin: "0 auto 20px"
   },
-  construyeIlustracionPequena: {
+  edificioMarco: {
+    maxWidth: 320,
+    margin: "0 auto 10px"
+  },
+  edificioTechoImg: {
     display: "block",
-    width: "100%",
-    maxWidth: 140,
-    margin: "0 auto 16px"
+    width: "100%"
+  },
+  edificioPlantaBajaImg: {
+    display: "block",
+    width: "100%"
+  },
+  edificioPlantasWrap: {
+    display: "flex",
+    flexDirection: "column"
+  },
+  edificioPlanta: {
+    padding: "14px 16px",
+    borderLeft: "6px solid rgba(0,0,0,0.08)",
+    borderRight: "6px solid rgba(0,0,0,0.08)"
+  },
+  edificioPlantaTitulo: {
+    fontWeight: 700,
+    color: "#4a463f",
+    margin: "0 0 2px",
+    fontSize: 14
+  },
+  edificioPlantaSubtitulo: {
+    fontSize: 12,
+    color: "#6b6558",
+    marginBottom: 8
+  },
+  archiveroGlobo: {
+    marginTop: 8,
+    background: "#fff",
+    borderRadius: 12,
+    padding: "8px 12px",
+    fontSize: 13,
+    color: "#4a463f",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
+  },
+  archiveroPresentacion: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    margin: "16px 0"
+  },
+  archiveroFoto: {
+    width: 56,
+    height: 56,
+    borderRadius: "50%",
+    objectFit: "cover",
+    flexShrink: 0,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+  },
+  archiveroGloboPresentacion: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: "10px 14px",
+    fontSize: 13,
+    color: "#4a463f",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+    flex: 1
   }
 };
 
