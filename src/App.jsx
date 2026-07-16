@@ -383,14 +383,6 @@ const [construyeAmbito, setConstruyeAmbito] = useState([]);
     setArchiveroAbierto(false);
     setPantalla("construye-jugando");
   }
-      setConstruyeAmbito(ambito);
-    setConstruyeRespuestas({});
-    setConstruyeResultados({});
-    setConstruyeMensajes({});
-    setConstruyeCompleto(false);
-    setConstruyeFeedback({});
-    setConstruyeIntentos({});
-    setPantalla("construye-jugando");
   }
 
 function actualizarRespuestaConstruye(id, campo, valor) {
