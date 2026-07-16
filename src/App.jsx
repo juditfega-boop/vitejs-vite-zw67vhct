@@ -12,6 +12,11 @@ import muerteImg2 from "./assets/trabajadora-2.png";
 import muerteImg3 from "./assets/trabajadora-3.png";
 import muerteImgDerrota from "./assets/trabajadora-derrota.png";
 import muerteImgVictoria from "./assets/trabajadora-victoria.png";
+import { ARTICULOS_CONSTITUCION } from "./datosArticulosConstitucion";
+import { FECHAS_CONSTITUCION } from "./datosFechasConstitucion";
+import { ESTRUCTURA_CONSTITUCION } from "./construyeConstitucion";
+import miniaturaArchivos from "./assets/archivos-miniatura.png";
+import miniaturaConstruye from "./assets/construye-miniatura.png";
 import miniaturaCarreraPlaza from "./assets/carrera-miniatura.jpg";
 
 const CLAVE_STATS = "opo_stats_v1";
@@ -222,6 +227,162 @@ export default function App() {
       setMuerteIndice(siguienteIndice);
       setMuerteTiempoRestante(muerteCronometroActivo ? 60 : null);
     }
+  }
+
+// 📁 estado del minijuego de emparejar "Conecta la Constitución"
+const EXPEDIENTES_CONECTA = [
+  { id: "articulos", nombre: "Artículos y contenido", emoji: "🛡️", datos: ARTICULOS_CONSTITUCION },
+  { id: "fechas", nombre: "Fechas importantes", emoji: "🗓️", datos: FECHAS_CONSTITUCION }
+];
+
+const [archivosDatosActivos, setArchivosDatosActivos] = useState([]);
+const [archivosPareja, setArchivosPareja] = useState([]);
+  const [archivosArticulos, setArchivosArticulos] = useState([]);
+  const [archivosDescripciones, setArchivosDescripciones] = useState([]);
+  const [archivosSelArticulo, setArchivosSelArticulo] = useState(null);
+  const [archivosSelDescripcion, setArchivosSelDescripcion] = useState(null);
+  const [archivosVerde, setArchivosVerde] = useState([]);
+  const [archivosDesvaneciendo, setArchivosDesvaneciendo] = useState([]);
+  const [archivosResueltos, setArchivosResueltos] = useState([]);
+  const [archivosError, setArchivosError] = useState(null);
+  const [archivosMostrarResumen, setArchivosMostrarResumen] = useState(false);
+
+  function comenzarJuegoArchivos(datosExpediente) {
+    const numParejas = Math.min(8, datosExpediente.length);
+    const seleccionadas = mezclar(datosExpediente).slice(0, numParejas);
+
+    setArchivosDatosActivos(datosExpediente);
+    setArchivosPareja(seleccionadas);
+    setArchivosArticulos(
+      mezclar(seleccionadas.map((a) => ({
+        id: a.id,
+        texto: a.etiqueta || `Artículo ${a.articulo}`
+      })))
+    );
+    setArchivosDescripciones(
+      mezclar(seleccionadas.map((a) => ({ id: a.id, texto: a.descripcion })))
+    );
+    setArchivosSelArticulo(null);
+    setArchivosSelDescripcion(null);
+    setArchivosVerde([]);
+    setArchivosDesvaneciendo([]);
+    setArchivosResueltos([]);
+    setArchivosError(null);
+    setArchivosMostrarResumen(false);
+    setPantalla("archivos-jugando");
+  }
+
+  function comprobarParejaArchivos(idArticulo, idDescripcion) {
+    if (idArticulo === idDescripcion) {
+      setArchivosVerde((v) => [...v, idArticulo]);
+
+      setTimeout(() => {
+        setArchivosDesvaneciendo((d) => [...d, idArticulo]);
+      }, 500);
+
+      setTimeout(() => {
+        setArchivosResueltos((r) => [...r, idArticulo]);
+        setArchivosVerde((v) => v.filter((x) => x !== idArticulo));
+        setArchivosDesvaneciendo((d) => d.filter((x) => x !== idArticulo));
+        setArchivosSelArticulo(null);
+        setArchivosSelDescripcion(null);
+      }, 800);
+    } else {
+      setArchivosError({ articulo: idArticulo, descripcion: idDescripcion });
+
+      setTimeout(() => {
+        setArchivosError(null);
+        setArchivosSelArticulo(null);
+        setArchivosSelDescripcion(null);
+      }, 450);
+    }
+  }
+
+  function seleccionarArticuloArchivos(id) {
+    if (archivosResueltos.includes(id) || archivosError) return;
+    setArchivosSelArticulo(id);
+    if (archivosSelDescripcion !== null) {
+      comprobarParejaArchivos(id, archivosSelDescripcion);
+    }
+  }
+
+  function seleccionarDescripcionArchivos(id) {
+    if (archivosResueltos.includes(id) || archivosError) return;
+    setArchivosSelDescripcion(id);
+    if (archivosSelArticulo !== null) {
+      comprobarParejaArchivos(archivosSelArticulo, id);
+    }
+  }
+
+  function agruparArchivosPorCapitulo(lista) {
+    const grupos = {};
+
+    lista.forEach((item) => {
+      const clave = item.capituloNumero;
+      if (!grupos[clave]) {
+        grupos[clave] = {
+          numero: item.capituloNumero,
+          nombre: item.capituloNombre,
+          articulos: []
+        };
+      }
+      grupos[clave].articulos.push(item);
+    });
+
+    return Object.values(grupos)
+    .sort((a, b) => a.numero.localeCompare(b.numero))
+    .map((g) => ({
+      ...g,
+      articulos: [...g.articulos].sort(
+        (a, b) => (a.orden ?? a.articulo ?? 0) - (b.orden ?? b.articulo ?? 0)
+      )
+    }));
+  }
+
+// 🏛️ estado del minijuego "Construye la Constitución" (motor genérico:
+  // solo depende de ESTRUCTURA_CONSTITUCION, sustituible por otro archivo)
+  const [construyeAmbito, setConstruyeAmbito] = useState([]);
+  const [construyeRespuestas, setConstruyeRespuestas] = useState({});
+  const [construyeResultados, setConstruyeResultados] = useState({});
+  const [construyeCompleto, setConstruyeCompleto] = useState(false);
+
+  function iniciarConstruye(ambito) {
+    setConstruyeAmbito(ambito);
+    setConstruyeRespuestas({});
+    setConstruyeResultados({});
+    setConstruyeCompleto(false);
+    setPantalla("construye-jugando");
+  }
+
+  function actualizarRespuestaConstruye(id, campo, valor) {
+    setConstruyeRespuestas((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], [campo]: valor }
+    }));
+  }
+
+  function comprobarConstruye() {
+    const resultados = {};
+    let todoCorrecto = true;
+
+    construyeAmbito.forEach((item) => {
+      const respuesta = construyeRespuestas[item.id] || {};
+      const inicioOk = Number(respuesta.inicio) === item.inicio;
+      const finOk = Number(respuesta.fin) === item.fin;
+
+      if (inicioOk && finOk) {
+        resultados[item.id] = "correcto";
+      } else if (inicioOk || finOk) {
+        resultados[item.id] = "parcial";
+        todoCorrecto = false;
+      } else {
+        resultados[item.id] = "incorrecto";
+        todoCorrecto = false;
+      }
+    });
+
+    setConstruyeResultados(resultados);
+    setConstruyeCompleto(todoCorrecto);
   }
 
   function eliminarPartidaHistorial(index) {
@@ -481,6 +642,18 @@ export default function App() {
 
     return () => clearTimeout(id);
   }, [pantalla, muerteTiempoRestante, muerteCronometroActivo]);
+
+  // 📁 cuando las 8 parejas están resueltas, pasa a la pantalla de resultado
+  useEffect(() => {
+    if (
+      pantalla === "archivos-jugando" &&
+      archivosPareja.length > 0 &&
+      archivosResueltos.length === archivosPareja.length
+    ) {
+      const id = setTimeout(() => setPantalla("archivos-resultado"), 400);
+      return () => clearTimeout(id);
+    }
+  }, [pantalla, archivosResueltos, archivosPareja]);
 
   function volverMenu() {
     setPantalla("inicio");
@@ -821,17 +994,14 @@ export default function App() {
 
       if (!s) return;
 
-      if (s.errores >= 3) {
+      if (s.aciertos >= s.errores && s.errores > 0) {
+        recuperadas.push(p);
+      }
+      else if (s.errores >= 3) {
         muyOlvidadas.push(p);
       }
       else if (s.errores > s.aciertos) {
         pendientes.push(p);
-      }
-      else if (
-        s.aciertos >= s.errores &&
-        s.errores > 0
-      ) {
-        recuperadas.push(p);
       }
     });
 
@@ -1703,6 +1873,18 @@ export default function App() {
         nombre: "Salva a tu trabajadora social",
         miniatura: muerteImg0,
         destino: "muerte-detalle"
+      },
+      {
+        id: "archivos",
+        nombre: "Conecta la Constitución",
+        miniatura: miniaturaArchivos,
+        destino: "archivos-detalle"
+      },
+      {
+        id: "construye",
+        nombre: "Construye la Constitución",
+        miniatura: miniaturaConstruye,
+        destino: "construye-detalle"
       }
     ];
 
@@ -1721,11 +1903,15 @@ export default function App() {
             onClick={() => setPantalla(j.destino)}
             style={styles.filaMinijuegoBtn}
           >
-            <img
-              src={j.miniatura}
-              alt={j.nombre}
-              style={styles.miniaturaMinijuego}
-            />
+            {j.miniatura ? (
+              <img
+                src={j.miniatura}
+                alt={j.nombre}
+                style={styles.miniaturaMinijuego}
+              />
+            ) : (
+              <span style={styles.miniaturaMinijuegoEmoji}>{j.emoji}</span>
+            )}
             <span style={styles.filaMinijuegoTexto}>{j.nombre}</span>
             <span style={{ color: "#8a8578" }}>→</span>
           </button>
@@ -1797,6 +1983,352 @@ export default function App() {
 
         <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
           ⬅ Volver
+        </button>
+      </div>
+    );
+  }
+
+  // 📁 DETALLE DE "CONECTA LA CONSTITUCIÓN"
+  if (pantalla === "archivos-detalle") {
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>📁 Conecta la Constitución</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <p style={styles.configSubLabel}>
+          Alguien ha mezclado los archivos de la Constitución. Tu misión es
+          volver a organizarlos: relaciona cada artículo con su contenido.
+          Cada partida elige 8 parejas al azar.
+        </p>
+
+        <button onClick={() => setPantalla("archivos-expedientes")} style={styles.ctaButton}>
+          Jugar
+        </button>
+
+        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+          ⬅ Volver
+        </button>
+      </div>
+    );
+  }
+
+  // 📁 ELEGIR EXPEDIENTE PARA "CONECTA LA CONSTITUCIÓN"
+  if (pantalla === "archivos-expedientes") {
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>📁 Elige un expediente</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        {EXPEDIENTES_CONECTA.map((exp) => (
+          <button
+            key={exp.id}
+            onClick={() => comenzarJuegoArchivos(exp.datos)}
+            style={styles.filaMinijuegoBtn}
+          >
+            <span style={styles.miniaturaMinijuegoEmoji}>{exp.emoji}</span>
+            <span style={styles.filaMinijuegoTexto}>{exp.nombre}</span>
+            <span style={{ color: "#8a8578" }}>→</span>
+          </button>
+        ))}
+
+        <button onClick={() => setPantalla("archivos-detalle")} style={styles.linkVolver}>
+          ⬅ Volver
+        </button>
+      </div>
+    );
+  }
+
+  // 🏛️ DETALLE DE "CONSTRUYE LA CONSTITUCIÓN"
+  if (pantalla === "construye-detalle") {
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>🏛️ Construye la Constitución</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <p style={styles.configSubLabel}>
+          La Constitución se ha desmontado. Tu misión es volver a
+          construirla, planta a planta: completa el artículo inicial y
+          final de cada título, capítulo y sección.
+        </p>
+
+        <button
+          onClick={() => setPantalla("construye-config")}
+          style={styles.ctaButton}
+        >
+          Construir
+        </button>
+
+        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+          ⬅ Volver
+        </button>
+      </div>
+    );
+  }
+
+  // 🏛️ ELEGIR QUÉ CONSTRUIR
+  if (pantalla === "construye-config") {
+    const titulos = ESTRUCTURA_CONSTITUCION.filter((i) => i.tipo === "Título");
+
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>¿Qué quieres construir?</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <button
+          onClick={() => iniciarConstruye(ESTRUCTURA_CONSTITUCION)}
+          style={{ ...styles.menuButton, ...styles.btnPeach }}
+          className="menu-btn"
+        >
+          🏛️ La Constitución completa
+        </button>
+
+        {titulos.map((t) => (
+          <button
+            key={t.id}
+            className="menu-btn"
+            onClick={() =>
+              iniciarConstruye(
+                ESTRUCTURA_CONSTITUCION.filter(
+                  (i) => i.inicio >= t.inicio && i.fin <= t.fin
+                )
+              )
+            }
+            style={{ ...styles.menuButton, ...styles.btnMint }}
+          >
+            {t.nombre} — {t.titulo}
+          </button>
+        ))}
+
+        <button onClick={() => setPantalla("construye-detalle")} style={styles.linkVolver}>
+          ⬅ Volver
+        </button>
+      </div>
+    );
+  }
+
+  // 🏛️ "CONSTRUYE LA CONSTITUCIÓN" — EN CURSO
+  if (pantalla === "construye-jugando") {
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>🏛️ Construyendo...</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        {construyeCompleto && (
+          <div style={{ ...styles.configCard, textAlign: "center" }}>
+            <p style={{ fontSize: 20, margin: 0 }}>🏛️ ¡Constitución reconstruida!</p>
+            <p style={styles.configSubLabel}>
+              Has completado correctamente toda esta estructura.
+            </p>
+          </div>
+        )}
+
+        {construyeAmbito.map((item) => {
+          const resultado = construyeResultados[item.id];
+          const respuesta = construyeRespuestas[item.id] || {};
+
+          const fondo =
+            resultado === "correcto"
+              ? "#d4edda"
+              : resultado === "parcial"
+              ? "#fff3cd"
+              : resultado === "incorrecto"
+              ? "#f8d7da"
+              : "#fff";
+
+          const sangria =
+            item.tipo === "Sección" ? 28 : item.tipo === "Capítulo" ? 14 : 0;
+
+          return (
+            <div
+              key={item.id}
+              style={{
+                ...styles.configCard,
+                marginLeft: sangria,
+                background: fondo
+              }}
+            >
+              <p style={styles.configCardTitle}>
+                {item.nombre} {resultado === "correcto" ? "✅" : ""}
+              </p>
+              <p style={{ ...styles.configSubLabel, marginBottom: 10 }}>{item.titulo}</p>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={styles.configSubLabel}>Artículo inicial</label>
+                  <input
+                    type="number"
+                    value={respuesta.inicio || ""}
+                    onChange={(e) =>
+                      actualizarRespuestaConstruye(item.id, "inicio", e.target.value)
+                    }
+                    style={styles.numeroInput}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={styles.configSubLabel}>Artículo final</label>
+                  <input
+                    type="number"
+                    value={respuesta.fin || ""}
+                    onChange={(e) =>
+                      actualizarRespuestaConstruye(item.id, "fin", e.target.value)
+                    }
+                    style={styles.numeroInput}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        <button onClick={comprobarConstruye} style={styles.ctaButton}>
+          Comprobar
+        </button>
+
+        <button
+          onClick={() => setPantalla("construye-config")}
+          style={styles.linkVolver}
+        >
+          ⬅ Elegir otra vez qué construir
+        </button>
+
+        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+          ⬅ Volver a minijuegos
+        </button>
+      </div>
+    );
+  }
+
+  // 📁 "CONECTA LA CONSTITUCIÓN" — EN CURSO
+  if (pantalla === "archivos-jugando") {
+    return (
+      <div style={styles.menuContainer}>
+        <style>{globalStyles}</style>
+
+        <div style={styles.simHeaderBar}>
+          <span style={styles.simTimer}>
+            📁 Archivados: {archivosResueltos.length} / {archivosPareja.length}
+          </span>
+        </div>
+
+        <div style={styles.archivosColumnas}>
+          <div style={styles.archivosColumna}>
+            {archivosArticulos.map((item) => {
+              if (archivosResueltos.includes(item.id)) return null;
+
+              const seleccionado = archivosSelArticulo === item.id;
+              const enVerde = archivosVerde.includes(item.id);
+              const enError =
+                archivosError && archivosError.articulo === item.id;
+              const desvaneciendo = archivosDesvaneciendo.includes(item.id);
+
+              return (
+                <button
+                  key={item.id}
+                  className={enError ? "archivos-shake" : ""}
+                  onClick={() => seleccionarArticuloArchivos(item.id)}
+                  style={{
+                    ...styles.archivosTarjeta,
+                    ...(seleccionado ? styles.archivosTarjetaSeleccionada : {}),
+                    ...(enVerde ? styles.archivosTarjetaCorrecta : {}),
+                    ...(enError ? styles.archivosTarjetaError : {}),
+                    ...(desvaneciendo ? { opacity: 0, transform: "scale(0.9)" } : {})
+                  }}
+                >
+                  {item.texto}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={styles.archivosColumna}>
+            {archivosDescripciones.map((item) => {
+              if (archivosResueltos.includes(item.id)) return null;
+
+              const seleccionado = archivosSelDescripcion === item.id;
+              const enVerde = archivosVerde.includes(item.id);
+              const enError =
+                archivosError && archivosError.descripcion === item.id;
+              const desvaneciendo = archivosDesvaneciendo.includes(item.id);
+
+              return (
+                <button
+                  key={item.id}
+                  className={enError ? "archivos-shake" : ""}
+                  onClick={() => seleccionarDescripcionArchivos(item.id)}
+                  style={{
+                    ...styles.archivosTarjeta,
+                    ...styles.archivosTarjetaDescripcion,
+                    ...(seleccionado ? styles.archivosTarjetaSeleccionada : {}),
+                    ...(enVerde ? styles.archivosTarjetaCorrecta : {}),
+                    ...(enError ? styles.archivosTarjetaError : {}),
+                    ...(desvaneciendo ? { opacity: 0, transform: "scale(0.9)" } : {})
+                  }}
+                >
+                  {item.texto}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 📁 RESULTADO DE "CONECTA LA CONSTITUCIÓN"
+  if (pantalla === "archivos-resultado") {
+    const grupos = agruparArchivosPorCapitulo(archivosPareja);
+
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>📁 Archivos organizados correctamente</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+
+        <button onClick={() => comenzarJuegoArchivos(archivosDatosActivos)} style={styles.ctaButton}>
+          Jugar otra vez
+        </button>
+
+        <button
+          onClick={() => setArchivosMostrarResumen((v) => !v)}
+          style={styles.linkVolver}
+        >
+          {archivosMostrarResumen ? "▲ Ocultar resumen" : "▼ Ver resumen"}
+        </button>
+
+        {archivosMostrarResumen && (
+          <div style={{ marginTop: 10 }}>
+            {grupos.map((g) => (
+              <div key={g.numero} style={styles.configCard}>
+                <p style={styles.configCardTitle}>
+                  Capítulo {g.numero} — {g.nombre}
+                </p>
+                {g.articulos.map((a) => (
+                  <p key={a.id} style={{ ...styles.configSubLabel, marginBottom: 6 }}>
+                    <b>{a.etiqueta || `Artículo ${a.articulo}`}:</b> {a.descripcion}
+                  </p>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+          ⬅ Volver a minijuegos
+        </button>
+
+        <button onClick={volverMenu} style={styles.linkVolver}>
+          ⬅ Volver al menú
         </button>
       </div>
     );
@@ -2145,9 +2677,7 @@ if (pantalla === "muerte-jugando" && muertePreguntas[muerteIndice]) {
                   <p style={{ margin: 0 }}>
                     <b>Explicación:</b>
                   </p>
-                  <p style={{ margin: "6px 0 0", whiteSpace: "pre-line" }}>
-                    {formatearTextoLargo(preguntaMuerte.explicacion)}
-                  </p>
+                  {renderizarTextoConNegrita(preguntaMuerte.explicacion)}
                 </div>
 
                 <button onClick={siguienteMuerte} style={styles.button}>
@@ -2680,6 +3210,19 @@ if (pantalla === "muerte-victoria") {
 
               if (!s) return null;
 
+              const acertoAhora = mensaje === "✅ Correcto";
+
+              if (acertoAhora) {
+                if (s.errores >= 3) {
+                  return (
+                    <p>
+                      💪 Antes te costaba, pero hoy la has clavado.
+                    </p>
+                  );
+                }
+                return null;
+              }
+
               if (s.errores >= 5) {
                 return (
                   <p>
@@ -2696,17 +3239,6 @@ if (pantalla === "muerte-victoria") {
                 );
               }
 
-              if (
-                s.aciertos >= s.errores &&
-                s.errores > 0
-              ) {
-                return (
-                  <p>
-                    🏆 Mary Richmond estaría orgullosa de tu constancia.
-                  </p>
-                );
-              }
-
               return null;
             })()}
 
@@ -2715,9 +3247,7 @@ if (pantalla === "muerte-victoria") {
                 <p style={{ margin: 0 }}>
                   <b>Explicación:</b>
                 </p>
-                <p style={{ margin: "6px 0 0", whiteSpace: "pre-line" }}>
-                  {formatearTextoLargo(pregunta.explicacion)}
-                </p>
+                {renderizarTextoConNegrita(pregunta.explicacion)}
               </div>
             )}
 
@@ -2858,10 +3388,31 @@ function formatearTiempo(segundosTotales) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-// 📖 separa frases pegadas ("...guerra.La ley...") en líneas distintas para que se lea mejor
+// 📖 separa frases pegadas ("...guerra.La ley...") en líneas distintas para que se lea mejor,
+// y convierte **texto** en negrita de verdad (ya que el CSV no guarda formato de Sheets)
 function formatearTextoLargo(texto) {
   if (!texto) return "";
   return texto.replace(/\.(?=[A-ZÁÉÍÓÚÑ])/g, ".\n");
+}
+
+function renderizarTextoConNegrita(texto) {
+  const textoConSaltos = formatearTextoLargo(texto);
+  const parrafos = textoConSaltos.split("\n").filter((p) => p.trim() !== "");
+
+  return parrafos.map((parrafo, i) => {
+    const partes = parrafo.split(/(\*\*.+?\*\*)/g);
+    return (
+      <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0" }}>
+        {partes.map((parte, j) =>
+          parte.startsWith("**") && parte.endsWith("**") ? (
+            <b key={j}>{parte.slice(2, -2)}</b>
+          ) : (
+            parte
+          )
+        )}
+      </p>
+    );
+  });
 }
 
 const globalStyles = `
@@ -2925,6 +3476,15 @@ const globalStyles = `
     animation-fill-mode: forwards;
     pointer-events: none;
     z-index: 999;
+  }
+  @keyframes archivosVibrar {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-6px); }
+    40%, 60% { transform: translateX(6px); }
+  }
+  .archivos-shake {
+    animation: archivosVibrar 0.4s;
   }
 `;
 
@@ -3490,6 +4050,57 @@ muertePreguntaCol: {
     fontSize: 15,
     fontWeight: 600,
     color: "#4a463f"
+  },
+  miniaturaMinijuegoEmoji: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    background: "#f2ece0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 26,
+    flexShrink: 0
+  },
+
+  // 📁 layout del juego de emparejar "Conecta la Constitución"
+  archivosColumnas: {
+    display: "flex",
+    gap: 10
+  },
+  archivosColumna: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10
+  },
+  archivosTarjeta: {
+    border: "1px solid #e4ddcf",
+    background: "#fff",
+    borderRadius: 14,
+    padding: "14px 10px",
+    fontSize: 13,
+    color: "#4a463f",
+    cursor: "pointer",
+    textAlign: "center",
+    transition: "background 0.2s ease, border-color 0.2s ease, opacity 0.3s ease, transform 0.3s ease",
+    fontFamily: "Arial"
+  },
+  archivosTarjetaDescripcion: {
+    textAlign: "left",
+    lineHeight: 1.4
+  },
+  archivosTarjetaSeleccionada: {
+    borderColor: "#e29aa0",
+    background: "#f3cdd2"
+  },
+  archivosTarjetaCorrecta: {
+    borderColor: "#7fb27f",
+    background: "#d4edda"
+  },
+  archivosTarjetaError: {
+    borderColor: "#c96a6a",
+    background: "#f8d7da"
   },
 
 // ☠️ pantalla de derrota: imagen de fondo fija (como la portada) + overlay que nunca se corta
