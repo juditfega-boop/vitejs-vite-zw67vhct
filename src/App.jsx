@@ -383,7 +383,6 @@ const [construyeAmbito, setConstruyeAmbito] = useState([]);
     setArchiveroAbierto(false);
     setPantalla("construye-jugando");
   }
-  }
 
 function actualizarRespuestaConstruye(id, campo, valor) {
   setConstruyeRespuestas((prev) => ({
@@ -3413,6 +3412,7 @@ if (pantalla === "muerte-victoria") {
       </button>
     </div>
   );
+}
 
 function obtenerStats() {
   return JSON.parse(localStorage.getItem(CLAVE_STATS)) || {};
