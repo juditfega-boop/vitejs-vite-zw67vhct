@@ -20,6 +20,7 @@ import miniaturaConstruye from "./assets/construye-miniatura.png";
 import construyeTecho from "./assets/construye-techo.png";
 import construyePlantaBaja from "./assets/construye-plantabaja.png";
 import construyeArchivero from "./assets/construye-archivero.png";
+import { MENSAJES_ANDER_EGG } from "./data/anderEggMensajes";
 import miniaturaCarreraPlaza from "./assets/carrera-miniatura.jpg";
 
 const CLAVE_STATS = "opo_stats_v1";
@@ -56,21 +57,17 @@ const FRASES_DERROTA_MUERTE = [
   "Ni Mary Richmond pudo con tanto papeleo de golpe."
 ];
 
-// 🗝️ frases del Archivero (mascota ficticia) en "Construye la Constitución"
-const FRASES_ARCHIVERO_FRIO = [
-  "Frío, frío... ese expediente está en otro cajón.",
-  "Nada que ver. Vuelve a mirar los números.",
-  "Ahí no es. Sigue buscando."
+// 🔍 frases de feedback al pulsar "Comprobar" en "Construye la Constitución"
+// (esto es el propio corrector hablando, no Ezequiel)
+const FRASES_COMPROBAR_PARCIAL = [
+  "Casi... revisa uno de los dos números.",
+  "Vas bien, pero algo no cuadra del todo.",
+  "Un número está bien, el otro no."
 ];
-const FRASES_ARCHIVERO_TEMPLADO = [
-  "Templado... vas por buen camino.",
-  "Cerca, muy cerca. Solo falta un ajuste.",
-  "Casi lo tienes, revisa un número."
-];
-const FRASES_ARCHIVERO_CALIENTE = [
-  "¡Caliente, caliente! Perfecto.",
-  "Ahí está. Bien archivado.",
-  "Exacto. Ese ya está en su sitio."
+const FRASES_COMPROBAR_INCORRECTO = [
+  "No es correcto, vuelve a intentarlo.",
+  "Ese expediente no encaja ahí todavía.",
+  "Prueba con otros números."
 ];
 
 // 🎬 posiciones medidas (top/left en %) de cada carril en el segundo 5 del vídeo,
@@ -363,16 +360,36 @@ const [archivosPareja, setArchivosPareja] = useState([]);
 const [construyeAmbito, setConstruyeAmbito] = useState([]);
   const [construyeRespuestas, setConstruyeRespuestas] = useState({});
   const [construyeResultados, setConstruyeResultados] = useState({});
-  const [construyeMensajes, setConstruyeMensajes] = useState({});
   const [construyeCompleto, setConstruyeCompleto] = useState(false);
+  const [construyeFeedback, setConstruyeFeedback] = useState({});
+  const [construyeIntentos, setConstruyeIntentos] = useState({});
+  const [construyeMensajesPool, setConstruyeMensajesPool] = useState([]);
+  const [construyeMensajeActual, setConstruyeMensajeActual] = useState("");
+  const [construyePistaOferta, setConstruyePistaOferta] = useState(null);
+  const [construyeDeclinado, setConstruyeDeclinado] = useState({});
   const [archiveroAbierto, setArchiveroAbierto] = useState(false);
 
   function iniciarConstruye(ambito) {
     setConstruyeAmbito(ambito);
     setConstruyeRespuestas({});
     setConstruyeResultados({});
+    setConstruyeCompleto(false);
+    setConstruyeFeedback({});
+    setConstruyeIntentos({});
+    setConstruyeMensajesPool([]);
+    setConstruyeMensajeActual("");
+    setConstruyePistaOferta(null);
+    setConstruyeDeclinado({});
+    setArchiveroAbierto(false);
+    setPantalla("construye-jugando");
+  }
+      setConstruyeAmbito(ambito);
+    setConstruyeRespuestas({});
+    setConstruyeResultados({});
     setConstruyeMensajes({});
     setConstruyeCompleto(false);
+    setConstruyeFeedback({});
+    setConstruyeIntentos({});
     setPantalla("construye-jugando");
   }
 
@@ -385,7 +402,7 @@ function actualizarRespuestaConstruye(id, campo, valor) {
 
 function comprobarConstruye() {
   const resultados = {};
-  const mensajes = {};
+  const nuevosIntentos = { ...construyeIntentos };
   let todoCorrecto = true;
   construyeAmbito.forEach((item) => {
     const respuesta = construyeRespuestas[item.id] || {};
@@ -402,17 +419,87 @@ function comprobarConstruye() {
       todoCorrecto = false;
     }
     resultados[item.id] = estado;
-    const listaFrases =
-      estado === "correcto"
-        ? FRASES_ARCHIVERO_CALIENTE
-        : estado === "parcial"
-        ? FRASES_ARCHIVERO_TEMPLADO
-        : FRASES_ARCHIVERO_FRIO;
-    mensajes[item.id] = listaFrases[Math.floor(Math.random() * listaFrases.length)];
+
+    if (estado === "correcto") {
+      nuevosIntentos[item.id] = 0;
+    } else {
+      nuevosIntentos[item.id] = (nuevosIntentos[item.id] || 0) + 1;
+    }
   });
+
+  const feedback = {};
+  construyeAmbito.forEach((item) => {
+    const estado = resultados[item.id];
+    if (estado === "parcial") {
+      feedback[item.id] =
+        FRASES_COMPROBAR_PARCIAL[Math.floor(Math.random() * FRASES_COMPROBAR_PARCIAL.length)];
+    } else if (estado === "incorrecto") {
+      feedback[item.id] =
+        FRASES_COMPROBAR_INCORRECTO[Math.floor(Math.random() * FRASES_COMPROBAR_INCORRECTO.length)];
+    }
+  });
+
   setConstruyeResultados(resultados);
-  setConstruyeMensajes(mensajes);
+  setConstruyeFeedback(feedback);
+  setConstruyeIntentos(nuevosIntentos);
   setConstruyeCompleto(todoCorrecto);
+
+  setConstruyeDeclinado((prev) => {
+    const copia = { ...prev };
+    Object.keys(nuevosIntentos).forEach((id) => {
+      if (resultados[id] !== "correcto") copia[id] = false;
+    });
+    return copia;
+  });
+}
+
+function mostrarSiguienteMensajeArchivero() {
+  let pool = construyeMensajesPool;
+  if (pool.length === 0) {
+    pool = mezclar(MENSAJES_ANDER_EGG);
+  }
+  const [siguiente, ...resto] = pool;
+  setConstruyeMensajeActual(siguiente.texto);
+  setConstruyeMensajesPool(resto);
+}
+
+function abrirArchivero() {
+  if (archiveroAbierto) {
+    setArchiveroAbierto(false);
+    return;
+  }
+
+  const apartadoDificil = construyeAmbito.find(
+    (item) =>
+      (construyeIntentos[item.id] || 0) >= 3 &&
+      construyeResultados[item.id] !== "correcto" &&
+      !construyeDeclinado[item.id]
+  );
+
+  if (apartadoDificil) {
+    setConstruyePistaOferta(apartadoDificil.id);
+  } else {
+    setConstruyePistaOferta(null);
+    mostrarSiguienteMensajeArchivero();
+  }
+
+  setArchiveroAbierto(true);
+}
+
+function aceptarPistaArchivero(apartadoId) {
+  const item = construyeAmbito.find((i) => i.id === apartadoId);
+  if (item) {
+    setConstruyeMensajeActual(
+      `Este apartado empieza después del artículo ${item.inicio - 1}.`
+    );
+  }
+  setConstruyePistaOferta(null);
+}
+
+function declinarPistaArchivero(apartadoId) {
+  setConstruyeDeclinado((prev) => ({ ...prev, [apartadoId]: true }));
+  setConstruyePistaOferta(null);
+  mostrarSiguienteMensajeArchivero();
 }
 
   function eliminarPartidaHistorial(index) {
@@ -2168,9 +2255,8 @@ if (pantalla === "construye-jugando") {
         <img src={construyeTecho} alt="" style={styles.edificioTechoImg} />
 
         <div style={styles.edificioPlantasWrap}>
-          {construyeAmbito.map((item, i) => {
+        {construyeAmbito.map((item, i) => {
             const resultado = construyeResultados[item.id];
-            const mensaje = construyeMensajes[item.id];
             const respuesta = construyeRespuestas[item.id] || {};
             const colorPlanta = paletaFloors[i % paletaFloors.length];
 
@@ -2185,35 +2271,33 @@ if (pantalla === "construye-jugando") {
                 <p style={styles.edificioPlantaSubtitulo}>{item.titulo}</p>
 
                 <div style={{ display: "flex", gap: 10 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={styles.configSubLabel}>Art. inicial</label>
-                    <input
-                      type="number"
-                      value={respuesta.inicio || ""}
-                      onChange={(e) =>
-                        actualizarRespuestaConstruye(item.id, "inicio", e.target.value)
-                      }
-                      style={styles.numeroInput}
-                    />
+                    <div style={{ flex: 1 }}>
+                      <label style={styles.configSubLabel}>Art. inicial</label>
+                      <input
+                        type="number"
+                        value={respuesta.inicio || ""}
+                        onChange={(e) =>
+                          actualizarRespuestaConstruye(item.id, "inicio", e.target.value)
+                        }
+                        style={styles.numeroInput}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={styles.configSubLabel}>Art. final</label>
+                      <input
+                        type="number"
+                        value={respuesta.fin || ""}
+                        onChange={(e) =>
+                          actualizarRespuestaConstruye(item.id, "fin", e.target.value)
+                        }
+                        style={styles.numeroInput}
+                      />
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={styles.configSubLabel}>Art. final</label>
-                    <input
-                      type="number"
-                      value={respuesta.fin || ""}
-                      onChange={(e) =>
-                        actualizarRespuestaConstruye(item.id, "fin", e.target.value)
-                      }
-                      style={styles.numeroInput}
-                    />
-                  </div>
-                </div>
 
-                {resultado && resultado !== "correcto" && (
-                  <div style={styles.archiveroGlobo}>
-                    🗝️ {mensaje}
-                  </div>
-                )}
+                  {construyeFeedback[item.id] && (
+                    <p style={styles.construyeFeedbackTexto}>{construyeFeedback[item.id]}</p>
+                  )}
               </div>
             );
           })}
@@ -2226,16 +2310,35 @@ if (pantalla === "construye-jugando") {
           Comprobar
         </button>
 
-        <button
-          onClick={() => setArchiveroAbierto((v) => !v)}
-          style={styles.archiveroBotonFlotante}
-        >
-          <img src={construyeArchivero} alt="Ezequiel Ander-Egg" style={styles.archiveroFotoFlotante} />
+        <button onClick={abrirArchivero} style={styles.archiveroBotonFlotante}>
+          <img src={construyeArchivero} alt="Ezequiel, el Archivero" style={styles.archiveroFotoFlotante} />
         </button>
 
         {archiveroAbierto && (
           <div style={styles.archiveroGloboFlotante}>
-            Soy Ezequiel Ander-Egg. Si necesitas ayuda con alguna puerta, avísame.
+            {construyePistaOferta ? (
+              <>
+                <p style={{ margin: "0 0 10px" }}>
+                  Parece que esta planta se está resistiendo... ¿Quieres una pista?
+                </p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => aceptarPistaArchivero(construyePistaOferta)}
+                    style={styles.archiveroBotonSi}
+                  >
+                    Sí, dame una pista
+                  </button>
+                  <button
+                    onClick={() => declinarPistaArchivero(construyePistaOferta)}
+                    style={styles.archiveroBotonNo}
+                  >
+                    Prefiero seguir intentando
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p style={{ margin: 0 }}>{construyeMensajeActual}</p>
+            )}
           </div>
         )}
 
@@ -3318,7 +3421,6 @@ if (pantalla === "muerte-victoria") {
       </button>
     </div>
   );
-}
 
 function obtenerStats() {
   return JSON.parse(localStorage.getItem(CLAVE_STATS)) || {};
@@ -4329,14 +4431,42 @@ derrotaOverlayInferior: {
     position: "fixed",
     bottom: 156,
     right: 20,
-    maxWidth: 220,
+    maxWidth: 240,
     background: "#fff",
     borderRadius: 16,
-    padding: "10px 14px",
+    padding: "12px 14px",
     fontSize: 13,
     color: "#4a463f",
     boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
     zIndex: 50
+  },
+  archiveroBotonSi: {
+    flex: 1,
+    border: "none",
+    borderRadius: 10,
+    padding: "8px 6px",
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#fff",
+    background: "#e29aa0",
+    cursor: "pointer"
+  },
+  archiveroBotonNo: {
+    flex: 1,
+    border: "1px solid #e4ddcf",
+    borderRadius: 10,
+    padding: "8px 6px",
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#8a8578",
+    background: "#fff",
+    cursor: "pointer"
+  },
+  construyeFeedbackTexto: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#8a6a4f",
+    fontStyle: "italic"
   }
 };
 
