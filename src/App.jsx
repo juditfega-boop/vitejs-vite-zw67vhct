@@ -365,6 +365,7 @@ const [construyeAmbito, setConstruyeAmbito] = useState([]);
   const [construyeResultados, setConstruyeResultados] = useState({});
   const [construyeMensajes, setConstruyeMensajes] = useState({});
   const [construyeCompleto, setConstruyeCompleto] = useState(false);
+  const [archiveroAbierto, setArchiveroAbierto] = useState(false);
 
   function iniciarConstruye(ambito) {
     setConstruyeAmbito(ambito);
@@ -2221,16 +2222,22 @@ if (pantalla === "construye-jugando") {
         <img src={construyePlantaBaja} alt="" style={styles.edificioPlantaBajaImg} />
         </div>
 
-        <div style={styles.archiveroPresentacion}>
-          <img src={construyeArchivero} alt="Ezequiel, el Archivero" style={styles.archiveroFoto} />
-          <div style={styles.archiveroGloboPresentacion}>
-            Soy Ezequiel, el Archivero. Si necesitas ayuda con alguna puerta, avísame.
-          </div>
-        </div>
-
         <button onClick={comprobarConstruye} style={styles.ctaButton}>
           Comprobar
         </button>
+
+        <button
+          onClick={() => setArchiveroAbierto((v) => !v)}
+          style={styles.archiveroBotonFlotante}
+        >
+          <img src={construyeArchivero} alt="Ezequiel Ander-Egg" style={styles.archiveroFotoFlotante} />
+        </button>
+
+        {archiveroAbierto && (
+          <div style={styles.archiveroGloboFlotante}>
+            Soy Ezequiel Ander-Egg. Si necesitas ayuda con alguna puerta, avísame.
+          </div>
+        )}
 
       <button
         onClick={() => setPantalla("construye-config")}
@@ -4298,28 +4305,38 @@ derrotaOverlayInferior: {
     color: "#4a463f",
     boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
   },
-  archiveroPresentacion: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    margin: "16px 0"
+  archiveroBotonFlotante: {
+    position: "fixed",
+    bottom: 90,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: "50%",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+    zIndex: 50
   },
-  archiveroFoto: {
-    width: 56,
-    height: 56,
+  archiveroFotoFlotante: {
+    width: "100%",
+    height: "100%",
     borderRadius: "50%",
     objectFit: "cover",
-    flexShrink: 0,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+    display: "block"
   },
-  archiveroGloboPresentacion: {
+  archiveroGloboFlotante: {
+    position: "fixed",
+    bottom: 156,
+    right: 20,
+    maxWidth: 220,
     background: "#fff",
     borderRadius: 16,
     padding: "10px 14px",
     fontSize: 13,
     color: "#4a463f",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-    flex: 1
+    boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+    zIndex: 50
   }
 };
 
