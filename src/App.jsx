@@ -442,6 +442,17 @@ function comprobarConstruye() {
     });
     return copia;
   });
+
+  // 🗝️ si alguna planta lleva ya 3 fallos, Ezequiel se abre solo con la oferta de pista
+  const apartadoDificil = construyeAmbito.find(
+    (item) =>
+      (nuevosIntentos[item.id] || 0) >= 3 && resultados[item.id] !== "correcto"
+  );
+
+  if (apartadoDificil) {
+    setConstruyePistaOferta(apartadoDificil.id);
+    setArchiveroAbierto(true);
+  }
 }
 
 function mostrarSiguienteMensajeArchivero() {
@@ -479,11 +490,26 @@ function abrirArchivero() {
 
 function aceptarPistaArchivero(apartadoId) {
   const item = construyeAmbito.find((i) => i.id === apartadoId);
+
   if (item) {
-    setConstruyeMensajeActual(
-      `Este apartado empieza después del artículo ${item.inicio - 1}.`
-    );
+    const respuesta = construyeRespuestas[item.id] || {};
+    const inicioOk = Number(respuesta.inicio) === item.inicio;
+    const finOk = Number(respuesta.fin) === item.fin;
+
+    let texto;
+    if (!finOk && inicioOk) {
+      // el inicio ya está bien, el que falla es el final
+      texto = `Este apartado termina justo antes del artículo ${item.fin + 1}.`;
+    } else if (item.inicio === 1) {
+      // caso especial: no existe "artículo 0"
+      texto = "Este apartado empieza justo en el artículo 1.";
+    } else {
+      texto = `Este apartado empieza después del artículo ${item.inicio - 1}.`;
+    }
+
+    setConstruyeMensajeActual(texto);
   }
+
   setConstruyePistaOferta(null);
 }
 
