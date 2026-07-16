@@ -17,6 +17,7 @@ import { FECHAS_CONSTITUCION } from "./datosFechasConstitucion";
 import { ESTRUCTURA_CONSTITUCION } from "./construyeConstitucion";
 import miniaturaArchivos from "./assets/archivos-miniatura.png";
 import miniaturaConstruye from "./assets/construye-miniatura.png";
+import ilustracionEdificio from "./assets/construye-edificio.png";
 import miniaturaCarreraPlaza from "./assets/carrera-miniatura.jpg";
 
 const CLAVE_STATS = "opo_stats_v1";
@@ -339,87 +340,50 @@ const [archivosPareja, setArchivosPareja] = useState([]);
     }));
   }
 
-// 🏛️ estado del minijuego "Construye la Constitución" (motor genérico:
-  // solo depende de ESTRUCTURA_CONSTITUCION, sustituible por otro archivo)
-  const [construyeAmbito, setConstruyeAmbito] = useState([]);
-  const [construyeRespuestas, setConstruyeRespuestas] = useState({});
-  const [construyeResultados, setConstruyeResultados] = useState({});
-  const [construyeCompleto, setConstruyeCompleto] = useState(false);
-  const [construyeDificultad, setConstruyeDificultad] = useState("facil"); // "facil" | "intermedio" | "experto"
-  const [construyeNombresPool, setConstruyeNombresPool] = useState([]);
-  const [construyeAsignaciones, setConstruyeAsignaciones] = useState({});
-  const [construyeNombreSeleccionado, setConstruyeNombreSeleccionado] = useState(null);
+// 🏛️ estado del minijuego "Construye la Constitución"
+const [construyeAmbito, setConstruyeAmbito] = useState([]);
+const [construyeRespuestas, setConstruyeRespuestas] = useState({});
+const [construyeResultados, setConstruyeResultados] = useState({});
+const [construyeCompleto, setConstruyeCompleto] = useState(false);
 
-  function iniciarConstruye(ambito) {
-    setConstruyeAmbito(ambito);
-    setConstruyeRespuestas({});
-    setConstruyeResultados({});
-    setConstruyeCompleto(false);
-    setConstruyeAsignaciones({});
-    setConstruyeNombreSeleccionado(null);
-    setConstruyeNombresPool(
-      mezclar(ambito.map((i) => ({ id: i.id, nombre: i.nombre })))
-    );
-    setPantalla("construye-jugando");
-  }
+function iniciarConstruye(ambito) {
+  setConstruyeAmbito(ambito);
+  setConstruyeRespuestas({});
+  setConstruyeResultados({});
+  setConstruyeCompleto(false);
+  setPantalla("construye-jugando");
+}
 
-  function seleccionarNombreConstruye(id) {
-    setConstruyeNombreSeleccionado(id === construyeNombreSeleccionado ? null : id);
-  }
+function actualizarRespuestaConstruye(id, campo, valor) {
+  setConstruyeRespuestas((prev) => ({
+    ...prev,
+    [id]: { ...prev[id], [campo]: valor }
+  }));
+}
 
-  function asignarNombreConstruye(apartadoId) {
-    if (construyeNombreSeleccionado === null) return;
-    setConstruyeAsignaciones((prev) => ({
-      ...prev,
-      [apartadoId]: construyeNombreSeleccionado
-    }));
-    setConstruyeNombreSeleccionado(null);
-  }
+function comprobarConstruye() {
+  const resultados = {};
+  let todoCorrecto = true;
 
-  function quitarAsignacionConstruye(apartadoId) {
-    setConstruyeAsignaciones((prev) => {
-      const copia = { ...prev };
-      delete copia[apartadoId];
-      return copia;
-    });
-  }
+  construyeAmbito.forEach((item) => {
+    const respuesta = construyeRespuestas[item.id] || {};
+    const inicioOk = Number(respuesta.inicio) === item.inicio;
+    const finOk = Number(respuesta.fin) === item.fin;
 
-  function actualizarRespuestaConstruye(id, campo, valor) {
-    setConstruyeRespuestas((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [campo]: valor }
-    }));
-  }
+    if (inicioOk && finOk) {
+      resultados[item.id] = "correcto";
+    } else if (inicioOk || finOk) {
+      resultados[item.id] = "parcial";
+      todoCorrecto = false;
+    } else {
+      resultados[item.id] = "incorrecto";
+      todoCorrecto = false;
+    }
+  });
 
-  function comprobarConstruye() {
-    const resultados = {};
-    let todoCorrecto = true;
-
-    construyeAmbito.forEach((item) => {
-      const respuesta = construyeRespuestas[item.id] || {};
-      const inicioOk = Number(respuesta.inicio) === item.inicio;
-      const finOk = Number(respuesta.fin) === item.fin;
-      const nombreOk =
-        construyeDificultad === "facil" ||
-        construyeAsignaciones[item.id] === item.id;
-
-      const aciertosParciales = [inicioOk, finOk, nombreOk].filter(Boolean).length;
-      const totalCampos = construyeDificultad === "facil" ? 2 : 3;
-
-      if (aciertosParciales === totalCampos) {
-        resultados[item.id] = "correcto";
-      } else if (aciertosParciales > 0) {
-        resultados[item.id] = "parcial";
-        todoCorrecto = false;
-      } else {
-        resultados[item.id] = "incorrecto";
-        todoCorrecto = false;
-      }
-    });
-
-    setConstruyeResultados(resultados);
-    setConstruyeCompleto(todoCorrecto);
-  }
+  setConstruyeResultados(resultados);
+  setConstruyeCompleto(todoCorrecto);
+}
 
   function eliminarPartidaHistorial(index) {
     const historial = obtenerHistorialJuego();
@@ -2078,16 +2042,22 @@ const [archivosPareja, setArchivosPareja] = useState([]);
     );
   }
 
-  // 🏛️ DETALLE DE "CONSTRUYE LA CONSTITUCIÓN"
-  if (pantalla === "construye-detalle") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>🏛️ Construye la Constitución</h1>
-          <div style={styles.menuUnderline} />
-        </div>
+// 🏛️ DETALLE DE "CONSTRUYE LA CONSTITUCIÓN"
+if (pantalla === "construye-detalle") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>🏛️ Construye la Constitución</h1>
+        <div style={styles.menuUnderline} />
+      </div>
 
-        <p style={styles.configSubLabel}>
+      <img
+        src={ilustracionEdificio}
+        alt="Edificio de la Constitución"
+        style={styles.construyeIlustracion}
+      />
+
+      <p style={styles.configSubLabel}>
           La Constitución se ha desmontado. Tu misión es volver a
           construirla, planta a planta: completa el artículo inicial y
           final de cada título, capítulo y sección.
@@ -2116,50 +2086,6 @@ if (pantalla === "construye-config") {
       <div style={styles.menuHeader}>
         <h1 style={styles.menuTitle}>¿Qué quieres construir?</h1>
         <div style={styles.menuUnderline} />
-      </div>
-
-      <div style={styles.configCard}>
-        <p style={styles.configCardTitle}>Dificultad</p>
-        <div style={styles.pillGroup}>
-          <button
-            className="pill"
-            onClick={() => setConstruyeDificultad("facil")}
-            style={{
-              ...styles.pillBtn,
-              ...(construyeDificultad === "facil" ? styles.pillBtnActiva : {})
-            }}
-          >
-            🟢 Fácil
-          </button>
-          <button
-            className="pill"
-            onClick={() => setConstruyeDificultad("intermedio")}
-            style={{
-              ...styles.pillBtn,
-              ...(construyeDificultad === "intermedio" ? styles.pillBtnActiva : {})
-            }}
-          >
-            🟡 Intermedio
-          </button>
-          <button
-            className="pill"
-            onClick={() => setConstruyeDificultad("experto")}
-            style={{
-              ...styles.pillBtn,
-              ...(construyeDificultad === "experto" ? styles.pillBtnActiva : {})
-            }}
-          >
-            🔴 Experto
-          </button>
-        </div>
-        <p style={{ ...styles.configSubLabel, marginTop: 10 }}>
-          {construyeDificultad === "facil" &&
-            "Rellena solo el artículo inicial y final de cada apartado."}
-          {construyeDificultad === "intermedio" &&
-            "Además, coloca el nombre correcto de cada apartado (Título, Capítulo, Sección...)."}
-          {construyeDificultad === "experto" &&
-            "Igual que Intermedio, pero sin ver la descripción de cada apartado."}
-        </p>
       </div>
 
       <button
@@ -2196,8 +2122,6 @@ if (pantalla === "construye-config") {
 
 // 🏛️ "CONSTRUYE LA CONSTITUCIÓN" — EN CURSO
 if (pantalla === "construye-jugando") {
-  const nombresUsados = Object.values(construyeAsignaciones);
-
   return (
     <div style={styles.menuContainer}>
       <div style={styles.menuHeader}>
@@ -2205,24 +2129,11 @@ if (pantalla === "construye-jugando") {
         <div style={styles.menuUnderline} />
       </div>
 
-      {/* 🏛️ edificio visual: un "piso" por apartado, que se colorea según su estado */}
-      <div style={styles.edificioTejado} />
-      <div style={styles.edificioPisos}>
-        {construyeAmbito.map((item) => {
-          const resultado = construyeResultados[item.id];
-          const color =
-            resultado === "correcto"
-              ? "#8fbf8f"
-              : resultado === "parcial"
-              ? "#e8c96a"
-              : resultado === "incorrecto"
-              ? "#d98888"
-              : "#d8d3c9";
-          return (
-            <div key={item.id} style={{ ...styles.edificioPiso, background: color }} />
-          );
-        })}
-      </div>
+      <img
+        src={ilustracionEdificio}
+        alt="Edificio de la Constitución"
+        style={styles.construyeIlustracionPequena}
+      />
 
       {construyeCompleto && (
         <div style={{ ...styles.configCard, textAlign: "center" }}>
@@ -2236,8 +2147,6 @@ if (pantalla === "construye-jugando") {
       {construyeAmbito.map((item) => {
         const resultado = construyeResultados[item.id];
         const respuesta = construyeRespuestas[item.id] || {};
-        const nombreAsignado = construyeAsignaciones[item.id];
-        const nombreCard = construyeNombresPool.find((n) => n.id === nombreAsignado);
 
         const fondo =
           resultado === "correcto"
@@ -2260,31 +2169,12 @@ if (pantalla === "construye-jugando") {
               background: fondo
             }}
           >
-            {construyeDificultad === "facil" ? (
-              <p style={styles.configCardTitle}>
-                {item.nombre} {resultado === "correcto" ? "✅" : ""}
-              </p>
-            ) : (
-              <button
-                onClick={() =>
-                  nombreAsignado
-                    ? quitarAsignacionConstruye(item.id)
-                    : asignarNombreConstruye(item.id)
-                }
-                style={styles.construyeCasillaNombre}
-              >
-                {nombreCard ? nombreCard.nombre : "Toca para colocar el nombre"}{" "}
-                {resultado === "correcto" ? "✅" : ""}
-              </button>
-            )}
+            <p style={styles.configCardTitle}>
+              {item.nombre} {resultado === "correcto" ? "✅" : ""}
+            </p>
+            <p style={{ ...styles.configSubLabel, marginBottom: 10 }}>{item.titulo}</p>
 
-            {construyeDificultad !== "experto" && (
-              <p style={{ ...styles.configSubLabel, marginBottom: 10, marginTop: 6 }}>
-                {item.titulo}
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+            <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1 }}>
                 <label style={styles.configSubLabel}>Artículo inicial</label>
                 <input
@@ -2311,31 +2201,6 @@ if (pantalla === "construye-jugando") {
           </div>
         );
       })}
-
-      {construyeDificultad !== "facil" && (
-        <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Nombres disponibles</p>
-          <div style={styles.bloquesGrid}>
-            {construyeNombresPool
-              .filter((n) => !nombresUsados.includes(n.id))
-              .map((n) => (
-                <button
-                  key={n.id}
-                  className="bloque-chip"
-                  onClick={() => seleccionarNombreConstruye(n.id)}
-                  style={{
-                    ...styles.bloqueChip,
-                    ...(construyeNombreSeleccionado === n.id
-                      ? styles.bloqueChipActiva
-                      : {})
-                  }}
-                >
-                  {n.nombre}
-                </button>
-              ))}
-          </div>
-        </div>
-      )}
 
       <button onClick={comprobarConstruye} style={styles.ctaButton}>
         Comprobar
@@ -4361,6 +4226,18 @@ derrotaOverlayInferior: {
     fontWeight: 700,
     color: "#4a463f",
     cursor: "pointer"
+  },
+  construyeIlustracion: {
+    display: "block",
+    width: "100%",
+    maxWidth: 260,
+    margin: "0 auto 20px"
+  },
+  construyeIlustracionPequena: {
+    display: "block",
+    width: "100%",
+    maxWidth: 140,
+    margin: "0 auto 16px"
   }
 };
 
