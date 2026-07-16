@@ -345,13 +345,43 @@ const [archivosPareja, setArchivosPareja] = useState([]);
   const [construyeRespuestas, setConstruyeRespuestas] = useState({});
   const [construyeResultados, setConstruyeResultados] = useState({});
   const [construyeCompleto, setConstruyeCompleto] = useState(false);
+  const [construyeDificultad, setConstruyeDificultad] = useState("facil"); // "facil" | "intermedio" | "experto"
+  const [construyeNombresPool, setConstruyeNombresPool] = useState([]);
+  const [construyeAsignaciones, setConstruyeAsignaciones] = useState({});
+  const [construyeNombreSeleccionado, setConstruyeNombreSeleccionado] = useState(null);
 
   function iniciarConstruye(ambito) {
     setConstruyeAmbito(ambito);
     setConstruyeRespuestas({});
     setConstruyeResultados({});
     setConstruyeCompleto(false);
+    setConstruyeAsignaciones({});
+    setConstruyeNombreSeleccionado(null);
+    setConstruyeNombresPool(
+      mezclar(ambito.map((i) => ({ id: i.id, nombre: i.nombre })))
+    );
     setPantalla("construye-jugando");
+  }
+
+  function seleccionarNombreConstruye(id) {
+    setConstruyeNombreSeleccionado(id === construyeNombreSeleccionado ? null : id);
+  }
+
+  function asignarNombreConstruye(apartadoId) {
+    if (construyeNombreSeleccionado === null) return;
+    setConstruyeAsignaciones((prev) => ({
+      ...prev,
+      [apartadoId]: construyeNombreSeleccionado
+    }));
+    setConstruyeNombreSeleccionado(null);
+  }
+
+  function quitarAsignacionConstruye(apartadoId) {
+    setConstruyeAsignaciones((prev) => {
+      const copia = { ...prev };
+      delete copia[apartadoId];
+      return copia;
+    });
   }
 
   function actualizarRespuestaConstruye(id, campo, valor) {
@@ -369,10 +399,16 @@ const [archivosPareja, setArchivosPareja] = useState([]);
       const respuesta = construyeRespuestas[item.id] || {};
       const inicioOk = Number(respuesta.inicio) === item.inicio;
       const finOk = Number(respuesta.fin) === item.fin;
+      const nombreOk =
+        construyeDificultad === "facil" ||
+        construyeAsignaciones[item.id] === item.id;
 
-      if (inicioOk && finOk) {
+      const aciertosParciales = [inicioOk, finOk, nombreOk].filter(Boolean).length;
+      const totalCampos = construyeDificultad === "facil" ? 2 : 3;
+
+      if (aciertosParciales === totalCampos) {
         resultados[item.id] = "correcto";
-      } else if (inicioOk || finOk) {
+      } else if (aciertosParciales > 0) {
         resultados[item.id] = "parcial";
         todoCorrecto = false;
       } else {
@@ -2071,24 +2107,68 @@ const [archivosPareja, setArchivosPareja] = useState([]);
     );
   }
 
-  // 🏛️ ELEGIR QUÉ CONSTRUIR
-  if (pantalla === "construye-config") {
-    const titulos = ESTRUCTURA_CONSTITUCION.filter((i) => i.tipo === "Título");
+// 🏛️ ELEGIR QUÉ CONSTRUIR
+if (pantalla === "construye-config") {
+  const titulos = ESTRUCTURA_CONSTITUCION.filter((i) => i.tipo === "Título");
 
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>¿Qué quieres construir?</h1>
-          <div style={styles.menuUnderline} />
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>¿Qué quieres construir?</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <div style={styles.configCard}>
+        <p style={styles.configCardTitle}>Dificultad</p>
+        <div style={styles.pillGroup}>
+          <button
+            className="pill"
+            onClick={() => setConstruyeDificultad("facil")}
+            style={{
+              ...styles.pillBtn,
+              ...(construyeDificultad === "facil" ? styles.pillBtnActiva : {})
+            }}
+          >
+            🟢 Fácil
+          </button>
+          <button
+            className="pill"
+            onClick={() => setConstruyeDificultad("intermedio")}
+            style={{
+              ...styles.pillBtn,
+              ...(construyeDificultad === "intermedio" ? styles.pillBtnActiva : {})
+            }}
+          >
+            🟡 Intermedio
+          </button>
+          <button
+            className="pill"
+            onClick={() => setConstruyeDificultad("experto")}
+            style={{
+              ...styles.pillBtn,
+              ...(construyeDificultad === "experto" ? styles.pillBtnActiva : {})
+            }}
+          >
+            🔴 Experto
+          </button>
         </div>
+        <p style={{ ...styles.configSubLabel, marginTop: 10 }}>
+          {construyeDificultad === "facil" &&
+            "Rellena solo el artículo inicial y final de cada apartado."}
+          {construyeDificultad === "intermedio" &&
+            "Además, coloca el nombre correcto de cada apartado (Título, Capítulo, Sección...)."}
+          {construyeDificultad === "experto" &&
+            "Igual que Intermedio, pero sin ver la descripción de cada apartado."}
+        </p>
+      </div>
 
-        <button
-          onClick={() => iniciarConstruye(ESTRUCTURA_CONSTITUCION)}
-          style={{ ...styles.menuButton, ...styles.btnPeach }}
-          className="menu-btn"
-        >
-          🏛️ La Constitución completa
-        </button>
+      <button
+        onClick={() => iniciarConstruye(ESTRUCTURA_CONSTITUCION)}
+        style={{ ...styles.menuButton, ...styles.btnPeach }}
+        className="menu-btn"
+      >
+        🏛️ La Constitución completa
+      </button>
 
         {titulos.map((t) => (
           <button
@@ -2114,99 +2194,166 @@ const [archivosPareja, setArchivosPareja] = useState([]);
     );
   }
 
-  // 🏛️ "CONSTRUYE LA CONSTITUCIÓN" — EN CURSO
-  if (pantalla === "construye-jugando") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>🏛️ Construyendo...</h1>
-          <div style={styles.menuUnderline} />
-        </div>
+// 🏛️ "CONSTRUYE LA CONSTITUCIÓN" — EN CURSO
+if (pantalla === "construye-jugando") {
+  const nombresUsados = Object.values(construyeAsignaciones);
 
-        {construyeCompleto && (
-          <div style={{ ...styles.configCard, textAlign: "center" }}>
-            <p style={{ fontSize: 20, margin: 0 }}>🏛️ ¡Constitución reconstruida!</p>
-            <p style={styles.configSubLabel}>
-              Has completado correctamente toda esta estructura.
-            </p>
-          </div>
-        )}
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>🏛️ Construyendo...</h1>
+        <div style={styles.menuUnderline} />
+      </div>
 
+      {/* 🏛️ edificio visual: un "piso" por apartado, que se colorea según su estado */}
+      <div style={styles.edificioTejado} />
+      <div style={styles.edificioPisos}>
         {construyeAmbito.map((item) => {
           const resultado = construyeResultados[item.id];
-          const respuesta = construyeRespuestas[item.id] || {};
-
-          const fondo =
+          const color =
             resultado === "correcto"
-              ? "#d4edda"
+              ? "#8fbf8f"
               : resultado === "parcial"
-              ? "#fff3cd"
+              ? "#e8c96a"
               : resultado === "incorrecto"
-              ? "#f8d7da"
-              : "#fff";
-
-          const sangria =
-            item.tipo === "Sección" ? 28 : item.tipo === "Capítulo" ? 14 : 0;
-
+              ? "#d98888"
+              : "#d8d3c9";
           return (
-            <div
-              key={item.id}
-              style={{
-                ...styles.configCard,
-                marginLeft: sangria,
-                background: fondo
-              }}
-            >
+            <div key={item.id} style={{ ...styles.edificioPiso, background: color }} />
+          );
+        })}
+      </div>
+
+      {construyeCompleto && (
+        <div style={{ ...styles.configCard, textAlign: "center" }}>
+          <p style={{ fontSize: 20, margin: 0 }}>🏛️ ¡Constitución reconstruida!</p>
+          <p style={styles.configSubLabel}>
+            Has completado correctamente toda esta estructura.
+          </p>
+        </div>
+      )}
+
+      {construyeAmbito.map((item) => {
+        const resultado = construyeResultados[item.id];
+        const respuesta = construyeRespuestas[item.id] || {};
+        const nombreAsignado = construyeAsignaciones[item.id];
+        const nombreCard = construyeNombresPool.find((n) => n.id === nombreAsignado);
+
+        const fondo =
+          resultado === "correcto"
+            ? "#d4edda"
+            : resultado === "parcial"
+            ? "#fff3cd"
+            : resultado === "incorrecto"
+            ? "#f8d7da"
+            : "#fff";
+
+        const sangria =
+          item.tipo === "Sección" ? 28 : item.tipo === "Capítulo" ? 14 : 0;
+
+        return (
+          <div
+            key={item.id}
+            style={{
+              ...styles.configCard,
+              marginLeft: sangria,
+              background: fondo
+            }}
+          >
+            {construyeDificultad === "facil" ? (
               <p style={styles.configCardTitle}>
                 {item.nombre} {resultado === "correcto" ? "✅" : ""}
               </p>
-              <p style={{ ...styles.configSubLabel, marginBottom: 10 }}>{item.titulo}</p>
+            ) : (
+              <button
+                onClick={() =>
+                  nombreAsignado
+                    ? quitarAsignacionConstruye(item.id)
+                    : asignarNombreConstruye(item.id)
+                }
+                style={styles.construyeCasillaNombre}
+              >
+                {nombreCard ? nombreCard.nombre : "Toca para colocar el nombre"}{" "}
+                {resultado === "correcto" ? "✅" : ""}
+              </button>
+            )}
 
-              <div style={{ display: "flex", gap: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={styles.configSubLabel}>Artículo inicial</label>
-                  <input
-                    type="number"
-                    value={respuesta.inicio || ""}
-                    onChange={(e) =>
-                      actualizarRespuestaConstruye(item.id, "inicio", e.target.value)
-                    }
-                    style={styles.numeroInput}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={styles.configSubLabel}>Artículo final</label>
-                  <input
-                    type="number"
-                    value={respuesta.fin || ""}
-                    onChange={(e) =>
-                      actualizarRespuestaConstruye(item.id, "fin", e.target.value)
-                    }
-                    style={styles.numeroInput}
-                  />
-                </div>
+            {construyeDificultad !== "experto" && (
+              <p style={{ ...styles.configSubLabel, marginBottom: 10, marginTop: 6 }}>
+                {item.titulo}
+              </p>
+            )}
+
+            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+              <div style={{ flex: 1 }}>
+                <label style={styles.configSubLabel}>Artículo inicial</label>
+                <input
+                  type="number"
+                  value={respuesta.inicio || ""}
+                  onChange={(e) =>
+                    actualizarRespuestaConstruye(item.id, "inicio", e.target.value)
+                  }
+                  style={styles.numeroInput}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={styles.configSubLabel}>Artículo final</label>
+                <input
+                  type="number"
+                  value={respuesta.fin || ""}
+                  onChange={(e) =>
+                    actualizarRespuestaConstruye(item.id, "fin", e.target.value)
+                  }
+                  style={styles.numeroInput}
+                />
               </div>
             </div>
-          );
-        })}
+          </div>
+        );
+      })}
 
-        <button onClick={comprobarConstruye} style={styles.ctaButton}>
-          Comprobar
-        </button>
+      {construyeDificultad !== "facil" && (
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Nombres disponibles</p>
+          <div style={styles.bloquesGrid}>
+            {construyeNombresPool
+              .filter((n) => !nombresUsados.includes(n.id))
+              .map((n) => (
+                <button
+                  key={n.id}
+                  className="bloque-chip"
+                  onClick={() => seleccionarNombreConstruye(n.id)}
+                  style={{
+                    ...styles.bloqueChip,
+                    ...(construyeNombreSeleccionado === n.id
+                      ? styles.bloqueChipActiva
+                      : {})
+                  }}
+                >
+                  {n.nombre}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
 
-        <button
-          onClick={() => setPantalla("construye-config")}
-          style={styles.linkVolver}
-        >
-          ⬅ Elegir otra vez qué construir
-        </button>
+      <button onClick={comprobarConstruye} style={styles.ctaButton}>
+        Comprobar
+      </button>
 
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver a minijuegos
-        </button>
-      </div>
-    );
-  }
+      <button
+        onClick={() => setPantalla("construye-config")}
+        style={styles.linkVolver}
+      >
+        ⬅ Elegir otra vez qué construir
+      </button>
+
+      <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+        ⬅ Volver a minijuegos
+      </button>
+    </div>
+  );
+}
 
   // 📁 "CONECTA LA CONSTITUCIÓN" — EN CURSO
   if (pantalla === "archivos-jugando") {
@@ -4178,6 +4325,42 @@ derrotaOverlayInferior: {
     marginTop: 4,
     cursor: "pointer",
     textShadow: "0 1px 4px rgba(255,255,255,0.75)"
+  },
+
+  // 🏛️ edificio visual de "Construye la Constitución"
+  edificioTejado: {
+    width: 0,
+    height: 0,
+    margin: "0 auto",
+    borderLeft: "18px solid transparent",
+    borderRight: "18px solid transparent",
+    borderBottom: "16px solid #8a8578"
+  },
+  edificioPisos: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 3,
+    width: "100%",
+    maxWidth: 280,
+    margin: "0 auto 20px"
+  },
+  edificioPiso: {
+    height: 16,
+    borderRadius: 4,
+    transition: "background 0.4s ease"
+  },
+  construyeCasillaNombre: {
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    border: "1px dashed #c9c2b4",
+    background: "#faf7f2",
+    borderRadius: 10,
+    padding: "10px 12px",
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#4a463f",
+    cursor: "pointer"
   }
 };
 
