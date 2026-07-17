@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { cargarPreguntas } from "./cargarPreguntas";
 import portada from "./assets/portada.jpeg";
-import video2Jugadoras from "./assets/carrera-video-2.mp4";
-import video3Jugadoras from "./assets/carrera-video-3.mp4";
-import video4Jugadoras from "./assets/carrera-video-4.mp4";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import muerteImg0 from "./assets/trabajadora-0.png";
@@ -19,7 +16,7 @@ import miniaturaCarreraPlaza from "./assets/carrera-miniatura.jpg";
 import { globalStyles, styles } from "./estilos";
 import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
-
+import CarreraPlaza from "./juegos/CarreraPlaza";
 
 const CLAVE_STATS = "opo_stats_v1";
 const CLAVE_RACHA = "opo_racha_v1";
@@ -39,14 +36,7 @@ const FRASES_BIENVENIDA = [
 ];
 
 // 🎮 frases graciosas para el minijuego "Carrera por la Plaza"
-const FRASES_MINIJUEGO = [
-  "El comité técnico ha deliberado: alguien necesita repasar la Ley 😅",
-  "Esta partida generaría un informe social muy interesante",
-  "Nivel de coordinación de caso: mejorable",
-  "Ander-Egg estaría tomando notas de esta sesión, y sugeriría que os pusieráis a estudiar",
-  "Recordad: Debéis una cerveza a quién haya ganado",
-  "La derivación de este grupo está clara: ¡Toca estudiar!"
-];
+
 // ☠️ frases de derrota para "Salva a tu trabajadora social"
 const FRASES_DERROTA_MUERTE = [
   "Esta vez la burocracia ganó.",
@@ -55,25 +45,6 @@ const FRASES_DERROTA_MUERTE = [
   "Ni Mary Richmond pudo con tanto papeleo de golpe."
 ];
 
-// 🎬 posiciones medidas (top/left en %) de cada carril en el segundo 5 del vídeo,
-// ordenadas de 1ª a última posición según el vídeo correspondiente
-const POSICIONES_VIDEO = {
-  2: [
-    { top: 15, left: 6 },
-    { top: 32, left: 6 }
-  ],
-  3: [
-    { top: 15, left: 6 },
-    { top: 32, left: 6 },
-    { top: 49, left: 6 }
-  ],
-  4: [
-    { top: 15, left: 6 },
-    { top: 32, left: 6 },
-    { top: 49, left: 6 },
-    { top: 66, left: 6 }
-  ]
-};
 
 export default function App() {
   const [preguntasBase, setPreguntasBase] = useState([]);
@@ -125,25 +96,6 @@ export default function App() {
     sincronizarConNube();
   }
 
-  // 🎮 estado del minijuego "Carrera por la Plaza" (independiente de las estadísticas personales)
-  const [juegoNumJugadores, setJuegoNumJugadores] = useState(2);
-  const [juegoNombres, setJuegoNombres] = useState(["Jugadora 1", "Jugadora 2"]);
-  const [juegoTipo, setJuegoTipo] = useState("general"); // "general" | "bloques"
-  const [juegoBloquesSeleccionados, setJuegoBloquesSeleccionados] = useState([]);
-  const [juegoNumPreguntas, setJuegoNumPreguntas] = useState(10);
-  const [juegoCronometroActivo, setJuegoCronometroActivo] = useState(false);
-
-  const [preguntasJuego, setPreguntasJuego] = useState([]);
-  const [puntuacionesJuego, setPuntuacionesJuego] = useState([]);
-  const [turnoActual, setTurnoActual] = useState(0);
-  const [respuestaSeleccionadaJuego, setRespuestaSeleccionadaJuego] = useState(null);
-  const [tiempoRestanteJuego, setTiempoRestanteJuego] = useState(null);
-  const [piezasConfeti, setPiezasConfeti] = useState([]);
-  const [fraseJuego, setFraseJuego] = useState("");
-  const [inicioTurno, setInicioTurno] = useState(null);
-  const [jugadoraExpandida, setJugadoraExpandida] = useState(null);
-  const [mostrarNombresVideo, setMostrarNombresVideo] = useState(false);
-  const [refrescoHistorial, setRefrescoHistorial] = useState(0);
 
   // ☠️ estado del minijuego "Salva a tu trabajadora social" (una sola jugadora, una sola vida)
   const [muerteTipo, setMuerteTipo] = useState("general"); // "general" | "bloques"
@@ -231,18 +183,6 @@ export default function App() {
     }
   }
 
-  function eliminarPartidaHistorial(index) {
-    const historial = obtenerHistorialJuego();
-    historial.splice(index, 1);
-    localStorage.setItem(CLAVE_HISTORIAL_JUEGO, JSON.stringify(historial));
-    setRefrescoHistorial((v) => v + 1);
-  }
-
-  function vaciarHistorialJuego() {
-    localStorage.setItem(CLAVE_HISTORIAL_JUEGO, JSON.stringify([]));
-    setRefrescoHistorial((v) => v + 1);
-  }
-
   // ☁️ código personal para sincronizar el progreso entre dispositivos
   const [codigo, setCodigo] = useState(
     () => localStorage.getItem(CLAVE_CODIGO) || ""
@@ -316,30 +256,6 @@ export default function App() {
     setMensajeSync("");
   }
 
-  function cambiarNumJugadoresJuego(n) {
-    setJuegoNumJugadores(n);
-    setJuegoNombres((prev) => {
-      const nuevo = [...prev];
-      while (nuevo.length < n) nuevo.push(`Jugadora ${nuevo.length + 1}`);
-      return nuevo.slice(0, n);
-    });
-  }
-
-  function actualizarNombreJugador(i, valor) {
-    setJuegoNombres((prev) => {
-      const copia = [...prev];
-      copia[i] = valor;
-      return copia;
-    });
-  }
-
-  function toggleBloqueJuego(nombre) {
-    setJuegoBloquesSeleccionados((prev) =>
-      prev.includes(nombre)
-        ? prev.filter((b) => b !== nombre)
-        : [...prev, nombre]
-    );
-  }
 
   useEffect(() => {
     async function init() {
@@ -359,13 +275,6 @@ export default function App() {
 
   const pregunta = preguntas[indice];
 
-  // 🎮 turno actual del minijuego (rota entre jugadores)
-  const totalTurnosJuego = juegoNumJugadores * juegoNumPreguntas;
-  const jugadorActualIndice = turnoActual % juegoNumJugadores;
-  const rondaActualJuego = Math.floor(turnoActual / juegoNumJugadores);
-  const preguntaJuego =
-    preguntasJuego[jugadorActualIndice] &&
-    preguntasJuego[jugadorActualIndice][rondaActualJuego];
 
   const stats = obtenerStats();
   const totalRespondidas = Object.values(stats).reduce(
@@ -421,52 +330,6 @@ export default function App() {
     return () => clearTimeout(id);
   }, [pantalla, tiempoRestanteSimulacro]);
 
-  // ⏱️ cuenta atrás del minijuego (1 min por turno, si el cronómetro está activo)
-  useEffect(() => {
-    if (
-      pantalla !== "juego-jugando" ||
-      !juegoCronometroActivo ||
-      tiempoRestanteJuego === null
-    )
-      return;
-
-    if (tiempoRestanteJuego <= 0) {
-      if (respuestaSeleccionadaJuego === null) {
-        const tiempoUsado = inicioTurno ? Date.now() - inicioTurno : 60000;
-
-        setPuntuacionesJuego((prev) => {
-          const copia = [...prev];
-          if (copia[jugadorActualIndice]) {
-            const actual = copia[jugadorActualIndice];
-            copia[jugadorActualIndice] = {
-              ...actual,
-              errores: actual.errores + 1,
-              tiempoTotal: (actual.tiempoTotal || 0) + tiempoUsado,
-              fallos: [
-                ...actual.fallos,
-                {
-                  pregunta: preguntaJuego ? preguntaJuego.pregunta : "",
-                  respuestaDada: "(sin responder a tiempo)",
-                  correcta: preguntaJuego
-                    ? preguntaJuego.respuestas[preguntaJuego.correcta]
-                    : ""
-                }
-              ]
-            };
-          }
-          return copia;
-        });
-      }
-      avanzarTurno();
-      return;
-    }
-
-    const id = setTimeout(() => {
-      setTiempoRestanteJuego((t) => (t !== null ? t - 1 : null));
-    }, 1000);
-
-    return () => clearTimeout(id);
-  }, [pantalla, tiempoRestanteJuego, juegoCronometroActivo, turnoActual]);
 
   // ⏱️ cuenta atrás de Salva a tu trabajadora social (si el cronómetro está activo)
   useEffect(() => {
@@ -702,120 +565,6 @@ export default function App() {
     setConExplicacion(true);
     actualizarRacha();
     setPantalla("quiz");
-  }
-
-  // 🎮 MINIJUEGO "CARRERA POR LA PLAZA" — no toca estadísticas ni memoria personal
-
-  function comenzarPartida() {
-    let listaFuente = preguntasBase;
-
-    if (juegoTipo === "bloques") {
-      listaFuente = preguntasBase.filter((p) =>
-        juegoBloquesSeleccionados.includes(p.bloque || "Sin bloque")
-      );
-    }
-
-    const totalNecesarias = juegoNumJugadores * juegoNumPreguntas;
-    const pool = mezclar(listaFuente)
-      .slice(0, totalNecesarias)
-      .map(prepararPregunta);
-
-    const porJugador = [];
-    for (let j = 0; j < juegoNumJugadores; j++) {
-      porJugador.push(
-        pool.slice(j * juegoNumPreguntas, (j + 1) * juegoNumPreguntas)
-      );
-    }
-
-    setPreguntasJuego(porJugador);
-    setPuntuacionesJuego(
-      juegoNombres.slice(0, juegoNumJugadores).map((nombre) => ({
-        nombre: nombre.trim() || "Jugadora",
-        aciertos: 0,
-        errores: 0,
-        tiempoTotal: 0,
-        fallos: []
-      }))
-    );
-    setTurnoActual(0);
-    setRespuestaSeleccionadaJuego(null);
-    setJugadoraExpandida(null);
-    setMostrarNombresVideo(false);
-    setPantalla("juego-transicion");
-  }
-
-  function comenzarTurno() {
-    setRespuestaSeleccionadaJuego(null);
-    setTiempoRestanteJuego(juegoCronometroActivo ? 60 : null);
-    setInicioTurno(Date.now());
-    setPantalla("juego-jugando");
-  }
-
-  function responderJuego(i) {
-    if (respuestaSeleccionadaJuego !== null || !preguntaJuego) return;
-
-    setRespuestaSeleccionadaJuego(i);
-
-    const esCorrecta = i === preguntaJuego.correcta;
-    const tiempoUsado = inicioTurno ? Date.now() - inicioTurno : 0;
-
-    setPuntuacionesJuego((prev) => {
-      const copia = [...prev];
-      const actual = copia[jugadorActualIndice];
-      copia[jugadorActualIndice] = {
-        ...actual,
-        aciertos: actual.aciertos + (esCorrecta ? 1 : 0),
-        errores: actual.errores + (esCorrecta ? 0 : 1),
-        tiempoTotal: (actual.tiempoTotal || 0) + tiempoUsado,
-        fallos: esCorrecta
-          ? actual.fallos
-          : [
-              ...actual.fallos,
-              {
-                pregunta: preguntaJuego.pregunta,
-                respuestaDada: preguntaJuego.respuestas[i],
-                correcta: preguntaJuego.respuestas[preguntaJuego.correcta]
-              }
-            ]
-      };
-      return copia;
-    });
-  }
-
-  function avanzarTurno() {
-    const siguienteTurno = turnoActual + 1;
-
-    if (siguienteTurno >= totalTurnosJuego) {
-      finalizarJuego();
-    } else {
-      setTurnoActual(siguienteTurno);
-      setRespuestaSeleccionadaJuego(null);
-      setPantalla("juego-transicion");
-    }
-  }
-
-  function generarConfeti() {
-    const colores = ["#f2b366", "#e29aa0", "#d9cdf0", "#d7dcc0", "#f3cdd2"];
-
-    return Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      izquierda: Math.random() * 100,
-      retraso: Math.random() * 0.6,
-      duracion: 2.2 + Math.random() * 1.6,
-      color: colores[i % colores.length],
-      giro: Math.round(Math.random() * 360)
-    }));
-  }
-
-  function finalizarJuego() {
-    setTiempoRestanteJuego(null);
-    setPiezasConfeti(generarConfeti());
-    setFraseJuego(
-      FRASES_MINIJUEGO[Math.floor(Math.random() * FRASES_MINIJUEGO.length)]
-    );
-    guardarPartidaHistorial(puntuacionesJuego);
-    setMostrarNombresVideo(false);
-    setPantalla("juego-resultado");
   }
 
   function obtenerPreguntasDebiles(lista) {
@@ -1702,7 +1451,7 @@ export default function App() {
         id: "carrera",
         nombre: "Carrera por la Plaza",
         miniatura: miniaturaCarreraPlaza,
-        destino: "juego-detalle-carrera"
+        destino: "carrera"
       },
       {
         id: "muerte",
@@ -1760,38 +1509,13 @@ export default function App() {
   }
 
   // 🏁 DETALLE DE "CARRERA POR LA PLAZA"
-  if (pantalla === "juego-detalle-carrera") {
+  if (pantalla === "carrera") {
     return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>🏁 Carrera por la Plaza</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-
-        <p style={styles.configSubLabel}>
-          De 2 a 4 personas, un solo dispositivo. Cada jugadora responde su
-          propia tanda de preguntas por turnos, sin ver el resultado hasta
-          el final. Gana quien más aciertos consiga.
-        </p>
-
-        <button
-          onClick={() => setPantalla("juego-config")}
-          style={styles.ctaButton}
-        >
-          Jugar
-        </button>
-
-        <button
-          onClick={() => setPantalla("juego-historial")}
-          style={styles.linkVolver}
-        >
-          🕓 Ver historial de partidas
-        </button>
-
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver
-        </button>
-      </div>
+      <CarreraPlaza
+        preguntasBase={preguntasBase}
+        setPantalla={setPantalla}
+        volverMenu={volverMenu}
+      />
     );
   }
 
@@ -2852,29 +2576,6 @@ function guardarFavoritos(lista) {
   localStorage.setItem(CLAVE_FAVORITOS, JSON.stringify(lista));
 }
 
-// 🎮 historial de partidas del minijuego (independiente de las estadísticas personales)
-function obtenerHistorialJuego() {
-  return JSON.parse(localStorage.getItem(CLAVE_HISTORIAL_JUEGO)) || [];
-}
-
-function guardarPartidaHistorial(puntuaciones) {
-  const historial = obtenerHistorialJuego();
-
-  const maxAciertos = Math.max(...puntuaciones.map((p) => p.aciertos));
-  const ganadoras = puntuaciones
-    .filter((p) => p.aciertos === maxAciertos)
-    .map((p) => p.nombre);
-  const ganador = ganadoras.length > 1 ? "Empate" : ganadoras[0];
-
-  const nuevaPartida = {
-    fecha: new Date().toLocaleString(),
-    jugadores: puntuaciones,
-    ganador
-  };
-
-  const actualizado = [nuevaPartida, ...historial].slice(0, 20);
-  localStorage.setItem(CLAVE_HISTORIAL_JUEGO, JSON.stringify(actualizado));
-}
 
 function formatearTiempo(segundosTotales) {
   const m = Math.floor(segundosTotales / 60);
