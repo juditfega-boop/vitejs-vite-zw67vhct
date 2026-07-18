@@ -1410,6 +1410,22 @@ if (pantalla === "muerte") {
     />
   );
 }
+
+// 🏁 DETALLE DE "CARRERA POR LA PLAZA"
+if (pantalla === "carrera") {
+  return (
+    <CarreraPlaza
+      preguntasBase={preguntasBase}
+      setPantalla={setPantalla}
+      volverMenu={volverMenu}
+    />
+  );
+}
+
+// 🏛️ DETALLE DE "CONSTRUYE LA CONSTITUCIÓN"
+if (pantalla === "construye") {
+  return <ConstruyeConstitucion setPantalla={setPantalla} />;
+}
   // 📁 DETALLE DE "CONECTA LA CONSTITUCIÓN"
   if (pantalla === "archivos") {
     return <ConectaConstitucion setPantalla={setPantalla} volverMenu={volverMenu} />;
