@@ -401,10 +401,10 @@ if (vista === "progreso") {
       </button>
 
       <button onClick={() => setVista("errores")} style={styles.filaMinijuegoBtn}>
-        <span style={styles.miniaturaMinijuegoEmoji}>⭐</span>
-        <span style={styles.filaMinijuegoTexto}>Repasar errores ({pendientesErrores})</span>
-        <span style={{ color: "#8a8578" }}>→</span>
-      </button>
+          <img src={iconoRepasarHero} alt="" style={styles.miniaturaMinijuego} />
+          <span style={styles.filaMinijuegoTexto}>Repasar errores ({pendientesErrores})</span>
+          <span style={{ color: "#8a8578" }}>→</span>
+        </button>
 
       <button onClick={() => setVista("favoritos")} style={styles.filaMinijuegoBtn}>
         <img src={iconoCarpetaFavoritas} alt="" style={styles.miniaturaMinijuego} />
