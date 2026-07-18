@@ -14,6 +14,7 @@ import SalvaTrabajadoraSocial from "./juegos/SalvaTrabajadoraSocial";
 import Estudiar from "./estudio/Estudiar";
 import Simulacro from "./estudio/Simulacro";
 import muerteImg0 from "./assets/trabajadora-0.png";
+import casaIcono from "./assets/casa-icono.png";
 import iconoLibro from "./assets/kit/icono-libro-estudiar.png";
 import iconoReloj from "./assets/kit/icono-reloj-simulacro.png";
 import iconoDados from "./assets/kit/icono-dados-minijuegos.png";

@@ -92,13 +92,14 @@ const styles = {
   button: {
     display: "block",
     width: "100%",
-    padding: 12,
-    marginTop: 10,
-    borderRadius: 8,
-    border: "1px solid #ccc",
+    padding: "14px 16px",
+    marginTop: 12,
+    borderRadius: 18,
+    border: "1px solid #e8e2d4",
     background: "#fff",
-    color: "#333",
-    cursor: "pointer"
+    color: "#4a463f",
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
   },
   explicacionCaja: {
     background: "#faf7f2",
@@ -242,10 +243,10 @@ const styles = {
   // ⚙️ tarjetas de configuración
   configCard: {
     background: "#fff",
-    borderRadius: 18,
-    padding: "16px 18px",
-    marginBottom: 18,
-    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
+    borderRadius: 22,
+    padding: "20px 22px",
+    marginBottom: 20,
+    boxShadow: "0 3px 12px rgba(0,0,0,0.035)"
   },
   configCardTitle: {
     fontSize: 14,
@@ -338,15 +339,15 @@ const styles = {
     display: "block",
     width: "100%",
     border: "none",
-    borderRadius: 20,
-    padding: "18px 20px",
-    marginTop: 10,
+    borderRadius: 22,
+    padding: "18px 22px",
+    marginTop: 12,
     fontSize: 16,
     fontWeight: 700,
-    color: "#fff",
-    background: "linear-gradient(90deg, #f2b366, #e29aa0)",
+    color: "#5a4f6b",
+    background: "linear-gradient(135deg, # decdf0, #f5e2e6)",
     cursor: "pointer",
-    boxShadow: "0 8px 20px rgba(226,154,160,0.35)",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
     textAlign: "center"
   },
   ctaButtonDisabled: {
@@ -364,10 +365,10 @@ const styles = {
   },
   statCard: {
     background: "#fff",
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 20,
+    padding: 16,
     textAlign: "center",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
+    boxShadow: "0 3px 10px rgba(0,0,0,0.03)"
   },
   statValue: {
     fontSize: 20,
@@ -471,12 +472,12 @@ const styles = {
   },
 
   // 🏁 resultados
-  resultCard: {
+resultCard: {
     background: "#fff",
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 4,
-    boxShadow: "0 4px 14px rgba(0,0,0,0.06)"
+    borderRadius: 22,
+    padding: 22,
+    marginTop: 6,
+    boxShadow: "0 3px 12px rgba(0,0,0,0.035)"
   },
   resultRow: {
     display: "flex",
@@ -960,8 +961,8 @@ styles.inicioHeroCard = {
   boxShadow: "0 4px 16px rgba(0,0,0,0.05)"
 };
 styles.inicioHeroIcono = {
-  width: 72,
-  height: 72,
+  width: 96,
+  height: 96,
   objectFit: "contain",
   flexShrink: 0
 };
@@ -1004,8 +1005,8 @@ styles.inicioTarjeta = {
   fontFamily: "Arial"
 };
 styles.inicioTarjetaIcono = {
-  width: 44,
-  height: 44,
+  width: 64,
+  height: 64,
   objectFit: "contain",
   marginBottom: 10
 };
