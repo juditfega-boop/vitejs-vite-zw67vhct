@@ -1010,6 +1010,13 @@ styles.inicioTarjetaIcono = {
   objectFit: "contain",
   marginBottom: 6
 };
+styles.inicioTarjetaIconoGrande = {
+  width: 150,
+  height: 150,
+  objectFit: "contain",
+  marginBottom: -14,
+  marginLeft: -14
+};
 styles.inicioTarjetaTitulo = {
   fontSize: 15,
   fontWeight: 700,

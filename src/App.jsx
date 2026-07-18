@@ -251,8 +251,7 @@ if (pantalla === "inicio") {
           onClick={() => setPantalla("minijuegos")}
           style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaSalvia }}
         >
-          <img src={iconoDados} alt="" style={styles.inicioTarjetaIcono} />
-          <p style={styles.inicioTarjetaTitulo}>Minijuegos</p>
+<img src={iconoDados} alt="" style={styles.inicioTarjetaIconoGrande} />          <p style={styles.inicioTarjetaTitulo}>Minijuegos</p>
           <p style={styles.inicioTarjetaSubtitulo}>Repasa jugando y diviértete</p>
           <div style={{ ...styles.inicioTarjetaLinea, background: "#8fb89a" }} />
         </button>
@@ -261,8 +260,7 @@ if (pantalla === "inicio") {
           onClick={() => setPantalla("estudiar-progreso")}
           style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaBeige }}
         >
-          <img src={iconoGrafico} alt="" style={styles.inicioTarjetaIcono} />
-          <p style={styles.inicioTarjetaTitulo}>Mi evolución</p>
+<img src={iconoGrafico} alt="" style={styles.inicioTarjetaIconoGrande} />          <p style={styles.inicioTarjetaTitulo}>Mi evolución</p>
           <p style={styles.inicioTarjetaSubtitulo}>Estadísticas, errores y favoritas</p>
           <div style={{ ...styles.inicioTarjetaLinea, background: "#d9a25c" }} />
         </button>
