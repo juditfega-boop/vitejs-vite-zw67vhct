@@ -953,16 +953,16 @@ styles.inicioHeaderTexto = {
 styles.inicioHeroCard = {
   display: "flex",
   alignItems: "center",
-  gap: 16,
+  gap: 14,
   background: "#fff",
   borderRadius: 24,
-  padding: 20,
+  padding: "16px 20px 16px 16px",
   marginBottom: 20,
   boxShadow: "0 4px 16px rgba(0,0,0,0.05)"
 };
 styles.inicioHeroIcono = {
-  width: 96,
-  height: 96,
+  width: 180,
+  height: 180,
   objectFit: "contain",
   flexShrink: 0
 };
@@ -1005,10 +1005,10 @@ styles.inicioTarjeta = {
   fontFamily: "Arial"
 };
 styles.inicioTarjetaIcono = {
-  width: 64,
-  height: 64,
+  width: 110,
+  height: 110,
   objectFit: "contain",
-  marginBottom: 10
+  marginBottom: 6
 };
 styles.inicioTarjetaTitulo = {
   fontSize: 15,
