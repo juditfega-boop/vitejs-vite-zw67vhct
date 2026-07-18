@@ -28,6 +28,45 @@ const FRASES_COMPROBAR_INCORRECTO = [
 export default function ConstruyeConstitucion({ setPantalla }) {
   const [vista, setVista] = useState("detalle"); // "detalle" | "config" | "jugando"
 
+  // 🖐️ posición arrastrable del botón de Ezequiel
+  const [archiveroPos, setArchiveroPos] = useState(() => ({
+    x: window.innerWidth - 80,
+    y: window.innerHeight - 150
+  }));
+  const arrastrandoRef = useState({ current: false })[0];
+  const offsetRef = useState({ current: { x: 0, y: 0 } })[0];
+  const seMovioRef = useState({ current: false })[0];
+
+  function iniciarArrastreArchivero(e) {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    arrastrandoRef.current = true;
+    seMovioRef.current = false;
+    offsetRef.current = {
+      x: e.clientX - archiveroPos.x,
+      y: e.clientY - archiveroPos.y
+    };
+  }
+
+  function moverArchivero(e) {
+    if (!arrastrandoRef.current) return;
+    seMovioRef.current = true;
+
+    const nuevoX = Math.min(
+      Math.max(10, e.clientX - offsetRef.current.x),
+      window.innerWidth - 70
+    );
+    const nuevoY = Math.min(
+      Math.max(10, e.clientY - offsetRef.current.y),
+      window.innerHeight - 70
+    );
+
+    setArchiveroPos({ x: nuevoX, y: nuevoY });
+  }
+
+  function soltarArchivero() {
+    arrastrandoRef.current = false;
+  }
+
   const [construyeAmbito, setConstruyeAmbito] = useState([]);
   const [construyeRespuestas, setConstruyeRespuestas] = useState({});
   const [construyeResultados, setConstruyeResultados] = useState({});
@@ -339,12 +378,35 @@ export default function ConstruyeConstitucion({ setPantalla }) {
           Comprobar
         </button>
 
-        <button onClick={abrirArchivero} style={styles.archiveroBotonFlotante}>
+        <button
+          onPointerDown={iniciarArrastreArchivero}
+          onPointerMove={moverArchivero}
+          onPointerUp={soltarArchivero}
+          onClick={() => {
+            if (!seMovioRef.current) abrirArchivero();
+          }}
+          style={{
+            ...styles.archiveroBotonFlotante,
+            left: archiveroPos.x,
+            top: archiveroPos.y,
+            bottom: "auto",
+            right: "auto",
+            touchAction: "none"
+          }}
+        >
           <img src={construyeArchivero} alt="Ezequiel, el Archivero" style={styles.archiveroFotoFlotante} />
         </button>
 
         {archiveroAbierto && (
-          <div style={styles.archiveroGloboFlotante}>
+          <div
+            style={{
+              ...styles.archiveroGloboFlotante,
+              left: Math.max(10, archiveroPos.x - 90),
+              top: Math.max(10, archiveroPos.y - 110),
+              bottom: "auto",
+              right: "auto"
+            }}
+          >
             {construyePistaOferta ? (
               <>
                 <p style={{ margin: "0 0 10px" }}>
