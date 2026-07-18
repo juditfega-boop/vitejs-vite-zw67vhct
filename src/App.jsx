@@ -12,6 +12,8 @@ import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
 import CarreraPlaza from "./juegos/CarreraPlaza";
 import SalvaTrabajadoraSocial from "./juegos/SalvaTrabajadoraSocial";
+import Estudiar from "./estudio/Estudiar";
+import Simulacro from "./estudio/Simulacro";
 import muerteImg0 from "./assets/trabajadora-0.png";
 
 
@@ -45,43 +47,6 @@ const FRASES_BIENVENIDA = [
 
 export default function App() {
   const [preguntasBase, setPreguntasBase] = useState([]);
-  const [preguntas, setPreguntas] = useState([]);
-  const [indice, setIndice] = useState(0);
-  const [pantalla, setPantalla] = useState(() =>
-  window.location.hash === "#inicio" ? "inicio" : "landing"
-);
-  const [mensaje, setMensaje] = useState("");
-  const [mostrar, setMostrar] = useState(false);
-  const [aciertos, setAciertos] = useState(0);
-  const [cantidad, setCantidad] = useState(20);
-
-  // 👈 frase de portada, elegida una sola vez al abrir la app
-  const [frase] = useState(
-    () => FRASES_BIENVENIDA[Math.floor(Math.random() * FRASES_BIENVENIDA.length)]
-  );
-
-  // 🧭 configuración de la pantalla "Estudiar"
-  const [tipoEstudio, setTipoEstudio] = useState("general"); // "general" | "bloques"
-  const [bloquesSeleccionados, setBloquesSeleccionados] = useState([]);
-  const [cronometroActivo, setCronometroActivo] = useState(false);
-  const [tipoCronometro, setTipoCronometro] = useState("auto"); // "auto" | "personalizado"
-  const [minutosPersonalizados, setMinutosPersonalizados] = useState(20);
-  const [conExplicacion, setConExplicacion] = useState(true);
-
-  // ⏱️ temporizador del estudio (null = sin cronómetro)
-  const [tiempoRestante, setTiempoRestante] = useState(null);
-
-  // 📝 estado del simulacro oficial
-  const [respuestasSimulacro, setRespuestasSimulacro] = useState([]);
-  const [tiempoRestanteSimulacro, setTiempoRestanteSimulacro] = useState(null);
-  const [horaInicioSimulacro, setHoraInicioSimulacro] = useState(null);
-  const [resultadoSimulacro, setResultadoSimulacro] = useState(null);
-
-  // ⏱️ instante en que se mostró la pregunta actual (para tiempo medio)
-  const [inicioPregunta, setInicioPregunta] = useState(null);
-
-  // ⭐ favoritos (persisten en localStorage, no afectan a la lógica del quiz)
-  const [favoritos, setFavoritos] = useState(() => obtenerFavoritos());
 
   function toggleFavorito(id) {
     setFavoritos((prev) => {
@@ -564,20 +529,20 @@ if (pantalla === "inicio") {
       </p>
 
       <button
-        className="menu-btn"
-        onClick={() => setPantalla("estudiar-config")}
-        style={{ ...styles.menuButton, ...styles.btnPeach }}
-      >
-        📖 Estudiar
-      </button>
+          className="menu-btn"
+          onClick={() => setPantalla("estudiar-estudio")}
+          style={{ ...styles.menuButton, ...styles.btnPeach }}
+        >
+          📖 Estudiar
+        </button>
 
-      <button
-        className="menu-btn"
-        onClick={() => setPantalla("simulacro-intro")}
-        style={{ ...styles.menuButton, ...styles.btnPurple }}
-      >
-        📝 Simulacro oficial
-      </button>
+        <button
+          className="menu-btn"
+          onClick={() => setPantalla("simulacro")}
+          style={{ ...styles.menuButton, ...styles.btnPurple }}
+        >
+          📝 Simulacro oficial
+        </button>
 
       <button
         className="menu-btn"
@@ -598,12 +563,12 @@ if (pantalla === "inicio") {
       <div style={{ height: 1, background: "#e4ddcf", margin: "18px 4px" }} />
 
       <button
-        className="menu-btn"
-        onClick={() => setPantalla("progreso")}
-        style={{ ...styles.menuButton, ...styles.btnPink }}
-      >
-        📈 Mi evolución
-      </button>
+          className="menu-btn"
+          onClick={() => setPantalla("estudiar-progreso")}
+          style={{ ...styles.menuButton, ...styles.btnPink }}
+        >
+          📈 Mi evolución
+        </button>
 
       <button
         className="menu-btn"
@@ -1420,6 +1385,32 @@ if (pantalla === "muerte") {
 }
 
 // 🏁 DETALLE DE "CARRERA POR LA PLAZA"
+if (pantalla === "estudiar-estudio") {
+  return (
+    <Estudiar
+      preguntasBase={preguntasBase}
+      volverMenu={volverMenu}
+      sincronizarConNube={sincronizarConNube}
+      vistaInicial="config"
+    />
+  );
+}
+
+if (pantalla === "estudiar-progreso") {
+  return (
+    <Estudiar
+      preguntasBase={preguntasBase}
+      volverMenu={volverMenu}
+      sincronizarConNube={sincronizarConNube}
+      vistaInicial="progreso"
+    />
+  );
+}
+
+if (pantalla === "simulacro") {
+  return <Simulacro preguntasBase={preguntasBase} volverMenu={volverMenu} />;
+}
+
 if (pantalla === "carrera") {
   return (
     <CarreraPlaza
