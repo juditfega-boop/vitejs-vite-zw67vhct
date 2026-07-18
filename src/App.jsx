@@ -15,12 +15,18 @@ import SalvaTrabajadoraSocial from "./juegos/SalvaTrabajadoraSocial";
 import muerteImg0 from "./assets/trabajadora-0.png";
 
 
-const CLAVE_STATS = "opo_stats_v1";
-const CLAVE_RACHA = "opo_racha_v1";
-const CLAVE_TIEMPOS = "opo_tiempos_v1";
-const CLAVE_FAVORITOS = "opo_favoritos_v1";
-const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
-const CLAVE_CODIGO = "opo_codigo_perfil_v1";
+import {
+  obtenerStats,
+  guardarStats,
+  registrarRespuesta,
+  obtenerRacha,
+  actualizarRacha,
+  obtenerTiempos,
+  registrarTiempoPregunta,
+  obtenerFavoritos,
+  guardarFavoritos,
+  CLAVE_CODIGO
+} from "./servicios/progreso";
 
 // ⏱️ duración total del simulacro oficial (minutos). Ajusta este número si quieres otro tiempo.
 const DURACION_SIMULACRO_MINUTOS = 100;
@@ -1767,89 +1773,7 @@ if (pantalla === "muerte-victoria") {
   );
 }
 
-function obtenerStats() {
-  return JSON.parse(localStorage.getItem(CLAVE_STATS)) || {};
-}
-
-function guardarStats(stats) {
-  localStorage.setItem(CLAVE_STATS, JSON.stringify(stats));
-}
-
-function registrarRespuesta(pregunta, correcta) {
-  const stats = obtenerStats();
-  const id = String(pregunta.id);
-
-  if (!stats[id]) {
-    stats[id] = {
-      id,
-      bloque: pregunta.bloque || "Sin bloque",
-      aciertos: 0,
-      errores: 0,
-      veces: 0
-    };
-  }
-
-  stats[id].veces += 1;
-
-  if (correcta) {
-    stats[id].aciertos += 1;
-  } else {
-    stats[id].errores += 1;
-  }
-
-  guardarStats(stats);
-}
-
-// 🔥 racha de estudio (días consecutivos)
-function obtenerRacha() {
-  return JSON.parse(localStorage.getItem(CLAVE_RACHA)) || {
-    ultimaFecha: null,
-    racha: 0
-  };
-}
-
-function actualizarRacha() {
-  const hoy = new Date().toISOString().slice(0, 10);
-  const datos = obtenerRacha();
-
-  if (datos.ultimaFecha === hoy) return;
-
-  const ayer = new Date();
-  ayer.setDate(ayer.getDate() - 1);
-  const ayerStr = ayer.toISOString().slice(0, 10);
-
-  const nuevaRacha = datos.ultimaFecha === ayerStr ? datos.racha + 1 : 1;
-
-  localStorage.setItem(
-    CLAVE_RACHA,
-    JSON.stringify({ ultimaFecha: hoy, racha: nuevaRacha })
-  );
-}
-
 // ⏱️ tiempo medio por pregunta
-function obtenerTiempos() {
-  return JSON.parse(localStorage.getItem(CLAVE_TIEMPOS)) || {
-    totalSegundos: 0,
-    totalPreguntas: 0
-  };
-}
-
-function registrarTiempoPregunta(segundos) {
-  const datos = obtenerTiempos();
-  datos.totalSegundos += segundos;
-  datos.totalPreguntas += 1;
-  localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos));
-}
-
-// ⭐ favoritos
-function obtenerFavoritos() {
-  return JSON.parse(localStorage.getItem(CLAVE_FAVORITOS)) || [];
-}
-
-function guardarFavoritos(lista) {
-  localStorage.setItem(CLAVE_FAVORITOS, JSON.stringify(lista));
-}
-
 
 function formatearTiempo(segundosTotales) {
   const m = Math.floor(segundosTotales / 60);

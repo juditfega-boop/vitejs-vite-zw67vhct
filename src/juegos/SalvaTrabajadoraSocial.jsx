@@ -7,8 +7,10 @@ import muerteImg3 from "../assets/trabajadora-3.png";
 import muerteImgDerrota from "../assets/trabajadora-derrota.png";
 import muerteImgVictoria from "../assets/trabajadora-victoria.png";
 
-const CLAVE_STATS = "opo_stats_v1";
-const CLAVE_RACHA = "opo_racha_v1";
+import {
+  registrarRespuesta,
+  actualizarRacha
+} from "../servicios/progreso";
 
 const FRASES_DERROTA_MUERTE = [
   "Esta vez la burocracia ganó.",
@@ -68,51 +70,6 @@ function renderizarTextoConNegrita(texto) {
       </p>
     );
   });
-}
-
-function obtenerStats() {
-  return JSON.parse(localStorage.getItem(CLAVE_STATS)) || {};
-}
-
-function guardarStats(stats) {
-  localStorage.setItem(CLAVE_STATS, JSON.stringify(stats));
-}
-
-function registrarRespuesta(pregunta, correcta) {
-  const stats = obtenerStats();
-  const id = String(pregunta.id);
-
-  if (!stats[id]) {
-    stats[id] = { id, bloque: pregunta.bloque || "Sin bloque", aciertos: 0, errores: 0, veces: 0 };
-  }
-
-  stats[id].veces += 1;
-  if (correcta) {
-    stats[id].aciertos += 1;
-  } else {
-    stats[id].errores += 1;
-  }
-
-  guardarStats(stats);
-}
-
-function obtenerRacha() {
-  return JSON.parse(localStorage.getItem(CLAVE_RACHA)) || { ultimaFecha: null, racha: 0 };
-}
-
-function actualizarRacha() {
-  const hoy = new Date().toISOString().slice(0, 10);
-  const datos = obtenerRacha();
-
-  if (datos.ultimaFecha === hoy) return;
-
-  const ayer = new Date();
-  ayer.setDate(ayer.getDate() - 1);
-  const ayerStr = ayer.toISOString().slice(0, 10);
-
-  const nuevaRacha = datos.ultimaFecha === ayerStr ? datos.racha + 1 : 1;
-
-  localStorage.setItem(CLAVE_RACHA, JSON.stringify({ ultimaFecha: hoy, racha: nuevaRacha }));
 }
 
 function imagenMuerteSubita(aciertos) {
