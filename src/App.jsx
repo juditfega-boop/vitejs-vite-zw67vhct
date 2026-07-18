@@ -1508,16 +1508,21 @@ export default function App() {
     );
   }
 
-  // 🏁 DETALLE DE "CARRERA POR LA PLAZA"
-  if (pantalla === "carrera") {
-    return (
-      <CarreraPlaza
-        preguntasBase={preguntasBase}
-        setPantalla={setPantalla}
-        volverMenu={volverMenu}
-      />
-    );
-  }
+// 🏁 DETALLE DE "CARRERA POR LA PLAZA"
+if (pantalla === "carrera") {
+  return (
+    <CarreraPlaza
+      preguntasBase={preguntasBase}
+      setPantalla={setPantalla}
+      volverMenu={volverMenu}
+    />
+  );
+}
+
+// 🏛️ DETALLE DE "CONSTRUYE LA CONSTITUCIÓN"
+if (pantalla === "construye") {
+  return <ConstruyeConstitucion setPantalla={setPantalla} />;
+}
 
   // ☠️ DETALLE DE "SALVA A TU TRABAJADORA SOCIAL"
   if (pantalla === "muerte-detalle") {
