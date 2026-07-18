@@ -14,7 +14,14 @@ import SalvaTrabajadoraSocial from "./juegos/SalvaTrabajadoraSocial";
 import Estudiar from "./estudio/Estudiar";
 import Simulacro from "./estudio/Simulacro";
 import muerteImg0 from "./assets/trabajadora-0.png";
-
+import casaIcono from "./assets/casa-icono.png";
+import iconoLibro from "./assets/kit/icono-libro-estudiar.png";
+import iconoReloj from "./assets/kit/icono-reloj-simulacro.png";
+import iconoDados from "./assets/kit/icono-dados-minijuegos.png";
+import iconoGrafico from "./assets/kit/icono-grafico-evolucion.png";
+import iconoCarpeta from "./assets/kit/icono-carpeta-favoritos.png";
+import iconoTaza from "./assets/kit/icono-taza-perfil.png";
+import iconoPlantita from "./assets/kit/icono-plantita-evolucion.png";
 import {
   obtenerStats,
   guardarStats,
@@ -160,75 +167,150 @@ export default function App() {
     );
   }
 
-  // 🟣 MENÚ PRINCIPAL
-  if (pantalla === "inicio") {
-    const racha = obtenerRacha().racha;
+// 🟣 MENÚ PRINCIPAL — INICIO (rediseño)
+if (pantalla === "inicio") {
+  const racha = obtenerRacha().racha;
+  const statsInicio = obtenerStats();
 
-    return (
-      <div style={styles.menuContainer}>
-        <style>{globalStyles}</style>
+  const totalRespondidas = Object.values(statsInicio).reduce((a, b) => a + (b.veces || 0), 0);
+  const pendientesEstudio = Math.max(0, preguntasBase.length - Object.keys(statsInicio).length);
 
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>Menú principal</h1>
-          <div style={styles.menuUnderline} />
+  const bloquesResumen = {};
+  preguntasBase.forEach((p) => {
+    const b = p.bloque || "Sin bloque";
+    if (!bloquesResumen[b]) bloquesResumen[b] = { respondidas: 0, aciertos: 0 };
+  });
+  Object.values(statsInicio).forEach((s) => {
+    const b = s.bloque || "Sin bloque";
+    if (!bloquesResumen[b]) bloquesResumen[b] = { respondidas: 0, aciertos: 0 };
+    bloquesResumen[b].respondidas += s.veces || 0;
+    bloquesResumen[b].aciertos += s.aciertos || 0;
+  });
+  const bloquesConDatos = Object.values(bloquesResumen).filter((b) => b.respondidas > 0);
+  const bloquesFavorables = bloquesConDatos.filter((b) => b.aciertos / b.respondidas >= 0.6).length;
+  const bloquesSeguimiento = bloquesConDatos.filter((b) => b.aciertos / b.respondidas < 0.4).length;
+  const porcentajeFavorable = bloquesConDatos.length
+    ? Math.round((bloquesFavorables / bloquesConDatos.length) * 100)
+    : 0;
+
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.inicioHeader}>
+        <img src={casaIcono} alt="" style={styles.inicioCasaIcono} />
+        <span style={styles.inicioHeaderTexto}>Inicio</span>
+      </div>
+
+      <div style={styles.inicioHeroCard}>
+        <img src={iconoPlantita} alt="" style={styles.inicioHeroIcono} />
+        <div style={styles.inicioHeroTexto}>
+          <p style={styles.inicioHeroTitulo}>
+            🔥 ¡Llevas {racha} {racha === 1 ? "día" : "días"} seguidos!
+          </p>
+          <p style={styles.inicioHeroSubtitulo}>
+            Estás construyendo tu futuro un día a la vez.
+          </p>
+          {pendientesEstudio > 0 && (
+            <div style={styles.inicioHeroPill}>
+              🌿 Hoy tienes {pendientesEstudio} preguntas nuevas por descubrir
+            </div>
+          )}
         </div>
+      </div>
 
-        <p style={{ textAlign: "center", color: "#7a9a7a", fontSize: 13, marginTop: -10, marginBottom: 24 }}>
-          🌿 Racha actual: {racha} {racha === 1 ? "día" : "días"}
-        </p>
-
+      <div style={styles.inicioGrid}>
         <button
-          className="menu-btn"
           onClick={() => setPantalla("estudiar-estudio")}
-          style={{ ...styles.menuButton, ...styles.btnPeach }}
+          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaLavanda }}
         >
-          📖 Estudiar
+          <img src={iconoLibro} alt="" style={styles.inicioTarjetaIcono} />
+          <p style={styles.inicioTarjetaTitulo}>Estudiar</p>
+          <p style={styles.inicioTarjetaSubtitulo}>Tests por bloques o generales</p>
+          <div style={{ ...styles.inicioTarjetaLinea, background: "#b9a8de" }} />
         </button>
 
         <button
-          className="menu-btn"
           onClick={() => setPantalla("simulacro")}
-          style={{ ...styles.menuButton, ...styles.btnPurple }}
+          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaRosa }}
         >
-          📝 Simulacro oficial
+          <img src={iconoReloj} alt="" style={styles.inicioTarjetaIcono} />
+          <p style={styles.inicioTarjetaTitulo}>Simulacro oficial</p>
+          <p style={styles.inicioTarjetaSubtitulo}>Examen completo, 100 preguntas</p>
+          <div style={{ ...styles.inicioTarjetaLinea, background: "#e2a3a9" }} />
         </button>
 
         <button
-          className="menu-btn"
           onClick={() => setPantalla("minijuegos")}
-          style={{ ...styles.menuButton, ...styles.btnMint }}
+          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaSalvia }}
         >
-          🎮 Minijuegos
+          <img src={iconoDados} alt="" style={styles.inicioTarjetaIcono} />
+          <p style={styles.inicioTarjetaTitulo}>Minijuegos</p>
+          <p style={styles.inicioTarjetaSubtitulo}>Repasa jugando y diviértete</p>
+          <div style={{ ...styles.inicioTarjetaLinea, background: "#8fb89a" }} />
         </button>
 
         <button
-          className="menu-btn"
-          onClick={() => setPantalla("desarrollo")}
-          style={{ ...styles.menuButton, ...styles.btnMuted }}
-        >
-          🧩 Desarrollo <span style={styles.badgeProximamente}>Próximamente</span>
-        </button>
-
-        <div style={{ height: 1, background: "#e4ddcf", margin: "18px 4px" }} />
-
-        <button
-          className="menu-btn"
           onClick={() => setPantalla("estudiar-progreso")}
-          style={{ ...styles.menuButton, ...styles.btnPink }}
+          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaBeige }}
         >
-          📈 Mi evolución
+          <img src={iconoGrafico} alt="" style={styles.inicioTarjetaIcono} />
+          <p style={styles.inicioTarjetaTitulo}>Mi evolución</p>
+          <p style={styles.inicioTarjetaSubtitulo}>Estadísticas, errores y favoritas</p>
+          <div style={{ ...styles.inicioTarjetaLinea, background: "#d9a25c" }} />
         </button>
 
         <button
-          className="menu-btn"
-          onClick={() => setPantalla("ajustes")}
-          style={{ ...styles.menuButton, ...styles.btnOlive }}
+          onClick={() => setPantalla("desarrollo")}
+          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaMuted }}
         >
-          👤 Mi perfil
+          <img src={iconoCarpeta} alt="" style={styles.inicioTarjetaIcono} />
+          <p style={styles.inicioTarjetaTitulo}>Desarrollo</p>
+          <p style={styles.inicioTarjetaSubtitulo}>Próximamente</p>
+          <div style={{ ...styles.inicioTarjetaLinea, background: "#c3bcae" }} />
+        </button>
+
+        <button
+          onClick={() => setPantalla("ajustes")}
+          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaLavandaClara }}
+        >
+          <img src={iconoTaza} alt="" style={styles.inicioTarjetaIcono} />
+          <p style={styles.inicioTarjetaTitulo}>Mi perfil</p>
+          <p style={styles.inicioTarjetaSubtitulo}>Sincroniza tu progreso</p>
+          <div style={{ ...styles.inicioTarjetaLinea, background: "#b9a8de" }} />
         </button>
       </div>
-    );
-  }
+
+      <div style={styles.inicioJardinCard}>
+        <p style={styles.inicioJardinTitulo}>🌿 Tu jardín de conocimiento</p>
+        <p style={styles.inicioJardinSubtitulo}>Cada respuesta es una raíz más fuerte.</p>
+
+        <div style={styles.inicioJardinGrid}>
+          <div style={styles.inicioJardinItem}>
+            <p style={styles.inicioJardinValor}>{totalRespondidas}</p>
+            <p style={styles.inicioJardinEtiqueta}>Preguntas aprendidas</p>
+          </div>
+          <div style={styles.inicioJardinItem}>
+            <p style={styles.inicioJardinValor}>{porcentajeFavorable}%</p>
+            <p style={styles.inicioJardinEtiqueta}>Bloques con evolución favorable</p>
+          </div>
+          <div style={styles.inicioJardinItem}>
+            <p style={styles.inicioJardinValor}>{bloquesSeguimiento}</p>
+            <p style={styles.inicioJardinEtiqueta}>Bloques necesitan seguimiento</p>
+          </div>
+          <div style={styles.inicioJardinItem}>
+            <p style={styles.inicioJardinValor}>{racha}</p>
+            <p style={styles.inicioJardinEtiqueta}>Tu racha actual</p>
+          </div>
+        </div>
+
+        <button onClick={() => setPantalla("estudiar-progreso")} style={styles.inicioJardinBoton}>
+          Ver mi evolución →
+        </button>
+      </div>
+
+      <p style={styles.inicioFraseFinal}>"{frase}"</p>
+    </div>
+  );
+}
 
 // 🎮 HUB DE MINIJUEGOS
 if (pantalla === "minijuegos") {

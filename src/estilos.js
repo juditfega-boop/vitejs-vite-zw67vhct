@@ -938,4 +938,162 @@ styles.placeholderEmoji = {
   marginBottom: 10
 };
 
+// 🏡 Inicio (rediseño)
+styles.inicioHeader = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  marginBottom: 20
+};
+styles.inicioCasaIcono = {
+  width: 32,
+  height: 32,
+  objectFit: "contain"
+};
+styles.inicioHeaderTexto = {
+  fontSize: 14,
+  fontWeight: 700,
+  color: "#8a8578"
+};
+styles.inicioHeroCard = {
+  display: "flex",
+  alignItems: "center",
+  gap: 16,
+  background: "#fff",
+  borderRadius: 24,
+  padding: 20,
+  marginBottom: 20,
+  boxShadow: "0 4px 16px rgba(0,0,0,0.05)"
+};
+styles.inicioHeroIcono = {
+  width: 72,
+  height: 72,
+  objectFit: "contain",
+  flexShrink: 0
+};
+styles.inicioHeroTexto = { flex: 1 };
+styles.inicioHeroTitulo = {
+  fontSize: 16,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: "0 0 4px"
+};
+styles.inicioHeroSubtitulo = {
+  fontSize: 13,
+  color: "#8a8578",
+  margin: "0 0 10px"
+};
+styles.inicioHeroPill = {
+  display: "inline-block",
+  background: "#f2ece0",
+  borderRadius: 14,
+  padding: "6px 12px",
+  fontSize: 12,
+  color: "#6a9a6a",
+  fontWeight: 600
+};
+styles.inicioGrid = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 12,
+  marginBottom: 20
+};
+styles.inicioTarjeta = {
+  border: "none",
+  borderRadius: 20,
+  padding: "18px 14px",
+  textAlign: "left",
+  cursor: "pointer",
+  boxShadow: "0 3px 10px rgba(0,0,0,0.04)",
+  display: "flex",
+  flexDirection: "column",
+  fontFamily: "Arial"
+};
+styles.inicioTarjetaIcono = {
+  width: 44,
+  height: 44,
+  objectFit: "contain",
+  marginBottom: 10
+};
+styles.inicioTarjetaTitulo = {
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: "0 0 4px"
+};
+styles.inicioTarjetaSubtitulo = {
+  fontSize: 12,
+  color: "#8a8578",
+  margin: "0 0 12px",
+  lineHeight: 1.4
+};
+styles.inicioTarjetaLinea = {
+  width: 36,
+  height: 3,
+  borderRadius: 3,
+  marginTop: "auto"
+};
+styles.inicioTarjetaLavanda = { background: "#ebe4f7" };
+styles.inicioTarjetaLavandaClara = { background: "#f1ecfa" };
+styles.inicioTarjetaRosa = { background: "#f8e6e8" };
+styles.inicioTarjetaSalvia = { background: "#e2f0e5" };
+styles.inicioTarjetaBeige = { background: "#faecd8" };
+styles.inicioTarjetaMuted = { background: "#f0ede6" };
+styles.inicioJardinCard = {
+  background: "#fff",
+  borderRadius: 24,
+  padding: 20,
+  marginBottom: 20,
+  boxShadow: "0 4px 16px rgba(0,0,0,0.05)"
+};
+styles.inicioJardinTitulo = {
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: "0 0 2px"
+};
+styles.inicioJardinSubtitulo = {
+  fontSize: 12,
+  color: "#8a8578",
+  margin: "0 0 16px"
+};
+styles.inicioJardinGrid = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 14,
+  marginBottom: 16
+};
+styles.inicioJardinItem = { textAlign: "center" };
+styles.inicioJardinValor = {
+  fontSize: 20,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: "0 0 2px"
+};
+styles.inicioJardinEtiqueta = {
+  fontSize: 11,
+  color: "#8a8578",
+  margin: 0
+};
+styles.inicioJardinBoton = {
+  display: "block",
+  width: "100%",
+  border: "none",
+  borderRadius: 16,
+  padding: "12px 16px",
+  background: "#ece4f7",
+  color: "#6a4f9a",
+  fontWeight: 700,
+  fontSize: 13,
+  cursor: "pointer"
+};
+styles.inicioFraseFinal = {
+  textAlign: "center",
+  fontStyle: "italic",
+  color: "#8a8578",
+  fontSize: 13,
+  marginTop: 4,
+  marginBottom: 10
+};
+
 export { globalStyles, styles };
