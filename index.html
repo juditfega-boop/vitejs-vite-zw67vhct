@@ -2,31 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light only">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AsistontasSociales</title>
   </head>
-  <button
-  id="boton-panico"
-  onclick="window.location.hash='inicio'; window.location.reload();"
-  style="
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 9999;
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: transparent;
-    padding: 0;
-    cursor: pointer;
-  "
-  title="Volver al menú principal"
->
-  <img src="/src/assets/casa-icono.png" alt="Menú principal" style="width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));" />
-</button>
   <body>
     <div id="root"></div>
+
+    <button
+    id="boton-panico"
+    onclick="window.location.hash='inicio'; window.location.reload();"
+    style="
+      position: absolute;
+      top: 40px;
+      left: calc(50% - 240px + 80px);
+      z-index: 50;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+    "
+    title="Volver al menú principal"
+  >
+    <img src="/src/assets/casa-icono.png" alt="Menú principal" style="width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));" />
+  </button>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
