@@ -3,12 +3,6 @@ import { cargarPreguntas } from "./cargarPreguntas";
 import portada from "./assets/portada.jpeg";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import muerteImg0 from "./assets/trabajadora-0.png";
-import muerteImg1 from "./assets/trabajadora-1.png";
-import muerteImg2 from "./assets/trabajadora-2.png";
-import muerteImg3 from "./assets/trabajadora-3.png";
-import muerteImgDerrota from "./assets/trabajadora-derrota.png";
-import muerteImgVictoria from "./assets/trabajadora-victoria.png";
 import { ESTRUCTURA_CONSTITUCION } from "./construyeConstitucion";
 import miniaturaArchivos from "./assets/archivos-miniatura.png";
 import miniaturaConstruye from "./assets/construye-miniatura.png";
@@ -17,6 +11,9 @@ import { globalStyles, styles } from "./estilos";
 import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
 import CarreraPlaza from "./juegos/CarreraPlaza";
+import SalvaTrabajadoraSocial from "./juegos/SalvaTrabajadoraSocial";
+import muerteImg0 from "./assets/trabajadora-0.png";
+
 
 const CLAVE_STATS = "opo_stats_v1";
 const CLAVE_RACHA = "opo_racha_v1";
@@ -38,12 +35,6 @@ const FRASES_BIENVENIDA = [
 // 🎮 frases graciosas para el minijuego "Carrera por la Plaza"
 
 // ☠️ frases de derrota para "Salva a tu trabajadora social"
-const FRASES_DERROTA_MUERTE = [
-  "Esta vez la burocracia ganó.",
-  "El expediente te ha vencido... por ahora.",
-  "Vuelve a intentarlo, la plaza no se rinde tan fácil.",
-  "Ni Mary Richmond pudo con tanto papeleo de golpe."
-];
 
 
 export default function App() {
@@ -96,92 +87,6 @@ export default function App() {
     sincronizarConNube();
   }
 
-
-  // ☠️ estado del minijuego "Salva a tu trabajadora social" (una sola jugadora, una sola vida)
-  const [muerteTipo, setMuerteTipo] = useState("general"); // "general" | "bloques"
-  const [muerteBloquesSeleccionados, setMuerteBloquesSeleccionados] = useState([]);
-  const [muerteCronometroActivo, setMuerteCronometroActivo] = useState(false);
-  const [muertePreguntas, setMuertePreguntas] = useState([]);
-  const [muerteIndice, setMuerteIndice] = useState(0);
-  const [muerteAciertos, setMuerteAciertos] = useState(0);
-  const [muerteMensaje, setMuerteMensaje] = useState("");
-  const [muerteMostrar, setMuerteMostrar] = useState(false);
-  const [muerteTiempoRestante, setMuerteTiempoRestante] = useState(null);
-  const [muerteRespuestaSeleccionada, setMuerteRespuestaSeleccionada] = useState(null);
-  const [fraseDerrota, setFraseDerrota] = useState("");
-
-  function toggleBloqueMuerte(nombre) {
-    setMuerteBloquesSeleccionados((prev) =>
-      prev.includes(nombre)
-        ? prev.filter((b) => b !== nombre)
-        : [...prev, nombre]
-    );
-  }
-
-  function imagenMuerteSubita(aciertos) {
-    const etapa = Math.min(3, Math.floor(aciertos / 5));
-    return [muerteImg0, muerteImg1, muerteImg2, muerteImg3][etapa];
-  }
-
-  function comenzarMuerteSubita() {
-    let listaFuente = preguntasBase;
-
-    if (muerteTipo === "bloques") {
-      listaFuente = preguntasBase.filter((p) =>
-        muerteBloquesSeleccionados.includes(p.bloque || "Sin bloque")
-      );
-    }
-
-    const base = mezclar(listaFuente).slice(0, 20).map(prepararPregunta);
-
-    setMuertePreguntas(base);
-    setMuerteIndice(0);
-    setMuerteAciertos(0);
-    setMuerteMensaje("");
-    setMuerteMostrar(false);
-    setMuerteRespuestaSeleccionada(null);
-    setMuerteTiempoRestante(muerteCronometroActivo ? 60 : null);
-    setPantalla("muerte-jugando");
-  }
-
-  function perderMuerte() {
-    setFraseDerrota(
-      FRASES_DERROTA_MUERTE[Math.floor(Math.random() * FRASES_DERROTA_MUERTE.length)]
-    );
-    setPantalla("muerte-derrota");
-  }
-
-  function comprobarMuerte(i) {
-    const pregunta = muertePreguntas[muerteIndice];
-    const esCorrecta = i === pregunta.correcta;
-
-    registrarRespuesta(pregunta, esCorrecta);
-    actualizarRacha();
-
-    if (esCorrecta) {
-      setMuerteRespuestaSeleccionada(i);
-      setMuerteMostrar(true);
-      setMuerteMensaje("✅ Correcto");
-      setMuerteAciertos((a) => a + 1);
-    } else {
-      perderMuerte();
-    }
-  }
-
-  function siguienteMuerte() {
-    setMuerteMensaje("");
-    setMuerteMostrar(false);
-    setMuerteRespuestaSeleccionada(null);
-
-    const siguienteIndice = muerteIndice + 1;
-
-    if (siguienteIndice >= muertePreguntas.length) {
-      setPantalla("muerte-victoria");
-    } else {
-      setMuerteIndice(siguienteIndice);
-      setMuerteTiempoRestante(muerteCronometroActivo ? 60 : null);
-    }
-  }
 
   // ☁️ código personal para sincronizar el progreso entre dispositivos
   const [codigo, setCodigo] = useState(
@@ -330,27 +235,6 @@ export default function App() {
     return () => clearTimeout(id);
   }, [pantalla, tiempoRestanteSimulacro]);
 
-
-  // ⏱️ cuenta atrás de Salva a tu trabajadora social (si el cronómetro está activo)
-  useEffect(() => {
-    if (
-      pantalla !== "muerte-jugando" ||
-      !muerteCronometroActivo ||
-      muerteTiempoRestante === null
-    )
-      return;
-
-    if (muerteTiempoRestante <= 0) {
-      perderMuerte();
-      return;
-    }
-
-    const id = setTimeout(() => {
-      setMuerteTiempoRestante((t) => (t !== null ? t - 1 : null));
-    }, 1000);
-
-    return () => clearTimeout(id);
-  }, [pantalla, muerteTiempoRestante, muerteCronometroActivo]);
 
   // 📁 cuando las 8 parejas están resueltas, pasa a la pantalla de resultado
 
@@ -1457,7 +1341,7 @@ export default function App() {
         id: "muerte",
         nombre: "Salva a tu trabajadora social",
         miniatura: muerteImg0,
-        destino: "muerte-detalle"
+        destino: "muerte"
       },
       {
         id: "archivos",
@@ -1509,167 +1393,20 @@ export default function App() {
   }
 
 // 🏁 DETALLE DE "CARRERA POR LA PLAZA"
-if (pantalla === "carrera") {
+if (pantalla === "muerte") {
   return (
-    <CarreraPlaza
+    <SalvaTrabajadoraSocial
       preguntasBase={preguntasBase}
       setPantalla={setPantalla}
       volverMenu={volverMenu}
     />
   );
 }
-
-// 🏛️ DETALLE DE "CONSTRUYE LA CONSTITUCIÓN"
-if (pantalla === "construye") {
-  return <ConstruyeConstitucion setPantalla={setPantalla} />;
-}
-
-  // ☠️ DETALLE DE "SALVA A TU TRABAJADORA SOCIAL"
-  if (pantalla === "muerte-detalle") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>☠️ Salva a tu trabajadora social</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-
-        <p style={styles.configSubLabel}>
-          20 preguntas, una sola vida. Si fallas una, la burocracia gana.
-          ¿Cuántas serás capaz de acertar seguidas?
-        </p>
-
-        <button
-          onClick={() => setPantalla("muerte-config")}
-          style={styles.ctaButton}
-        >
-          Jugar
-        </button>
-
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver
-        </button>
-      </div>
-    );
-  }
-
   // 📁 DETALLE DE "CONECTA LA CONSTITUCIÓN"
   if (pantalla === "archivos") {
     return <ConectaConstitucion setPantalla={setPantalla} volverMenu={volverMenu} />;
   }
 
-  // ⚙️ CONFIGURACIÓN DE "SALVA A TU TRABAJADORA SOCIAL"
-  if (pantalla === "muerte-config") {
-    const bloquesDisponiblesMuerte = Object.keys(
-      agruparPorBloques(preguntasBase)
-    );
-
-    let listaFuenteMuerte = preguntasBase;
-    if (muerteTipo === "bloques") {
-      listaFuenteMuerte = preguntasBase.filter((p) =>
-        muerteBloquesSeleccionados.includes(p.bloque || "Sin bloque")
-      );
-    }
-
-    const hayPreguntasSuficientesMuerte = listaFuenteMuerte.length >= 20;
-
-    const puedeEmpezarMuerte =
-      (muerteTipo === "general" || muerteBloquesSeleccionados.length > 0) &&
-      hayPreguntasSuficientesMuerte;
-
-    return (
-      <div style={styles.menuContainer}>
-        <style>{globalStyles}</style>
-
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>☠️ Salva a tu trabajadora social</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-
-        <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Preguntas</p>
-          <div style={styles.pillGroup}>
-            <button
-              className="pill"
-              onClick={() => setMuerteTipo("general")}
-              style={{
-                ...styles.pillBtn,
-                ...(muerteTipo === "general" ? styles.pillBtnActiva : {})
-              }}
-            >
-              General
-            </button>
-            <button
-              className="pill"
-              onClick={() => setMuerteTipo("bloques")}
-              style={{
-                ...styles.pillBtn,
-                ...(muerteTipo === "bloques" ? styles.pillBtnActiva : {})
-              }}
-            >
-              Por bloques
-            </button>
-          </div>
-
-          {muerteTipo === "bloques" && (
-            <div style={styles.bloquesGrid}>
-              {bloquesDisponiblesMuerte.map((b) => (
-                <button
-                  key={b}
-                  className="bloque-chip"
-                  onClick={() => toggleBloqueMuerte(b)}
-                  style={{
-                    ...styles.bloqueChip,
-                    ...(muerteBloquesSeleccionados.includes(b)
-                      ? styles.bloqueChipActiva
-                      : {})
-                  }}
-                >
-                  {b}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {!hayPreguntasSuficientesMuerte && (
-            <p style={{ ...styles.configSubLabel, color: "#c96a6a", marginTop: 8 }}>
-              No hay 20 preguntas disponibles con esta selección
-              ({listaFuenteMuerte.length} disponibles). Elige más bloques o
-              cambia a general.
-            </p>
-          )}
-        </div>
-
-        <div style={styles.configCard}>
-          <div style={styles.configRow}>
-            <p style={styles.configCardTitle}>Activar cronómetro (1 min / pregunta)</p>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={muerteCronometroActivo}
-                onChange={() => setMuerteCronometroActivo((v) => !v)}
-              />
-              <span className="slider"></span>
-            </label>
-          </div>
-        </div>
-
-        <button
-          onClick={comenzarMuerteSubita}
-          disabled={!puedeEmpezarMuerte}
-          style={{
-            ...styles.ctaButton,
-            ...(puedeEmpezarMuerte ? {} : styles.ctaButtonDisabled)
-          }}
-        >
-          Empezar
-        </button>
-
-        <button onClick={() => setPantalla("muerte-detalle")} style={styles.linkVolver}>
-          ⬅ Volver
-        </button>
-      </div>
-    );
-  }
 
 // ☠️ SALVA A TU TRABAJADORA SOCIAL — EN CURSO
 if (pantalla === "muerte-jugando" && muertePreguntas[muerteIndice]) {
