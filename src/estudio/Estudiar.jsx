@@ -83,6 +83,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [minutosPersonalizados, setMinutosPersonalizados] = useState(20);
   const [conExplicacion, setConExplicacion] = useState(true);
   const [tiempoRestante, setTiempoRestante] = useState(null);
+  const [inicioPregunta, setInicioPregunta] = useState(null);
   const [favoritos, setFavoritos] = useState(() => obtenerFavoritos());
 
   const pregunta = preguntas[indice];

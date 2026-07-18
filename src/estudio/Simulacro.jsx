@@ -26,7 +26,10 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
   const [preguntas, setPreguntas] = useState([]);
   const [indice, setIndice] = useState(0);
-
+  const [tiempoRestanteSimulacro, setTiempoRestanteSimulacro] = useState(null);
+  const [respuestasSimulacro, setRespuestasSimulacro] = useState([]);
+  const [horaInicioSimulacro, setHoraInicioSimulacro] = useState(null);
+  const [resultadoSimulacro, setResultadoSimulacro] = useState(null);  
   const pregunta = preguntas[indice];
 
   useEffect(() => {
