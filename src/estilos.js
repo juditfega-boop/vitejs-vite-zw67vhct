@@ -344,8 +344,8 @@ const styles = {
     marginTop: 12,
     fontSize: 16,
     fontWeight: 700,
-    color: "#5a4f6b",
-    background: "linear-gradient(135deg, # decdf0, #f5e2e6)",
+    color: "#5a4636",
+    background: "linear-gradient(135deg, #f2cb8f, #eeb9bd)",
     cursor: "pointer",
     boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
     textAlign: "center"
@@ -872,12 +872,14 @@ derrotaOverlayInferior: {
   },
   archiveroGloboFlotante: {
     position: "absolute",
-    left: 0,
-    maxWidth: 240,
+    width: "max-content",
+    maxWidth: "min(300px, 82vw)",
+    minWidth: 220,
     background: "#fff",
     borderRadius: 16,
-    padding: "12px 14px",
+    padding: "12px 16px",
     fontSize: 13,
+    lineHeight: 1.5,
     color: "#4a463f",
     boxShadow: "0 4px 14px rgba(0,0,0,0.2)"
   },

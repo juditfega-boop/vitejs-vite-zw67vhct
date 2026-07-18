@@ -88,7 +88,7 @@ export default function ConstruyeConstitucion({ setPantalla }) {
     setConstruyeIntentos({});
     setConstruyeMensajesPool([]);
     setConstruyeMensajeActual(
-      "¡Hola! Soy Ezequiel Ander-Egg. Si quieres que te ayude o te hable de mí, solo tienes que pincharme."
+      "¡Hola! Soy Ezequiel Ander-Egg. Me puedes mover a donde quieras, y cada vez que me pinches te contaré algo distinto sobre mí."
     );
     setConstruyePistaOferta(null);
     setConstruyeDeclinado({});
@@ -408,7 +408,10 @@ export default function ConstruyeConstitucion({ setPantalla }) {
                 ...styles.archiveroGloboFlotante,
                 ...(archiveroPos.y > window.innerHeight / 2
                   ? { bottom: 70, top: "auto" }
-                  : { top: 70, bottom: "auto" })
+                  : { top: 70, bottom: "auto" }),
+                ...(archiveroPos.x > window.innerWidth / 2
+                  ? { right: 0, left: "auto" }
+                  : { left: 0, right: "auto" })
               }}
             >
             {construyePistaOferta ? (
