@@ -854,17 +854,13 @@ derrotaOverlayInferior: {
     boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
   },
   archiveroBotonFlotante: {
-    position: "fixed",
-    bottom: 90,
-    right: 20,
     width: 60,
     height: 60,
     borderRadius: "50%",
     border: "none",
     padding: 0,
     cursor: "pointer",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
-    zIndex: 50
+    boxShadow: "0 4px 14px rgba(0,0,0,0.25)"
   },
   archiveroFotoFlotante: {
     width: "100%",
@@ -874,17 +870,15 @@ derrotaOverlayInferior: {
     display: "block"
   },
   archiveroGloboFlotante: {
-    position: "fixed",
-    bottom: 156,
-    right: 20,
+    position: "absolute",
+    left: 0,
     maxWidth: 240,
     background: "#fff",
     borderRadius: 16,
     padding: "12px 14px",
     fontSize: 13,
     color: "#4a463f",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
-    zIndex: 50
+    boxShadow: "0 4px 14px rgba(0,0,0,0.2)"
   },
   archiveroBotonSi: {
     flex: 1,

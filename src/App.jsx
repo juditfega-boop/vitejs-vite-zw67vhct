@@ -142,13 +142,14 @@ export default function App() {
     sincronizarConNube();
   }
 
-  // 🏠 el botón de pánico (definido en index.html) se oculta cuando ya estás en Inicio
-  useEffect(() => {
-    const boton = document.getElementById("boton-panico");
-    if (boton) {
-      boton.style.display = pantalla === "inicio" ? "none" : "block";
-    }
-  }, [pantalla]);
+// 🏠 el botón de pánico (definido en index.html) se oculta en Inicio y en la Portada
+useEffect(() => {
+  const boton = document.getElementById("boton-panico");
+  if (boton) {
+    const ocultarEn = pantalla === "inicio" || pantalla === "landing";
+    boton.style.display = ocultarEn ? "none" : "block";
+  }
+}, [pantalla]);
 
   // 🌸 PANTALLA DE BIENVENIDA (LANDING)
   if (pantalla === "landing") {

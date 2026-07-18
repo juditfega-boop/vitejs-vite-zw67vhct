@@ -378,35 +378,39 @@ export default function ConstruyeConstitucion({ setPantalla }) {
           Comprobar
         </button>
 
-        <button
-          onPointerDown={iniciarArrastreArchivero}
-          onPointerMove={moverArchivero}
-          onPointerUp={soltarArchivero}
-          onClick={() => {
-            if (!seMovioRef.current) abrirArchivero();
-          }}
+        <div
           style={{
-            ...styles.archiveroBotonFlotante,
+            position: "fixed",
             left: archiveroPos.x,
             top: archiveroPos.y,
-            bottom: "auto",
-            right: "auto",
-            touchAction: "none"
+            zIndex: 50
           }}
         >
-          <img src={construyeArchivero} alt="Ezequiel, el Archivero" style={styles.archiveroFotoFlotante} />
-        </button>
-
-        {archiveroAbierto && (
-          <div
+          <button
+            onPointerDown={iniciarArrastreArchivero}
+            onPointerMove={moverArchivero}
+            onPointerUp={soltarArchivero}
+            onClick={() => {
+              if (!seMovioRef.current) abrirArchivero();
+            }}
             style={{
-              ...styles.archiveroGloboFlotante,
-              left: Math.max(10, archiveroPos.x - 90),
-              top: Math.max(10, archiveroPos.y - 110),
-              bottom: "auto",
-              right: "auto"
+              ...styles.archiveroBotonFlotante,
+              position: "relative",
+              touchAction: "none"
             }}
           >
+            <img src={construyeArchivero} alt="Ezequiel, el Archivero" style={styles.archiveroFotoFlotante} />
+          </button>
+
+          {archiveroAbierto && (
+            <div
+              style={{
+                ...styles.archiveroGloboFlotante,
+                ...(archiveroPos.y > window.innerHeight / 2
+                  ? { bottom: 70, top: "auto" }
+                  : { top: 70, bottom: "auto" })
+              }}
+            >
             {construyePistaOferta ? (
               <>
                 <p style={{ margin: "0 0 10px" }}>
@@ -427,11 +431,12 @@ export default function ConstruyeConstitucion({ setPantalla }) {
                   </button>
                 </div>
               </>
-            ) : (
-              <p style={{ margin: 0 }}>{construyeMensajeActual}</p>
-            )}
-          </div>
-        )}
+) : (
+  <p style={{ margin: 0 }}>{construyeMensajeActual}</p>
+)}
+</div>
+)}
+</div>
 
         <button onClick={() => setVista("config")} style={styles.linkVolver}>
           ⬅ Elegir otra vez qué construir
