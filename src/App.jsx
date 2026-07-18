@@ -47,7 +47,9 @@ export default function App() {
   const [preguntasBase, setPreguntasBase] = useState([]);
   const [preguntas, setPreguntas] = useState([]);
   const [indice, setIndice] = useState(0);
-  const [pantalla, setPantalla] = useState("landing");
+  const [pantalla, setPantalla] = useState(() =>
+  window.location.hash === "#inicio" ? "inicio" : "landing"
+);
   const [mensaje, setMensaje] = useState("");
   const [mostrar, setMostrar] = useState(false);
   const [aciertos, setAciertos] = useState(0);
