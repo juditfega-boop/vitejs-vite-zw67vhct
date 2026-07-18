@@ -48,10 +48,12 @@ export default function ConstruyeConstitucion({ setPantalla }) {
     setConstruyeFeedback({});
     setConstruyeIntentos({});
     setConstruyeMensajesPool([]);
-    setConstruyeMensajeActual("");
+    setConstruyeMensajeActual(
+      "¡Hola! Soy Ezequiel Ander-Egg. Si quieres que te ayude o te hable de mí, solo tienes que pincharme."
+    );
     setConstruyePistaOferta(null);
     setConstruyeDeclinado({});
-    setArchiveroAbierto(false);
+    setArchiveroAbierto(true);
     setVista("jugando");
   }
 
