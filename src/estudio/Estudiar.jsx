@@ -10,6 +10,18 @@ import {
   guardarFavoritos
 } from "../servicios/progreso";
 import { styles } from "../estilos";
+import iconoTazaPlantita from "../assets/kit/icono-taza-plantita-evolucion.png";
+import iconoRelojEvolucion from "../assets/kit/icono-reloj-simulacro.png";
+import iconoPlantitaEvolucion from "../assets/kit/icono-plantita-evolucion.png";
+import iconoRepasarHero from "../assets/kit/icono-repasar-errores-hero.png";
+import iconoCarpetitaPrioritarios from "../assets/kit/icono-carpetita-prioritarios.png";
+import iconoCarpetitaSeguimiento from "../assets/kit/icono-carpetita-seguimiento.png";
+import iconoCarpetitaResueltos from "../assets/kit/icono-carpetita-resueltos.png";
+import iconoCasosPrioritarios from "../assets/kit/icono-casos-prioritarios.png";
+import iconoCasosSeguimiento from "../assets/kit/icono-casos-seguimiento.png";
+import iconoCasosResueltos from "../assets/kit/icono-casos-resueltos.png";
+import iconoCarpetaFavoritas from "../assets/kit/icono-favoritos-corazon.png";
+import iconoGrafico from "../assets/kit/icono-grafico-evolucion.png";
 
 function mezclar(array) {
   return [...array].sort(() => Math.random() - 0.5);
@@ -84,6 +96,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [conExplicacion, setConExplicacion] = useState(true);
   const [tiempoRestante, setTiempoRestante] = useState(null);
   const [inicioPregunta, setInicioPregunta] = useState(null);
+  const [tabEvolucion, setTabEvolucion] = useState("resumen");
   const [favoritos, setFavoritos] = useState(() => obtenerFavoritos());
 
   const pregunta = preguntas[indice];
@@ -372,45 +385,195 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     );
   }
 
-  // 📈 MI PROGRESO (hub)
-  if (vista === "progreso") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>Mi progreso</h1>
+// 📈 MI EVOLUCIÓN (hub de 3 accesos)
+if (vista === "progreso") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>Mi evolución</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <button onClick={() => setVista("estadisticas")} style={styles.filaMinijuegoBtn}>
+        <img src={iconoGrafico} alt="" style={styles.miniaturaMinijuego} />
+        <span style={styles.filaMinijuegoTexto}>Estadísticas</span>
+        <span style={{ color: "#8a8578" }}>→</span>
+      </button>
+
+      <button onClick={() => setVista("errores")} style={styles.filaMinijuegoBtn}>
+        <span style={styles.miniaturaMinijuegoEmoji}>⭐</span>
+        <span style={styles.filaMinijuegoTexto}>Repasar errores ({pendientesErrores})</span>
+        <span style={{ color: "#8a8578" }}>→</span>
+      </button>
+
+      <button onClick={() => setVista("favoritos")} style={styles.filaMinijuegoBtn}>
+        <img src={iconoCarpetaFavoritas} alt="" style={styles.miniaturaMinijuego} />
+        <span style={styles.filaMinijuegoTexto}>Favoritas ({favoritos.length})</span>
+        <span style={{ color: "#8a8578" }}>→</span>
+      </button>
+
+      <button onClick={volverMenu} style={styles.linkVolver}>
+        ⬅ Volver al menú
+      </button>
+    </div>
+  );
+}
+
+// 📊 ESTADÍSTICAS (Resumen + Por bloques)
+if (vista === "estadisticas") {
+  const statsGuardadas = obtenerStats();
+  const bloques = {};
+
+  Object.values(statsGuardadas).forEach((dato) => {
+    const bloque = dato.bloque || "Sin bloque";
+    if (!bloques[bloque]) bloques[bloque] = { respondidas: 0, aciertos: 0 };
+    bloques[bloque].respondidas += dato.veces || 0;
+    bloques[bloque].aciertos += dato.aciertos || 0;
+  });
+
+  function mensajeBloque(p) {
+    if (p >= 90) return "🎓 Nivel Jane Addams: podrías montar tu propia Hull House";
+    if (p >= 75) return "💪 Caso con alta autonomía, casi de alta";
+    if (p >= 60) return "🙂 Vas bien, aunque el expediente aún tiene puntos abiertos";
+    if (p >= 40) return "⚠️ Este bloque necesita un plan de intervención en condiciones";
+    if (p >= 20) return "🚨 Caso de alta vulnerabilidad — refuerza la red de apoyo";
+    return "🆘 Urgencia social: deriva este bloque a estudio inmediato";
+  }
+
+  const ordenados = Object.entries(bloques)
+    .map(([nombre, datos]) => ({
+      nombre,
+      porcentaje: datos.respondidas ? Math.round((datos.aciertos / datos.respondidas) * 100) : 0
+    }))
+    .sort((a, b) => b.porcentaje - a.porcentaje);
+
+  const totalRespondidas = Object.values(statsGuardadas).reduce((a, b) => a + (b.veces || 0), 0);
+  const totalAciertos = Object.values(statsGuardadas).reduce((a, b) => a + (b.aciertos || 0), 0);
+  const porcentajeGlobal = totalRespondidas ? Math.round((totalAciertos / totalRespondidas) * 100) : 0;
+
+  const racha = obtenerRacha().racha;
+  const tiempos = obtenerTiempos();
+  const horasEstudio = Math.round((tiempos.totalSegundos / 3600) * 10) / 10;
+
+  function mensajeGlobal(p) {
+    if (p >= 80) return "Muy buen progreso";
+    if (p >= 60) return "Vas por buen camino";
+    if (p >= 40) return "Sigue regando este jardín";
+    if (p > 0) return "Toca reforzar un poco más";
+    return "Aún no hay datos suficientes";
+  }
+
+  // círculo de progreso (SVG)
+  const radio = 52;
+  const circunferencia = 2 * Math.PI * radio;
+  const relleno = (porcentajeGlobal / 100) * circunferencia;
+
+  return (
+    <div style={styles.menuContainer}>
+<div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Estadísticas</h1>
           <div style={styles.menuUnderline} />
         </div>
 
+      <div style={styles.evolucionTabs}>
         <button
-          className="menu-btn"
-          onClick={() => setVista("estadisticas")}
-          style={{ ...styles.menuButton, ...styles.btnPeach }}
+          onClick={() => setTabEvolucion("resumen")}
+          style={{
+            ...styles.evolucionTabBtn,
+            ...(tabEvolucion === "resumen" ? styles.evolucionTabBtnActiva : {})
+          }}
         >
-          📊 Estadísticas
+          Resumen
         </button>
-
         <button
-          className="menu-btn"
-          onClick={() => setVista("errores")}
-          style={{ ...styles.menuButton, ...styles.btnPink }}
+          onClick={() => setTabEvolucion("bloques")}
+          style={{
+            ...styles.evolucionTabBtn,
+            ...(tabEvolucion === "bloques" ? styles.evolucionTabBtnActiva : {})
+          }}
         >
-          ⭐ Repasar errores ({pendientesErrores})
-        </button>
-
-        <button
-          className="menu-btn"
-          onClick={() => setVista("favoritos")}
-          style={{ ...styles.menuButton, ...styles.btnOlive }}
-        >
-          ❤️ Favoritas ({favoritos.length})
-        </button>
-
-        <button onClick={volverMenu} style={styles.linkVolver}>
-          ⬅ Volver al menú
+          Por bloques
         </button>
       </div>
-    );
-  }
+
+      {tabEvolucion === "resumen" && (
+        <>
+          <div style={styles.evolucionAnilloCard}>
+            <p style={styles.evolucionAnilloTitulo}>Rendimiento global</p>
+
+            <svg width="130" height="130" viewBox="0 0 130 130">
+              <circle cx="65" cy="65" r={radio} fill="none" stroke="#f0ece0" strokeWidth="12" />
+              <circle
+                cx="65"
+                cy="65"
+                r={radio}
+                fill="none"
+                stroke="#a8c9ae"
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeDasharray={`${relleno} ${circunferencia}`}
+                transform="rotate(-90 65 65)"
+              />
+              <text x="65" y="72" textAnchor="middle" fontSize="26" fontWeight="700" fill="#4a463f">
+                {porcentajeGlobal}%
+              </text>
+            </svg>
+
+            <p style={styles.evolucionAnilloSubtitulo}>{mensajeGlobal(porcentajeGlobal)}</p>
+          </div>
+
+          <div style={styles.evolucionStatsRow}>
+            <div style={styles.evolucionStatItem}>
+              <img src={iconoPlantitaEvolucion} alt="" style={styles.evolucionStatIcono} />
+              <p style={styles.evolucionStatValor}>{totalRespondidas}</p>
+              <p style={styles.evolucionStatEtiqueta}>Preguntas aprendidas</p>
+            </div>
+            <div style={styles.evolucionStatItem}>
+              <img src={iconoRelojEvolucion} alt="" style={styles.evolucionStatIcono} />
+              <p style={styles.evolucionStatValor}>{horasEstudio}</p>
+              <p style={styles.evolucionStatEtiqueta}>Horas de estudio</p>
+            </div>
+            <div style={styles.evolucionStatItem}>
+              <p style={{ fontSize: 28, margin: "4px 0" }}>🔥</p>
+              <p style={styles.evolucionStatValor}>{racha}</p>
+              <p style={styles.evolucionStatEtiqueta}>Días racha actual</p>
+            </div>
+          </div>
+
+          <div style={styles.evolucionMensajeCard}>
+            <img src={iconoTazaPlantita} alt="" style={styles.evolucionMensajeIcono} />
+            <p style={styles.evolucionMensajeTexto}>
+              {racha > 0
+                ? "Eres constante y eso se nota. Sigue regando tu jardín cada día."
+                : "Cada respuesta es una raíz más fuerte. Empieza hoy tu racha."}
+            </p>
+          </div>
+
+          </>
+        )}
+
+      {tabEvolucion === "bloques" && (
+        <>
+          {ordenados.length === 0 ? (
+            <p style={styles.configSubLabel}>Todavía no has respondido preguntas 😅</p>
+          ) : (
+            ordenados.map((b) => (
+              <div key={b.nombre} style={styles.configCard}>
+                <p style={styles.configCardTitle}>{b.nombre}</p>
+                <p style={styles.configSubLabel}>{b.porcentaje}% aciertos</p>
+                <p style={{ ...styles.configSubLabel, marginTop: 6 }}>{mensajeBloque(b.porcentaje)}</p>
+              </div>
+            ))
+          )}
+        </>
+      )}
+
+      <button onClick={volverMenu} style={styles.linkVolver}>
+        ⬅ Volver al menú
+      </button>
+    </div>
+  );
+}
 
   // ❤️ FAVORITAS
   if (vista === "favoritos") {
@@ -448,60 +611,104 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     );
   }
 
-  // ⭐ REPASAR ERRORES
-  if (vista === "errores") {
-    const stats = obtenerStats();
-    const muyOlvidadas = [];
-    const pendientes = [];
-    const recuperadas = [];
+// ⭐ REPASAR ERRORES
+if (vista === "errores") {
+  const stats = obtenerStats();
+  const muyOlvidadas = [];
+  const pendientes = [];
+  const recuperadas = [];
 
-    preguntasBase.forEach((p) => {
-      const s = stats[String(p.id)];
-      if (!s) return;
+  preguntasBase.forEach((p) => {
+    const s = stats[String(p.id)];
+    if (!s) return;
 
-      if (s.aciertos >= s.errores && s.errores > 0) {
-        recuperadas.push(p);
-      } else if (s.errores >= 3) {
-        muyOlvidadas.push(p);
-      } else if (s.errores > s.aciertos) {
-        pendientes.push(p);
-      }
-    });
+    if (s.aciertos >= s.errores && s.errores > 0) {
+      recuperadas.push(p);
+    } else if (s.errores >= 3) {
+      muyOlvidadas.push(p);
+    } else if (s.errores > s.aciertos) {
+      pendientes.push(p);
+    }
+  });
 
-    return (
-      <div style={styles.container}>
-        <h1>⭐ Repasar errores</h1>
+  return (
+    <div style={styles.menuContainer}>
+      <img src={iconoRepasarHero} alt="" style={styles.repasarHeroImg} />
 
-        <div style={{ border: "1px solid #ddd", padding: 15, marginTop: 10, borderRadius: 10 }}>
-          <h3>🔴 Casos prioritarios ({muyOlvidadas.length})</h3>
-          <p>Estas preguntas requieren de intervención urgente</p>
-          <button style={styles.button} onClick={() => iniciarBloque(muyOlvidadas)}>
-            Repasar
-          </button>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>Repasar errores</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <div style={styles.repasarResumenCard}>
+        <div style={styles.repasarResumenItem}>
+          <img src={iconoCarpetitaPrioritarios} alt="" style={styles.repasarResumenIcono} />
+          <p style={styles.repasarResumenValor}>{muyOlvidadas.length}</p>
+          <p style={styles.repasarResumenEtiqueta}>prioritarios</p>
         </div>
-
-        <div style={{ border: "1px solid #ddd", padding: 15, marginTop: 10, borderRadius: 10 }}>
-          <h3>🟡 Casos en seguimiento ({pendientes.length})</h3>
-          <p>Sigues con el expediente abierto</p>
-          <button style={styles.button} onClick={() => iniciarBloque(pendientes)}>
-            Repasar
-          </button>
+        <div style={styles.repasarResumenItem}>
+          <img src={iconoCarpetitaSeguimiento} alt="" style={styles.repasarResumenIcono} />
+          <p style={styles.repasarResumenValor}>{pendientes.length}</p>
+          <p style={styles.repasarResumenEtiqueta}>en seguimiento</p>
         </div>
-
-        <div style={{ border: "1px solid #ddd", padding: 15, marginTop: 10, borderRadius: 10 }}>
-          <h3>🟢 Casos resueltos ({recuperadas.length})</h3>
-          <p>Intervención finalizada: autonomía conseguida</p>
-          <button style={styles.button} onClick={() => iniciarBloque(recuperadas)}>
-            Repasar
-          </button>
+        <div style={styles.repasarResumenItem}>
+          <img src={iconoCarpetitaResueltos} alt="" style={styles.repasarResumenIcono} />
+          <p style={styles.repasarResumenValor}>{recuperadas.length}</p>
+          <p style={styles.repasarResumenEtiqueta}>resueltos</p>
         </div>
+      </div>
 
-        <button onClick={volverAProgreso} style={styles.button}>
-          ⬅ Volver
+      <div style={{ ...styles.repasarFilaCard, background: "#f9e3e3" }}>
+        <div style={{ display: "flex", gap: 12 }}>
+          <img src={iconoCasosPrioritarios} alt="" style={styles.repasarFilaIcono} />
+          <div style={{ flex: 1 }}>
+            <p style={styles.repasarFilaTitulo}>🔴 Casos prioritarios ({muyOlvidadas.length})</p>
+            <p style={styles.repasarFilaTexto}>
+              Estos conceptos necesitan volver pronto. Conviene repasarlos antes de que se olviden.
+            </p>
+          </div>
+        </div>
+        <button onClick={() => iniciarBloque(muyOlvidadas)} style={{ ...styles.repasarBoton, background: "#f0c3c3" }}>
+          🍃 Revisar expedientes
         </button>
       </div>
-    );
-  }
+
+      <div style={{ ...styles.repasarFilaCard, background: "#f7e9d2" }}>
+        <div style={{ display: "flex", gap: 12 }}>
+          <img src={iconoCasosSeguimiento} alt="" style={styles.repasarFilaIcono} />
+          <div style={{ flex: 1 }}>
+            <p style={styles.repasarFilaTitulo}>🟡 Casos en seguimiento ({pendientes.length})</p>
+            <p style={styles.repasarFilaTexto}>
+              Ya has avanzado mucho con ellos. Cada repaso los hace más fuertes.
+            </p>
+          </div>
+        </div>
+        <button onClick={() => iniciarBloque(pendientes)} style={{ ...styles.repasarBoton, background: "#eed7a3" }}>
+          🍃 Continuar repasando
+        </button>
+      </div>
+
+      <div style={{ ...styles.repasarFilaCard, background: "#e3ecd9" }}>
+        <div style={{ display: "flex", gap: 12 }}>
+          <img src={iconoCasosResueltos} alt="" style={styles.repasarFilaIcono} />
+          <div style={{ flex: 1 }}>
+            <p style={styles.repasarFilaTitulo}>🟢 Casos resueltos ({recuperadas.length})</p>
+            <p style={styles.repasarFilaTexto}>
+              Estos conceptos ya forman parte de tus raíces. ¡Buen trabajo!
+            </p>
+          </div>
+        </div>
+        <button onClick={() => iniciarBloque(recuperadas)} style={{ ...styles.repasarBoton, background: "#c9dcb5" }}>
+          🍃 Ver historial
+        </button>
+      </div>
+
+      <button onClick={volverAProgreso} style={styles.linkVolver}>
+        ⬅ Volver
+      </button>
+    </div>
+  );
+}
 
   // 📊 ESTADÍSTICAS
   if (vista === "estadisticas") {

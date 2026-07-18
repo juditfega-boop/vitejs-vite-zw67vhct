@@ -1100,4 +1100,147 @@ styles.inicioFraseFinal = {
   marginBottom: 10
 };
 
+styles.evolucionHeader = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16
+};
+styles.evolucionTitulo = {
+  fontSize: 22,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: 0
+};
+styles.evolucionHojaDecorativa = { width: 40, height: 40, objectFit: "contain" };
+styles.evolucionTabs = {
+  display: "flex",
+  gap: 6,
+  background: "#fff",
+  borderRadius: 18,
+  padding: 5,
+  marginBottom: 18,
+  boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
+};
+styles.evolucionTabBtn = {
+  flex: 1,
+  border: "none",
+  background: "transparent",
+  borderRadius: 14,
+  padding: "10px 8px",
+  fontSize: 13,
+  fontWeight: 600,
+  color: "#8a8578",
+  cursor: "pointer"
+};
+styles.evolucionTabBtnActiva = {
+  background: "#ece4f7",
+  color: "#5a4676"
+};
+styles.evolucionAnilloCard = {
+  background: "#fff",
+  borderRadius: 24,
+  padding: "22px 20px",
+  textAlign: "center",
+  marginBottom: 16,
+  boxShadow: "0 3px 12px rgba(0,0,0,0.035)"
+};
+styles.evolucionAnilloTitulo = {
+  fontSize: 14,
+  fontWeight: 700,
+  color: "#4a463f",
+  marginBottom: 10
+};
+styles.evolucionAnilloSubtitulo = {
+  fontSize: 13,
+  color: "#8a8578",
+  marginTop: 8
+};
+styles.evolucionStatsRow = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 10,
+  marginBottom: 16
+};
+styles.evolucionStatItem = {
+  flex: 1,
+  background: "#fff",
+  borderRadius: 18,
+  padding: "14px 8px",
+  textAlign: "center",
+  boxShadow: "0 3px 10px rgba(0,0,0,0.03)"
+};
+styles.evolucionStatIcono = { width: 36, height: 36, objectFit: "contain", marginBottom: 2 };
+styles.evolucionStatValor = { fontSize: 18, fontWeight: 700, color: "#4a463f", margin: "2px 0" };
+styles.evolucionStatEtiqueta = { fontSize: 10, color: "#8a8578", margin: 0, lineHeight: 1.3 };
+styles.evolucionMensajeCard = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  background: "#fff",
+  borderRadius: 20,
+  padding: 16,
+  marginBottom: 18,
+  boxShadow: "0 3px 12px rgba(0,0,0,0.035)"
+};
+styles.evolucionMensajeIcono = { width: 64, height: 64, objectFit: "contain", flexShrink: 0 };
+styles.evolucionMensajeTexto = { fontSize: 13, color: "#4a463f", margin: 0, lineHeight: 1.5 };
+styles.evolucionEnlace = {
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  border: "none",
+  background: "#fff",
+  borderRadius: 16,
+  padding: "14px 16px",
+  marginBottom: 10,
+  fontSize: 14,
+  fontWeight: 600,
+  color: "#4a463f",
+  cursor: "pointer",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
+};
+
+styles.repasarHeroImg = {
+  display: "block",
+  width: 160,
+  margin: "0 auto 8px"
+};
+styles.repasarResumenCard = {
+  display: "flex",
+  background: "#fff",
+  borderRadius: 22,
+  padding: "18px 10px",
+  marginBottom: 18,
+  boxShadow: "0 3px 12px rgba(0,0,0,0.035)"
+};
+styles.repasarResumenItem = {
+  flex: 1,
+  textAlign: "center",
+  borderRight: "1px solid #f0ece2"
+};
+styles.repasarResumenIcono = { width: 40, height: 40, objectFit: "contain", marginBottom: 4 };
+styles.repasarResumenValor = { fontSize: 20, fontWeight: 700, color: "#4a463f", margin: "2px 0" };
+styles.repasarResumenEtiqueta = { fontSize: 11, color: "#8a8578", margin: 0 };
+styles.repasarFilaCard = {
+  borderRadius: 22,
+  padding: 16,
+  marginBottom: 14
+};
+styles.repasarFilaIcono = { width: 56, height: 56, objectFit: "contain", flexShrink: 0 };
+styles.repasarFilaTitulo = { fontSize: 14, fontWeight: 700, color: "#4a463f", margin: "0 0 4px" };
+styles.repasarFilaTexto = { fontSize: 12, color: "#5a5650", margin: 0, lineHeight: 1.4 };
+styles.repasarBoton = {
+  display: "block",
+  width: "100%",
+  border: "none",
+  borderRadius: 14,
+  padding: "10px 14px",
+  marginTop: 12,
+  fontSize: 13,
+  fontWeight: 700,
+  color: "#4a463f",
+  cursor: "pointer"
+};
+
 export { globalStyles, styles };
