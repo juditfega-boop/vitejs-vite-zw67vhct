@@ -546,67 +546,75 @@ export default function App() {
     );
   }
 
-  // 🟣 MENÚ PRINCIPAL
-  if (pantalla === "inicio") {
-    return (
-      <div style={styles.menuContainer}>
-        <style>{globalStyles}</style>
+// 🟣 MENÚ PRINCIPAL
+if (pantalla === "inicio") {
+  const racha = obtenerRacha().racha;
 
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>Menú principal</h1>
-          <div style={styles.menuUnderline} />
-        </div>
+  return (
+    <div style={styles.menuContainer}>
+      <style>{globalStyles}</style>
 
-        <button
-          className="menu-btn"
-          onClick={() => setPantalla("estudiar-config")}
-          style={{ ...styles.menuButton, ...styles.btnPeach }}
-        >
-          📖 Estudiar
-        </button>
-
-        <button
-          className="menu-btn"
-          onClick={() => setPantalla("simulacro-intro")}
-          style={{ ...styles.menuButton, ...styles.btnPurple }}
-        >
-          📝 Simulacro oficial
-        </button>
-
-        <button
-          className="menu-btn"
-          onClick={() => setPantalla("progreso")}
-          style={{ ...styles.menuButton, ...styles.btnPink }}
-        >
-          📈 Mi evolución
-        </button>
-
-        <button
-          className="menu-btn"
-          onClick={() => setPantalla("desarrollo")}
-          style={{ ...styles.menuButton, ...styles.btnMuted }}
-        >
-          🧩 Desarrollo <span style={styles.badgeProximamente}>Próximamente</span>
-        </button>
-
-        <button
-          className="menu-btn"
-          onClick={() => setPantalla("minijuegos")}
-          style={{ ...styles.menuButton, ...styles.btnMint }}
-        >
-          🎮 Minijuegos
-        </button>
-
-        <button
-          className="menu-btn"
-          onClick={() => setPantalla("ajustes")}
-          style={{ ...styles.menuButton, ...styles.btnOlive }}
-        >
-          👤 Mi perfil
-        </button>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>Menú principal</h1>
+        <div style={styles.menuUnderline} />
       </div>
-    );
-  }
+
+      <p style={{ textAlign: "center", color: "#7a9a7a", fontSize: 13, marginTop: -10, marginBottom: 24 }}>
+        🌿 Racha actual: {racha} {racha === 1 ? "día" : "días"}
+      </p>
+
+      <button
+        className="menu-btn"
+        onClick={() => setPantalla("estudiar-config")}
+        style={{ ...styles.menuButton, ...styles.btnPeach }}
+      >
+        📖 Estudiar
+      </button>
+
+      <button
+        className="menu-btn"
+        onClick={() => setPantalla("simulacro-intro")}
+        style={{ ...styles.menuButton, ...styles.btnPurple }}
+      >
+        📝 Simulacro oficial
+      </button>
+
+      <button
+        className="menu-btn"
+        onClick={() => setPantalla("minijuegos")}
+        style={{ ...styles.menuButton, ...styles.btnMint }}
+      >
+        🎮 Minijuegos
+      </button>
+
+      <button
+        className="menu-btn"
+        onClick={() => setPantalla("desarrollo")}
+        style={{ ...styles.menuButton, ...styles.btnMuted }}
+      >
+        🧩 Desarrollo <span style={styles.badgeProximamente}>Próximamente</span>
+      </button>
+
+      <div style={{ height: 1, background: "#e4ddcf", margin: "18px 4px" }} />
+
+      <button
+        className="menu-btn"
+        onClick={() => setPantalla("progreso")}
+        style={{ ...styles.menuButton, ...styles.btnPink }}
+      >
+        📈 Mi evolución
+      </button>
+
+      <button
+        className="menu-btn"
+        onClick={() => setPantalla("ajustes")}
+        style={{ ...styles.menuButton, ...styles.btnOlive }}
+      >
+        👤 Mi perfil
+      </button>
+    </div>
+  );
+}
 
   // ⚙️ CONFIGURACIÓN DE ESTUDIO
   if (pantalla === "estudiar-config") {
