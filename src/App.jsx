@@ -230,8 +230,89 @@ export default function App() {
     );
   }
 
-  // ☠️ DETALLE DE "SALVA A TU TRABAJADORA SOCIAL"
-  if (pantalla === "muerte") {
+// 🎮 HUB DE MINIJUEGOS
+if (pantalla === "minijuegos") {
+  const listaMinijuegos = [
+    {
+      id: "carrera",
+      nombre: "Carrera por la Plaza",
+      miniatura: miniaturaCarreraPlaza,
+      destino: "carrera"
+    },
+    {
+      id: "muerte",
+      nombre: "Salva a tu trabajadora social",
+      miniatura: muerteImg0,
+      destino: "muerte"
+    },
+    {
+      id: "archivos",
+      nombre: "Conecta la Constitución",
+      miniatura: miniaturaArchivos,
+      destino: "archivos"
+    },
+    {
+      id: "construye",
+      nombre: "Construye la Constitución",
+      miniatura: miniaturaConstruye,
+      destino: "construye"
+    }
+  ];
+
+  return (
+    <div style={styles.menuContainer}>
+      <style>{globalStyles}</style>
+
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>Minijuegos</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      {listaMinijuegos.map((j) => (
+        <button
+          key={j.id}
+          onClick={() => setPantalla(j.destino)}
+          style={styles.filaMinijuegoBtn}
+        >
+          {j.miniatura ? (
+            <img
+              src={j.miniatura}
+              alt={j.nombre}
+              style={styles.miniaturaMinijuego}
+            />
+          ) : (
+            <span style={styles.miniaturaMinijuegoEmoji}>{j.emoji}</span>
+          )}
+          <span style={styles.filaMinijuegoTexto}>{j.nombre}</span>
+          <span style={{ color: "#8a8578" }}>→</span>
+        </button>
+      ))}
+
+      <button onClick={volverMenu} style={styles.linkVolver}>
+        ⬅ Volver al menú
+      </button>
+    </div>
+  );
+}
+
+// 🧩 DESARROLLO (próximamente)
+if (pantalla === "desarrollo") {
+  return (
+    <div style={styles.placeholderContainer}>
+      <div style={styles.placeholderCard}>
+        <div style={styles.placeholderEmoji}>🧩</div>
+        <h2>Desarrollo</h2>
+        <p style={styles.configSubLabel}>Próximamente</p>
+        <button onClick={volverMenu} style={styles.linkVolver}>
+          ⬅ Volver al menú
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ☠️ DETALLE DE "SALVA A TU TRABAJADORA SOCIAL"
+if (pantalla === "muerte") {
     return (
       <SalvaTrabajadoraSocial
         preguntasBase={preguntasBase}
