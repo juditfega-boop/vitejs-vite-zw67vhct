@@ -457,13 +457,15 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     );
   }
 
-  // 🎉 VICTORIA
-  if (vista === "victoria") {
+// 🎉 VICTORIA
+if (vista === "victoria") {
     return (
       <div style={styles.menuContainer}>
-        <div style={styles.muerteImagenCol}>
-          <img src={muerteImgVictoria} alt="Has sobrevivido" style={styles.muerteImagen} />
-        </div>
+        <img
+          src={muerteImgVictoria}
+          alt="Has sobrevivido"
+          style={{ display: "block", width: 140, margin: "0 auto 16px" }}
+        />
 
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>🎉 ¡Has sobrevivido!</h1>
