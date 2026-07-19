@@ -7,6 +7,9 @@ import muerteImg3 from "../assets/trabajadora-3.png";
 import muerteImgDerrota from "../assets/trabajadora-derrota.png";
 import muerteImgVictoria from "../assets/trabajadora-victoria.png";
 import heroSalvaTrabajadora from "../assets/kit/hero-salva-trabajadora.png";
+import iconoPregunta from "../assets/bookbrand/icono-brand-pregunta.png";
+import iconoErrorX from "../assets/kit/icono-sim-errores.png";
+import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
 
 import {
   registrarRespuesta,
@@ -195,23 +198,23 @@ if (vista === "detalle") {
       <img src={heroSalvaTrabajadora} alt="" style={styles.juegoDetalleHeroImg} />
 
       <div style={styles.configCard}>
-        <div style={styles.juegoDetalleFila}>
-          <span style={styles.juegoDetalleEmoji}>📋</span>
-          <p style={styles.juegoDetalleTexto}>20 preguntas, una sola vida</p>
+          <div style={styles.juegoDetalleFila}>
+            <img src={iconoPregunta} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>20 preguntas, una sola vida</p>
+          </div>
+          <div style={styles.juegoDetalleFila}>
+            <img src={iconoErrorX} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              Si fallas una, la burocracia gana
+            </p>
+          </div>
+          <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
+            <img src={iconoTrofeo} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              Sobrevive a las 20 preguntas y habrás ganado
+            </p>
+          </div>
         </div>
-        <div style={styles.juegoDetalleFila}>
-          <span style={styles.juegoDetalleEmoji}>❌</span>
-          <p style={styles.juegoDetalleTexto}>
-            Si fallas una, la burocracia gana
-          </p>
-        </div>
-        <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
-          <span style={styles.juegoDetalleEmoji}>🏆</span>
-          <p style={styles.juegoDetalleTexto}>
-            Sobrevive a las 20 preguntas y habrás ganado
-          </p>
-        </div>
-      </div>
 
       <button onClick={() => setVista("config")} style={styles.ctaButton}>
         🚩 Empezar

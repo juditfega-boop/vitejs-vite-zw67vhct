@@ -913,6 +913,12 @@ muertePreguntaCol: {
     textAlign: "center",
     flexShrink: 0
   },
+  juegoDetalleIcono: {
+    width: 30,
+    height: 30,
+    objectFit: "contain",
+    flexShrink: 0
+  },
   juegoDetalleTexto: {
     margin: 0,
     fontSize: 13,
@@ -1626,7 +1632,7 @@ styles.simStatValor = { fontSize: 15, fontWeight: 700, color: "#4a463f", margin:
 styles.simStatEtiqueta = { fontSize: 9, color: "#8a8578", margin: 0, lineHeight: 1.25 };
 styles.simHeroImg = {
   display: "block",
-  width: 170,
+  width: 230,
   margin: "0 auto 8px"
 };
 styles.simRepasoBoton = {

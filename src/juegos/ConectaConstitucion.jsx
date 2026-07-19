@@ -5,6 +5,9 @@ import { styles, globalStyles } from "../estilos";
 import heroConectaConstitucion from "../assets/kit/hero-conecta-constitucion.png";
 import iconoExpedienteArticulos from "../assets/kit/icono-expediente-articulos.png";
 import iconoExpedienteFechas from "../assets/kit/icono-expediente-fechas.png";
+import iconoArchivos from "../assets/bookbrand/icono-brand-archivos.png";
+import iconoEnlace from "../assets/bookbrand/icono-brand-enlace.png";
+import iconoDiana from "../assets/bookbrand/icono-brand-diana.png";
 
 // 🔀 mezcla un array al azar (copia local, igual que en App.jsx)
 function mezclar(array) {
@@ -171,25 +174,25 @@ if (vista === "detalle") {
       <img src={heroConectaConstitucion} alt="" style={styles.juegoDetalleHeroImg} />
 
       <div style={styles.configCard}>
-        <div style={styles.juegoDetalleFila}>
-          <span style={styles.juegoDetalleEmoji}>🗂️</span>
-          <p style={styles.juegoDetalleTexto}>
-            Alguien ha mezclado los archivos de la Constitución
-          </p>
+          <div style={styles.juegoDetalleFila}>
+            <img src={iconoArchivos} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              Alguien ha mezclado los archivos de la Constitución
+            </p>
+          </div>
+          <div style={styles.juegoDetalleFila}>
+            <img src={iconoEnlace} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              Relaciona cada artículo con su contenido
+            </p>
+          </div>
+          <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
+            <img src={iconoDiana} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              Cada partida elige 8 parejas al azar
+            </p>
+          </div>
         </div>
-        <div style={styles.juegoDetalleFila}>
-          <span style={styles.juegoDetalleEmoji}>🔗</span>
-          <p style={styles.juegoDetalleTexto}>
-            Relaciona cada artículo con su contenido
-          </p>
-        </div>
-        <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
-          <span style={styles.juegoDetalleEmoji}>🎯</span>
-          <p style={styles.juegoDetalleTexto}>
-            Cada partida elige 8 parejas al azar
-          </p>
-        </div>
-      </div>
 
       <button onClick={() => setVista("expedientes")} style={styles.ctaButton}>
         🚩 Jugar

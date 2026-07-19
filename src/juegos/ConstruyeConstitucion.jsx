@@ -5,6 +5,8 @@ import construyeTecho from "../assets/construye-techo.png";
 import construyePlantaBaja from "../assets/construye-plantabaja.png";
 import construyeArchivero from "../assets/construye-archivero.png";
 import { styles, globalStyles } from "../estilos";
+import iconoLadrillo from "../assets/bookbrand/icono-brand-ladrillo.png";
+import iconoGrua from "../assets/bookbrand/icono-brand-grua.png";
 import heroConstruyeConstitucion from "../assets/kit/hero-construye-constitucion.png";
 
 // 🔀 mezcla un array al azar (copia local, igual que la de App.jsx)
@@ -248,25 +250,25 @@ if (vista === "detalle") {
       <img src={heroConstruyeConstitucion} alt="" style={styles.juegoDetalleHeroImg} />
 
       <div style={styles.configCard}>
-        <div style={styles.juegoDetalleFila}>
-          <span style={styles.juegoDetalleEmoji}>🧱</span>
-          <p style={styles.juegoDetalleTexto}>
-            La Constitución se ha desmontado
-          </p>
+          <div style={styles.juegoDetalleFila}>
+            <img src={iconoLadrillo} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              La Constitución se ha desmontado
+            </p>
+          </div>
+          <div style={styles.juegoDetalleFila}>
+            <img src={iconoGrua} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              Vuelve a construirla, planta a planta
+            </p>
+          </div>
+          <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
+            <span style={styles.juegoDetalleEmoji}>🔢</span>
+            <p style={styles.juegoDetalleTexto}>
+              Completa el artículo inicial y final de cada título, capítulo y sección
+            </p>
+          </div>
         </div>
-        <div style={styles.juegoDetalleFila}>
-          <span style={styles.juegoDetalleEmoji}>🏗️</span>
-          <p style={styles.juegoDetalleTexto}>
-            Vuelve a construirla, planta a planta
-          </p>
-        </div>
-        <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
-          <span style={styles.juegoDetalleEmoji}>🔢</span>
-          <p style={styles.juegoDetalleTexto}>
-            Completa el artículo inicial y final de cada título, capítulo y sección
-          </p>
-        </div>
-      </div>
 
       <button onClick={() => setVista("config")} style={styles.ctaButton}>
         🚩 Construir

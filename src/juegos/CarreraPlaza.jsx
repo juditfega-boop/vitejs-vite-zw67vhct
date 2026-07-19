@@ -4,6 +4,9 @@ import video2Jugadoras from "../assets/carrera-video-2.mp4";
 import video3Jugadoras from "../assets/carrera-video-3.mp4";
 import video4Jugadoras from "../assets/carrera-video-4.mp4";
 import heroCarreraPlaza from "../assets/kit/hero-carrera-plaza.png";
+import iconoPersonas from "../assets/bookbrand/icono-brand-personas.png";
+import iconoTurno from "../assets/bookbrand/icono-brand-turno.png";
+import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
 
 const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
 
@@ -317,25 +320,25 @@ if (vista === "detalle") {
       <img src={heroCarreraPlaza} alt="" style={styles.juegoDetalleHeroImg} />
 
       <div style={styles.configCard}>
-        <div style={styles.juegoDetalleFila}>
-          <span style={styles.juegoDetalleEmoji}>👥</span>
-          <p style={styles.juegoDetalleTexto}>
-            De 2 a 4 personas
-            <br />
-            Un solo dispositivo
-          </p>
+          <div style={styles.juegoDetalleFila}>
+            <img src={iconoPersonas} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              De 2 a 4 personas
+              <br />
+              Un solo dispositivo
+            </p>
+          </div>
+          <div style={styles.juegoDetalleFila}>
+            <img src={iconoTurno} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>Cada jugadora responde por turnos</p>
+          </div>
+          <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
+            <img src={iconoTrofeo} alt="" style={styles.juegoDetalleIcono} />
+            <p style={styles.juegoDetalleTexto}>
+              Gana quien consiga más aciertos y llegue primero a la meta
+            </p>
+          </div>
         </div>
-        <div style={styles.juegoDetalleFila}>
-          <span style={styles.juegoDetalleEmoji}>🔄</span>
-          <p style={styles.juegoDetalleTexto}>Cada persona responde por turnos</p>
-        </div>
-        <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
-          <span style={styles.juegoDetalleEmoji}>🏆</span>
-          <p style={styles.juegoDetalleTexto}>
-            Gana quien consiga más aciertos y llegue primero a la meta
-          </p>
-        </div>
-      </div>
 
       <button onClick={() => setVista("config")} style={styles.ctaButton}>
         🚩 Empezar carrera
