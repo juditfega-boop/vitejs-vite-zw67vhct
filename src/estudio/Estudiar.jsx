@@ -22,6 +22,65 @@ import iconoCasosSeguimiento from "../assets/kit/icono-casos-seguimiento.png";
 import iconoCasosResueltos from "../assets/kit/icono-casos-resueltos.png";
 import iconoCarpetaFavoritas from "../assets/kit/icono-favoritos-corazon.png";
 import iconoGrafico from "../assets/kit/icono-grafico-evolucion.png";
+import iconoLibroEstudiar from "../assets/kit/icono-libro-estudiar.png";
+import iconoTipoEstudio from "../assets/kit/icono-tipo-estudio-planta.png";
+import iconoNumPreguntas from "../assets/kit/icono-num-preguntas-flor.png";
+import iconoCronometro from "../assets/kit/icono-cronometro-reloj.png";
+import iconoExplicacion from "../assets/kit/icono-explicacion-libreta.png";
+import plantaFeliz from "../assets/kit/planta-resultado-feliz.png";
+import plantaTriste from "../assets/kit/planta-resultado-triste.png";
+
+// CSS del interruptor tipo "pastilla" (encendido/apagado), igual al que ya usa el resto de la app
+const estudiarEstilosLocales = `
+  .icono-mini-header {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    object-fit: contain !important;
+    display: inline-block !important;
+  }
+  .icono-mini-config {
+    width: 24px !important;
+    height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    object-fit: contain !important;
+    display: inline-block !important;
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  .switch input { display: none; }
+  .switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #e4ddcf;
+    transition: 0.2s;
+    border-radius: 26px;
+  }
+  .switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; width: 20px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: 0.2s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .switch input:checked + .slider {
+    background-color: #e29aa0;
+  }
+  .switch input:checked + .slider:before {
+    transform: translateX(20px);
+  }
+`;
 
 function mezclar(array) {
   return [...array].sort(() => Math.random() - 0.5);
@@ -100,6 +159,12 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [favoritos, setFavoritos] = useState(() => obtenerFavoritos());
 
   const pregunta = preguntas[indice];
+
+  useEffect(() => {
+    const boton = document.getElementById("boton-panico");
+    if (!boton) return;
+    boton.style.display = vista === "quiz" ? "none" : "";
+  }, [vista]);
 
   function toggleFavorito(id) {
     setFavoritos((prev) => {
@@ -245,14 +310,22 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     const puedeComenzar = tipoEstudio === "general" || bloquesSeleccionados.length > 0;
 
     return (
-      <div style={styles.menuContainer}>
+<div style={styles.menuContainer}>
+<style>{estudiarEstilosLocales}</style>
+
         <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>Estudiar</h1>
+        <div style={styles.estudiarHeaderRow}>
+            <h1 style={styles.menuTitle}>Estudiar</h1>
+            <img src={iconoLibroEstudiar} alt="" style={styles.estudiarHeaderIcono} />
+          </div>
           <div style={styles.menuUnderline} />
         </div>
 
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Tipo de estudio</p>
+        <div style={styles.configCardTitleRow}>
+            <img src={iconoTipoEstudio} alt="" className="icono-mini-config" style={styles.configCardIcono} />
+            <p style={{ ...styles.configCardTitle, marginBottom: 0 }}>Tipo de estudio</p>
+          </div>       
           <div style={styles.pillGroup}>
             <button
               className="pill"
@@ -290,7 +363,10 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
         </div>
 
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Número de preguntas</p>
+        <div style={styles.configCardTitleRow}>
+            <img src={iconoNumPreguntas} alt="" className="icono-mini-config" style={styles.configCardIcono} />
+            <p style={{ ...styles.configCardTitle, marginBottom: 0 }}>Número de preguntas</p>
+          </div>
           <div style={styles.pillGroup}>
             {[10, 20, 30, 50, 100].map((n) => (
               <button
@@ -307,7 +383,10 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
 
         <div style={styles.configCard}>
           <div style={styles.configRow}>
-            <p style={styles.configCardTitle}>Activar cronómetro</p>
+          <div style={{ ...styles.configCardTitleRow, marginBottom: 0 }}>
+              <img src={iconoCronometro} alt="" className="icono-mini-config" style={styles.configCardIcono} />
+              <p style={{ ...styles.configCardTitle, marginBottom: 0 }}>Activar cronómetro</p>
+            </div>
             <label className="switch">
               <input
                 type="checkbox"
@@ -320,7 +399,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
 
           {cronometroActivo && (
             <>
-              <div style={styles.pillGroup}>
+              <div style={{ ...styles.pillGroup, marginTop: 12 }}>
                 <button
                   className="pill"
                   onClick={() => setTipoCronometro("auto")}
@@ -358,7 +437,10 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
 
         <div style={styles.configCard}>
           <div style={styles.configRow}>
-            <p style={styles.configCardTitle}>Mostrar explicación al responder</p>
+          <div style={{ ...styles.configCardTitleRow, marginBottom: 0 }}>
+              <img src={iconoExplicacion} alt="" className="icono-mini-config" style={styles.configCardIcono} />
+              <p style={{ ...styles.configCardTitle, marginBottom: 0 }}>Mostrar explicación al responder</p>
+            </div>
             <label className="switch">
               <input
                 type="checkbox"
@@ -817,92 +899,102 @@ if (vista === "errores") {
     );
   }
 
-  // 🟣 QUIZ
-  if (vista === "quiz" && pregunta) {
-    return (
-      <div style={styles.container}>
-        <button onClick={volverMenu} style={styles.button}>
+// 🟣 QUIZ
+if (vista === "quiz" && pregunta) {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.quizHeaderRow}>
+        <button onClick={volverMenu} style={styles.quizVolverBtn}>
           ⬅ Menú
         </button>
-
-        {tiempoRestante !== null && (
-          <p style={{ fontWeight: 700, color: "#e29aa0" }}>⏱ {formatearTiempo(tiempoRestante)}</p>
-        )}
-
-        <p>Pregunta {indice + 1} / {preguntas.length}</p>
-
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "center" }}>
-          <h3 style={{ margin: 0 }}>{pregunta.pregunta}</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {tiempoRestante !== null && (
+            <span style={styles.simTimer}>⏱ {formatearTiempo(tiempoRestante)}</span>
+          )}
           <button
             onClick={() => toggleFavorito(pregunta.id)}
             title="Marcar como favorita"
-            style={{ border: "none", background: "transparent", fontSize: 20, cursor: "pointer", lineHeight: 1 }}
+            style={styles.quizFavoritoBtn}
           >
             {favoritos.includes(String(pregunta.id)) ? "⭐" : "☆"}
           </button>
         </div>
-
-        {pregunta.respuestas.map((r, i) => {
-          let bg = "#fff";
-          if (mostrar) bg = i === pregunta.correcta ? "#d4edda" : "#f8d7da";
-
-          return (
-            <button
-              key={i}
-              onClick={() => comprobar(i)}
-              disabled={mostrar}
-              style={{
-                ...styles.button,
-                background: bg,
-                textAlign: "left",
-                lineHeight: 1.5,
-                whiteSpace: "pre-line"
-              }}
-            >
-              {formatearTextoLargo(r)}
-            </button>
-          );
-        })}
-
-        {mostrar && (
-          <>
-            <p>{mensaje}</p>
-
-            {(() => {
-              const s = obtenerStats()[String(pregunta.id)];
-              if (!s) return null;
-
-              const acertoAhora = mensaje === "✅ Correcto";
-
-              if (acertoAhora) {
-                if (s.errores >= 3) {
-                  return <p>💪 Antes te costaba, pero hoy la has clavado.</p>;
-                }
-                return null;
-              }
-
-              if (s.errores >= 5) return <p>💀 Deja las cervezas y ponte a estudiar.</p>;
-              if (s.errores >= 3) return <p>👀 Ya os estáis viendo demasiado tú y esta pregunta</p>;
-              return null;
-            })()}
-
-            {conExplicacion && (
-              <div style={styles.explicacionCaja}>
-                <p style={{ margin: 0 }}>
-                  <b>Explicación:</b>
-                </p>
-                {renderizarTextoConNegrita(pregunta.explicacion)}
-              </div>
-            )}
-
-            <button onClick={siguiente} style={styles.button}>
-              Siguiente →
-            </button>
-          </>
-        )}
       </div>
-    );
-  }
+
+      <span style={styles.quizPreguntaTag}>
+        Pregunta {indice + 1} de {preguntas.length}
+      </span>
+
+      <div style={styles.quizPreguntaCard}>
+        <p style={styles.quizPreguntaTexto}>{pregunta.pregunta}</p>
+      </div>
+
+      {pregunta.respuestas.map((r, i) => {
+        let estadoEstilo = {};
+        if (mostrar) {
+          estadoEstilo = i === pregunta.correcta ? styles.quizRespuestaCorrecta : styles.quizRespuestaIncorrecta;
+        }
+
+        return (
+          <button
+            key={i}
+            onClick={() => comprobar(i)}
+            disabled={mostrar}
+            style={{ ...styles.quizRespuestaBtn, ...estadoEstilo }}
+          >
+            <span style={styles.quizRespuestaLetra}>{String.fromCharCode(65 + i)}</span>
+            <span>{formatearTextoLargo(r)}</span>
+          </button>
+        );
+      })}
+
+      {mostrar && (
+        <>
+          <div style={styles.quizFeedbackRow}>
+            <img
+              src={mensaje === "✅ Correcto" ? plantaFeliz : plantaTriste}
+              alt=""
+              style={styles.quizFeedbackIcono}
+            />
+            <p style={styles.quizFeedbackTexto}>{mensaje}</p>
+          </div>
+
+          {(() => {
+            const s = obtenerStats()[String(pregunta.id)];
+            if (!s) return null;
+
+            const acertoAhora = mensaje === "✅ Correcto";
+
+            if (acertoAhora) {
+              if (s.errores >= 3) {
+                return <p style={styles.configSubLabel}>💪 Antes te costaba, pero hoy la has clavado.</p>;
+              }
+              return null;
+            }
+
+            if (s.errores >= 5) return <p style={styles.configSubLabel}>💀 Deja las cervezas y ponte a estudiar.</p>;
+            if (s.errores >= 3) return <p style={styles.configSubLabel}>👀 Ya os estáis viendo demasiado tú y esta pregunta</p>;
+            return null;
+          })()}
+
+          {conExplicacion && (
+            <div style={styles.explicacionCaja}>
+              <div style={styles.explicacionTituloRow}>
+                <img src={iconoExplicacion} alt="" style={styles.explicacionIcono} />
+                <b>Explicación:</b>
+              </div>
+              {renderizarTextoConNegrita(pregunta.explicacion)}
+            </div>
+          )}
+
+          <button onClick={siguiente} style={styles.ctaButton}>
+            Siguiente →
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
   // Fin del bloque
   return (

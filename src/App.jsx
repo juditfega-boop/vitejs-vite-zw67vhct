@@ -384,7 +384,7 @@ if (pantalla === "minijuegos") {
   );
 }
 
-// 🧩 DESARROLLO (próximamente)
+// DESARROLLO (próximamente)
 if (pantalla === "desarrollo") {
   return (
     <div style={styles.placeholderContainer}>

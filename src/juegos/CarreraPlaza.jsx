@@ -90,7 +90,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
   const [vista, setVista] = useState("detalle"); // detalle|config|transicion|jugando|resultado|historial
 
   const [juegoNumJugadores, setJuegoNumJugadores] = useState(2);
-  const [juegoNombres, setJuegoNombres] = useState(["Jugadora 1", "Jugadora 2"]);
+  const [juegoNombres, setJuegoNombres] = useState(["Persona 1", "Persona 2"]);
   const [juegoTipo, setJuegoTipo] = useState("general");
   const [juegoBloquesSeleccionados, setJuegoBloquesSeleccionados] = useState([]);
   const [juegoNumPreguntas, setJuegoNumPreguntas] = useState(10);
@@ -170,7 +170,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
     setPreguntasJuego(porJugador);
     setPuntuacionesJuego(
       juegoNombres.slice(0, juegoNumJugadores).map((nombre) => ({
-        nombre: nombre.trim() || "Jugadora",
+        nombre: nombre.trim() || "Persona",
         aciertos: 0,
         errores: 0,
         tiempoTotal: 0,
@@ -307,7 +307,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
         </div>
 
         <p style={styles.configSubLabel}>
-          De 2 a 4 personas, un solo dispositivo. Cada jugadora responde su
+          De 2 a 4 personas, un solo dispositivo. Cada persona responde su
           propia tanda de preguntas por turnos, sin ver el resultado hasta
           el final. Gana quien más aciertos consiga.
         </p>
@@ -357,7 +357,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
         </div>
 
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Número de jugadoras</p>
+          <p style={styles.configCardTitle}>Número de personas</p>
           <div style={styles.pillGroup}>
             {[2, 3, 4].map((n) => (
               <button
@@ -434,7 +434,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
         </div>
 
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Preguntas por jugadora</p>
+          <p style={styles.configCardTitle}>Preguntas por persona</p>
           <div style={styles.pillGroup}>
             {[5, 10, 15, 20].map((n) => (
               <button
@@ -493,7 +493,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
 
   // 🔄 TRANSICIÓN ENTRE JUGADORAS
   if (vista === "transicion") {
-    const nombreActual = puntuacionesJuego[jugadorActualIndice]?.nombre || "Jugadora";
+    const nombreActual = puntuacionesJuego[jugadorActualIndice]?.nombre || "Persona";
 
     return (
       <div style={styles.placeholderContainer}>
@@ -516,7 +516,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
 
   // 🎮 TURNO EN CURSO
   if (vista === "jugando" && preguntaJuego) {
-    const nombreActual = puntuacionesJuego[jugadorActualIndice]?.nombre || "Jugadora";
+    const nombreActual = puntuacionesJuego[jugadorActualIndice]?.nombre || "Persona";
 
     return (
       <div style={styles.menuContainer}>

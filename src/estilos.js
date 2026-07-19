@@ -102,18 +102,138 @@ const styles = {
     boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
   },
   explicacionCaja: {
-    background: "#faf7f2",
-    border: "1px solid #e4ddcf",
-    borderRadius: 10,
-    padding: "12px 14px",
-    marginTop: 10,
+    background: "#faf3e8",
+    border: "1px dashed #e4ddcf",
+    borderRadius: 18,
+    padding: "16px 18px",
+    marginTop: 14,
     fontSize: 13,
     lineHeight: 1.6,
     textAlign: "left",
     color: "#4a463f"
   },
+  explicacionTituloRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8
+  },
+  explicacionIcono: {
+    width: 20,
+    height: 20,
+    objectFit: "contain",
+    flexShrink: 0
+  },
 
-  // 🌸 estilos de la portada
+// 🌱 pantalla de Estudiar — quiz en una sola pantalla
+quizHeaderRow: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 18
+},
+quizVolverBtn: {
+  border: "none",
+  background: "transparent",
+  color: "#8a8578",
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: "pointer",
+  padding: 0
+},
+quizFavoritoBtn: {
+  border: "none",
+  background: "transparent",
+  fontSize: 22,
+  cursor: "pointer",
+  lineHeight: 1,
+  padding: 0
+},
+quizPreguntaTag: {
+  display: "inline-block",
+  background: "#faf3e8",
+  border: "1px dashed #e4ddcf",
+  borderRadius: 10,
+  padding: "6px 16px",
+  fontSize: 13,
+  color: "#8a8578",
+  fontWeight: 600,
+  marginBottom: 16
+},
+quizPreguntaCard: {
+  background: "#fff",
+  borderRadius: 24,
+  padding: "22px 20px",
+  marginBottom: 18,
+  boxShadow: "0 3px 12px rgba(0,0,0,0.035)",
+  textAlign: "left"
+},
+quizPreguntaTexto: {
+  fontSize: 17,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: 0,
+  lineHeight: 1.45
+},
+quizRespuestaBtn: {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  width: "100%",
+  textAlign: "left",
+  border: "1px solid #e8e2d4",
+  background: "#fff",
+  borderRadius: 18,
+  padding: "14px 16px",
+  marginBottom: 10,
+  fontSize: 14,
+  color: "#4a463f",
+  cursor: "pointer",
+  lineHeight: 1.5,
+  whiteSpace: "pre-line",
+  fontFamily: "Arial"
+},
+quizRespuestaLetra: {
+  width: 28,
+  height: 28,
+  borderRadius: "50%",
+  background: "#faf7f2",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 13,
+  fontWeight: 700,
+  color: "#8a8578",
+  flexShrink: 0
+},
+quizRespuestaCorrecta: {
+  borderColor: "#a8c9ae",
+  background: "#eaf4ec"
+},
+quizRespuestaIncorrecta: {
+  borderColor: "#e2a3a3",
+  background: "#faeaea"
+},
+quizFeedbackRow: {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  marginTop: 4,
+  marginBottom: 4
+},
+quizFeedbackIcono: {
+  width: 34,
+  height: 34,
+  objectFit: "contain"
+},
+quizFeedbackTexto: {
+  fontSize: 14,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: 0
+},
+
+// 🌸 estilos de la portada
   landingContainer: {
     position: "relative",
     width: "100vw",
@@ -253,6 +373,29 @@ const styles = {
     fontWeight: 700,
     color: "#4a463f",
     marginBottom: 12
+  },
+  configCardTitleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12
+  },
+  configCardIcono: {
+    width: 26,
+    height: 26,
+    objectFit: "contain",
+    flexShrink: 0
+  },
+  estudiarHeaderRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8
+  },
+  estudiarHeaderIcono: {
+    width: 46,
+    height: 46,
+    objectFit: "contain"
   },
   configRow: {
     display: "flex",
