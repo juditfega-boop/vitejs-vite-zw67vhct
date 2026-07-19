@@ -6,6 +6,7 @@ import muerteImg2 from "../assets/trabajadora-2.png";
 import muerteImg3 from "../assets/trabajadora-3.png";
 import muerteImgDerrota from "../assets/trabajadora-derrota.png";
 import muerteImgVictoria from "../assets/trabajadora-victoria.png";
+import heroSalvaTrabajadora from "../assets/kit/hero-salva-trabajadora.png";
 
 import {
   registrarRespuesta,
@@ -175,30 +176,53 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     return () => clearTimeout(id);
   }, [vista, muerteTiempoRestante, muerteCronometroActivo]);
 
-  // ☠️ DETALLE
-  if (vista === "detalle") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>☠️ Salva a tu trabajadora social</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-
-        <p style={styles.configSubLabel}>
-          20 preguntas, una sola vida. Si fallas una, la burocracia gana.
-          ¿Cuántas serás capaz de acertar seguidas?
-        </p>
-
-        <button onClick={() => setVista("config")} style={styles.ctaButton}>
-          Jugar
-        </button>
-
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver
+// ☠️ DETALLE
+if (vista === "detalle") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.quizHeaderRow}>
+        <button onClick={() => setPantalla("minijuegos")} style={styles.quizVolverBtn}>
+          ⬅
         </button>
       </div>
-    );
-  }
+
+      <div style={styles.menuHeader}>
+        <span style={styles.juegoDetalleEmojiTitulo}>☠️</span>
+        <h1 style={styles.menuTitle}>Salva a tu Trabajadora Social</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <img src={heroSalvaTrabajadora} alt="" style={styles.juegoDetalleHeroImg} />
+
+      <div style={styles.configCard}>
+        <div style={styles.juegoDetalleFila}>
+          <span style={styles.juegoDetalleEmoji}>📋</span>
+          <p style={styles.juegoDetalleTexto}>20 preguntas, una sola vida</p>
+        </div>
+        <div style={styles.juegoDetalleFila}>
+          <span style={styles.juegoDetalleEmoji}>❌</span>
+          <p style={styles.juegoDetalleTexto}>
+            Si fallas una, la burocracia gana
+          </p>
+        </div>
+        <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
+          <span style={styles.juegoDetalleEmoji}>🏆</span>
+          <p style={styles.juegoDetalleTexto}>
+            Sobrevive a las 20 preguntas y habrás ganado
+          </p>
+        </div>
+      </div>
+
+      <button onClick={() => setVista("config")} style={styles.ctaButton}>
+        🚩 Empezar
+      </button>
+
+      <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+        🍃 Volver
+      </button>
+    </div>
+  );
+}
 
   // ⚙️ CONFIGURACIÓN
   if (vista === "config") {
