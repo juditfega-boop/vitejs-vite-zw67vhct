@@ -629,6 +629,40 @@ resultCard: {
     borderBottom: "1px solid #f0ece2",
     fontSize: 14
   },
+  resultRowLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    color: "#4a463f",
+    fontWeight: 600
+  },
+  resultRowIcono: {
+    width: 22,
+    height: 22,
+    objectFit: "contain",
+    flexShrink: 0
+  },
+  resultRowValor: {
+    fontWeight: 700,
+    color: "#4a463f"
+  },
+  finBloqueHeroImg: {
+    display: "block",
+    width: 190,
+    margin: "0 auto 14px"
+  },
+  finBloqueSubtitulo: {
+    textAlign: "center",
+    color: "#8a8578",
+    fontSize: 14,
+    marginTop: -6,
+    marginBottom: 6
+  },
+  finBloqueCorazon: {
+    textAlign: "center",
+    fontSize: 20,
+    marginBottom: 14
+  },
 
   // 🎬 vídeo de celebración
   videoContainer: {

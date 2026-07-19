@@ -29,6 +29,10 @@ import iconoCronometro from "../assets/kit/icono-cronometro-reloj.png";
 import iconoExplicacion from "../assets/kit/icono-explicacion-libreta.png";
 import plantaFeliz from "../assets/kit/planta-resultado-feliz.png";
 import plantaTriste from "../assets/kit/planta-resultado-triste.png";
+import iconoFinBloqueHero from "../assets/kit/icono-fin-bloque-hero.png";
+import iconoFinAciertos from "../assets/kit/icono-fin-aciertos.png";
+import iconoFinExpedientes from "../assets/kit/icono-fin-expedientes.png";
+import iconoFinRacha from "../assets/kit/icono-fin-racha.png";
 
 // CSS del interruptor tipo "pastilla" (encendido/apagado), igual al que ya usa el resto de la app
 const estudiarEstilosLocales = `
@@ -157,6 +161,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [inicioPregunta, setInicioPregunta] = useState(null);
   const [tabEvolucion, setTabEvolucion] = useState("resumen");
   const [favoritos, setFavoritos] = useState(() => obtenerFavoritos());
+  const [expedientesResueltos, setExpedientesResueltos] = useState(0);
 
   const pregunta = preguntas[indice];
 
@@ -215,6 +220,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     setPreguntas(base);
     setIndice(0);
     setAciertos(0);
+    setExpedientesResueltos(0);
     setMensaje("");
     setMostrar(false);
 
@@ -241,6 +247,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     setPreguntas(base);
     setIndice(0);
     setAciertos(0);
+    setExpedientesResueltos(0);
     setMensaje("");
     setMostrar(false);
     setTiempoRestante(null);
@@ -275,6 +282,8 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
 
   function comprobar(index) {
     const esCorrecta = index === pregunta.correcta;
+    const statsAntes = obtenerStats()[String(pregunta.id)];
+    const teniaFallosPrevios = statsAntes && statsAntes.errores > 0 && statsAntes.errores >= statsAntes.aciertos;
 
     registrarRespuesta(pregunta, esCorrecta);
 
@@ -286,6 +295,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     if (esCorrecta) {
       setMensaje("✅ Correcto");
       setAciertos((a) => a + 1);
+      if (teniaFallosPrevios) setExpedientesResueltos((e) => e + 1);
     } else {
       setMensaje("❌ Incorrecto");
     }
@@ -996,14 +1006,48 @@ if (vista === "quiz" && pregunta) {
   );
 }
 
-  // Fin del bloque
-  return (
-    <div style={styles.container}>
-      <h2>Fin del bloque</h2>
-      <p>Aciertos: {aciertos} / {preguntas.length}</p>
-      <button onClick={volverMenu} style={styles.button}>
-        Volver al menú
-      </button>
+// 🌸 Fin del bloque (resultado final)
+const rachaFinal = obtenerRacha().racha;
+
+return (
+  <div style={styles.menuContainer}>
+    <div style={styles.menuHeader}>
+      <h1 style={styles.menuTitle}>Fin del bloque</h1>
+      <div style={styles.menuUnderline} />
     </div>
-  );
+
+    <p style={styles.finBloqueSubtitulo}>¡Buen trabajo, sigue así!</p>
+    <p style={styles.finBloqueCorazon}>💗</p>
+
+    <img src={iconoFinBloqueHero} alt="" style={styles.finBloqueHeroImg} />
+
+    <div style={styles.resultCard}>
+      <div style={styles.resultRow}>
+        <span style={styles.resultRowLabel}>
+          <img src={iconoFinAciertos} alt="" style={styles.resultRowIcono} />
+          Aciertos
+        </span>
+        <span style={styles.resultRowValor}>{aciertos} de {preguntas.length}</span>
+      </div>
+      <div style={styles.resultRow}>
+        <span style={styles.resultRowLabel}>
+          <img src={iconoFinExpedientes} alt="" style={styles.resultRowIcono} />
+          Expedientes resueltos
+        </span>
+        <span style={styles.resultRowValor}>{expedientesResueltos}</span>   
+           </div>
+      <div style={{ ...styles.resultRow, borderBottom: "none" }}>
+        <span style={styles.resultRowLabel}>
+          <img src={iconoFinRacha} alt="" style={styles.resultRowIcono} />
+          Racha activa
+        </span>
+        <span style={styles.resultRowValor}>{rachaFinal} días</span>
+      </div>
+    </div>
+
+    <button onClick={volverMenu} style={styles.ctaButton}>
+      Volver al menú
+    </button>
+  </div>
+);
 }
