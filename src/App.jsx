@@ -3,9 +3,10 @@ import { cargarPreguntas } from "./cargarPreguntas";
 import portada from "./assets/portada.jpeg";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import miniaturaArchivos from "./assets/archivos-miniatura.png";
-import miniaturaConstruye from "./assets/construye-miniatura.png";
-import miniaturaCarreraPlaza from "./assets/carrera-miniatura.jpg";
+import iconoHubCarreraPlaza from "./assets/kit/icono-hub-carrera-plaza.png";
+import iconoHubSalvaTrabajadora from "./assets/kit/icono-hub-salva-trabajadora.png";
+import iconoHubConectaConstitucion from "./assets/kit/icono-hub-conecta-constitucion.png";
+import iconoHubConstruyeConstitucion from "./assets/kit/icono-hub-construye-constitucion.png";
 import { globalStyles, styles } from "./estilos";
 import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
@@ -325,25 +326,33 @@ if (pantalla === "minijuegos") {
     {
       id: "carrera",
       nombre: "Carrera por la Plaza",
-      miniatura: miniaturaCarreraPlaza,
+      descripcion: "Compite respondiendo preguntas y llega el primero a la meta.",
+      miniatura: iconoHubCarreraPlaza,
+      colorFlecha: "#f3cdd2",
       destino: "carrera"
     },
     {
       id: "muerte",
       nombre: "Salva a tu trabajadora social",
-      miniatura: muerteImg0,
+      descripcion: "Responde rápido y ayuda a rescatarla antes de que sea tarde.",
+      miniatura: iconoHubSalvaTrabajadora,
+      colorFlecha: "#f6d7ae",
       destino: "muerte"
     },
     {
       id: "archivos",
       nombre: "Conecta la Constitución",
-      miniatura: miniaturaArchivos,
+      descripcion: "Une artículos y conceptos para completar la conexión.",
+      miniatura: iconoHubConectaConstitucion,
+      colorFlecha: "#d7dcc0",
       destino: "archivos"
     },
     {
       id: "construye",
       nombre: "Construye la Constitución",
-      miniatura: miniaturaConstruye,
+      descripcion: "Coloca cada parte de la Constitución en su lugar correcto.",
+      miniatura: iconoHubConstruyeConstitucion,
+      colorFlecha: "#d9cdf0",
       destino: "construye"
     }
   ];
@@ -357,23 +366,22 @@ if (pantalla === "minijuegos") {
         <div style={styles.menuUnderline} />
       </div>
 
+      <p style={styles.minijuegosSubtitulo}>
+        Aprende jugando, repasa sin darte cuenta y disfruta del camino.
+      </p>
+
       {listaMinijuegos.map((j) => (
         <button
           key={j.id}
           onClick={() => setPantalla(j.destino)}
-          style={styles.filaMinijuegoBtn}
+          style={styles.minijuegoFilaCard}
         >
-          {j.miniatura ? (
-            <img
-              src={j.miniatura}
-              alt={j.nombre}
-              style={styles.miniaturaMinijuego}
-            />
-          ) : (
-            <span style={styles.miniaturaMinijuegoEmoji}>{j.emoji}</span>
-          )}
-          <span style={styles.filaMinijuegoTexto}>{j.nombre}</span>
-          <span style={{ color: "#8a8578" }}>→</span>
+          <img src={j.miniatura} alt={j.nombre} style={styles.minijuegoFilaImg} />
+          <div style={styles.minijuegoFilaTexto}>
+            <p style={styles.minijuegoFilaTitulo}>{j.nombre}</p>
+            <p style={styles.minijuegoFilaDescripcion}>{j.descripcion}</p>
+          </div>
+          <span style={{ ...styles.minijuegoFilaFlecha, background: j.colorFlecha }}>→</span>
         </button>
       ))}
 

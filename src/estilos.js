@@ -834,6 +834,64 @@ muertePreguntaCol: {
     flexShrink: 0
   },
 
+  // 🎲 hub de Minijuegos (rediseño)
+  minijuegosSubtitulo: {
+    textAlign: "center",
+    color: "#8a8578",
+    fontSize: 13,
+    lineHeight: 1.6,
+    margin: "-10px 0 24px",
+    padding: "0 10px"
+  },
+  minijuegoFilaCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    width: "100%",
+    border: "none",
+    background: "#fff",
+    borderRadius: 20,
+    padding: 12,
+    marginBottom: 14,
+    cursor: "pointer",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.05)",
+    textAlign: "left",
+    fontFamily: "Arial"
+  },
+  minijuegoFilaImg: {
+    width: 64,
+    height: 64,
+    objectFit: "contain",
+    flexShrink: 0
+  },
+  minijuegoFilaTexto: {
+    flex: 1,
+    minWidth: 0
+  },
+  minijuegoFilaTitulo: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: "#4a463f",
+    margin: "0 0 4px"
+  },
+  minijuegoFilaDescripcion: {
+    fontSize: 12,
+    color: "#8a8578",
+    margin: 0,
+    lineHeight: 1.45
+  },
+  minijuegoFilaFlecha: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 15,
+    color: "#4a463f",
+    flexShrink: 0
+  },
+
   // 📁 layout del juego de emparejar "Conecta la Constitución"
   archivosColumnas: {
     display: "flex",
