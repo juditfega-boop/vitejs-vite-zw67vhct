@@ -1420,4 +1420,26 @@ styles.repasarBoton = {
   cursor: "pointer"
 };
 
+// 🗂️ Repasar errores — estado vacío por categoría
+styles.erroresVacioIlustracion = {
+  display: "block",
+  width: 170,
+  margin: "10px auto 18px"
+};
+styles.erroresVacioTitulo = {
+  textAlign: "center",
+  fontSize: 20,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: "0 0 10px"
+};
+styles.erroresVacioSubtitulo = {
+  textAlign: "center",
+  fontSize: 13,
+  color: "#8a8578",
+  lineHeight: 1.6,
+  marginBottom: 26,
+  padding: "0 8px"
+};
+
 export { globalStyles, styles };

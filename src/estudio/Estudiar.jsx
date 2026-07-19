@@ -33,6 +33,7 @@ import iconoFinBloqueHero from "../assets/kit/icono-fin-bloque-hero.png";
 import iconoFinAciertos from "../assets/kit/icono-fin-aciertos.png";
 import iconoFinExpedientes from "../assets/kit/icono-fin-expedientes.png";
 import iconoFinRacha from "../assets/kit/icono-fin-racha.png";
+import iconoFolderVacio from "../assets/kit/icono-favoritos-corazon-carpeta.png";
 
 // CSS del interruptor tipo "pastilla" (encendido/apagado), igual al que ya usa el resto de la app
 const estudiarEstilosLocales = `
@@ -162,6 +163,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [tabEvolucion, setTabEvolucion] = useState("resumen");
   const [favoritos, setFavoritos] = useState(() => obtenerFavoritos());
   const [expedientesResueltos, setExpedientesResueltos] = useState(0);
+  const [tabErroresVacio, setTabErroresVacio] = useState("prioritarios");
 
   const pregunta = preguntas[indice];
 
@@ -184,6 +186,15 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   function volverAProgreso() {
     setVista("progreso");
     sincronizarConNube();
+  }
+
+  function volverAErrores() {
+    setVista("errores");
+  }
+
+  function mostrarVacio(tab) {
+    setTabErroresVacio(tab);
+    setVista("errores-vacio");
   }
 
   useEffect(() => {
@@ -760,7 +771,10 @@ if (vista === "errores") {
             </p>
           </div>
         </div>
-        <button onClick={() => iniciarBloque(muyOlvidadas)} style={{ ...styles.repasarBoton, background: "#f0c3c3" }}>
+        <button
+          onClick={() => (muyOlvidadas.length > 0 ? iniciarBloque(muyOlvidadas) : mostrarVacio("prioritarios"))}
+          style={{ ...styles.repasarBoton, background: "#f0c3c3" }}
+        >
           🍃 Revisar expedientes
         </button>
       </div>
@@ -775,7 +789,10 @@ if (vista === "errores") {
             </p>
           </div>
         </div>
-        <button onClick={() => iniciarBloque(pendientes)} style={{ ...styles.repasarBoton, background: "#eed7a3" }}>
+        <button
+          onClick={() => (pendientes.length > 0 ? iniciarBloque(pendientes) : mostrarVacio("seguimiento"))}
+          style={{ ...styles.repasarBoton, background: "#eed7a3" }}
+        >
           🍃 Continuar repasando
         </button>
       </div>
@@ -790,7 +807,10 @@ if (vista === "errores") {
             </p>
           </div>
         </div>
-        <button onClick={() => iniciarBloque(recuperadas)} style={{ ...styles.repasarBoton, background: "#c9dcb5" }}>
+        <button
+          onClick={() => (recuperadas.length > 0 ? iniciarBloque(recuperadas) : mostrarVacio("resueltos"))}
+          style={{ ...styles.repasarBoton, background: "#c9dcb5" }}
+        >
           🍃 Ver historial
         </button>
       </div>
@@ -802,8 +822,57 @@ if (vista === "errores") {
   );
 }
 
-  // 📊 ESTADÍSTICAS
-  if (vista === "estadisticas") {
+// 🗂️ REPASAR ERRORES — sin expedientes en la categoría elegida
+if (vista === "errores-vacio") {
+  const titulosVacio = {
+    prioritarios: "Prioritarios",
+    seguimiento: "En seguimiento",
+    resueltos: "Resueltos"
+  };
+
+  const subtitulosVacio = {
+    prioritarios: "¡Genial! Ahora mismo no tienes preguntas que necesiten tu atención urgente.",
+    seguimiento: "No hay expedientes en seguimiento en este momento. Todo bajo control.",
+    resueltos: "Todavía no has resuelto ningún expediente difícil. En cuanto lo hagas, aparecerá aquí."
+  };
+
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.quizHeaderRow}>
+        <button onClick={volverAErrores} style={styles.quizVolverBtn}>
+          ⬅ Repasar errores
+        </button>
+      </div>
+
+      <div style={styles.evolucionTabs}>
+        {["prioritarios", "seguimiento", "resueltos"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setTabErroresVacio(tab)}
+            style={{
+              ...styles.evolucionTabBtn,
+              ...(tabErroresVacio === tab ? styles.evolucionTabBtnActiva : {})
+            }}
+          >
+            {titulosVacio[tab]}
+          </button>
+        ))}
+      </div>
+
+      <img src={iconoFolderVacio} alt="" style={styles.erroresVacioIlustracion} />
+
+      <h2 style={styles.erroresVacioTitulo}>No hay expedientes</h2>
+      <p style={styles.erroresVacioSubtitulo}>{subtitulosVacio[tabErroresVacio]}</p>
+
+      <button onClick={volverAErrores} style={styles.ctaButton}>
+        Volver al resumen
+      </button>
+    </div>
+  );
+}
+
+  // 📊 ESTADÍSTICAS (Resumen + Por bloques)
+if (vista === "estadisticas") {
     const statsGuardadas = obtenerStats();
     const bloques = {};
 
