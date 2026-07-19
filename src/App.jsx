@@ -23,8 +23,10 @@ import iconoGrafico from "./assets/kit/icono-grafico-evolucion.png";
 import iconoCarpeta from "./assets/kit/icono-carpeta-favoritos.png";
 import iconoTaza from "./assets/kit/icono-taza-perfil.png";
 import iconoPlantita from "./assets/kit/icono-plantita-evolucion.png";
+import iconoRachaLlama from "./assets/bookbrand/icono-brand-racha-llama.png";
 import iconoPerfilSilueta from "./assets/kit/icono-perfil-silueta.png";
 import iconoPerfilHero from "./assets/kit/icono-perfil-hero.png";
+import iconoNube from "./assets/bookbrand/icono-brand-nube.png";
 import {
   obtenerStats,
   guardarStats,
@@ -215,8 +217,9 @@ if (pantalla === "inicio") {
       <div style={styles.inicioHeroCard}>
         <img src={iconoPlantita} alt="" style={styles.inicioHeroIcono} />
         <div style={styles.inicioHeroTexto}>
-          <p style={styles.inicioHeroTitulo}>
-            🔥 ¡Llevas {racha} {racha === 1 ? "día" : "días"} seguidos!
+        <p style={{ ...styles.inicioHeroTitulo, ...styles.heroRachaRow }}>
+            <img src={iconoRachaLlama} alt="" style={styles.iconoInlinePequeno} />
+            ¡Llevas {racha} {racha === 1 ? "día" : "días"} seguidos!
           </p>
           <p style={styles.inicioHeroSubtitulo}>
             Estás construyendo tu futuro un día a la vez.
@@ -486,7 +489,10 @@ if (pantalla === "muerte") {
         <img src={iconoPerfilHero} alt="" style={styles.perfilHeroImg} />
 
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>☁️ Tu código de progreso</p>
+        <p style={styles.configCardTitle}>
+            <img src={iconoNube} alt="" style={styles.perfilNubeIcono} />
+            Tu código de progreso
+          </p>
 
           {codigo ? (
             <>

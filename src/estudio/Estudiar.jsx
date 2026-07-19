@@ -33,7 +33,10 @@ import iconoFinBloqueHero from "../assets/kit/icono-fin-bloque-hero.png";
 import iconoFinAciertos from "../assets/kit/icono-fin-aciertos.png";
 import iconoFinExpedientes from "../assets/kit/icono-fin-expedientes.png";
 import iconoFinRacha from "../assets/kit/icono-fin-racha.png";
+import iconoFavoritoLleno from "../assets/bookbrand/icono-brand-favorito-lleno.png";
+import iconoFavoritoVacio from "../assets/bookbrand/icono-brand-favorito-vacio.png";
 import iconoFolderVacio from "../assets/kit/icono-favoritos-corazon-carpeta.png";
+import iconoRachaLlama from "../assets/bookbrand/icono-brand-racha-llama.png";
 
 // CSS del interruptor tipo "pastilla" (encendido/apagado), igual al que ya usa el resto de la app
 const estudiarEstilosLocales = `
@@ -304,11 +307,11 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     }
 
     if (esCorrecta) {
-      setMensaje("✅ Correcto");
+      setMensaje("Correcto");
       setAciertos((a) => a + 1);
       if (teniaFallosPrevios) setExpedientesResueltos((e) => e + 1);
     } else {
-      setMensaje("❌ Incorrecto");
+      setMensaje("Incorrecto");
     }
 
     setMostrar(true);
@@ -637,7 +640,7 @@ if (vista === "estadisticas") {
               <p style={styles.evolucionStatEtiqueta}>Horas de estudio</p>
             </div>
             <div style={styles.evolucionStatItem}>
-              <p style={{ fontSize: 28, margin: "4px 0" }}>🔥</p>
+              <img src={iconoRachaLlama} alt="" style={styles.evolucionStatIcono} />
               <p style={styles.evolucionStatValor}>{racha}</p>
               <p style={styles.evolucionStatEtiqueta}>Días racha actual</p>
             </div>
@@ -990,13 +993,17 @@ if (vista === "quiz" && pregunta) {
           {tiempoRestante !== null && (
             <span style={styles.simTimer}>⏱ {formatearTiempo(tiempoRestante)}</span>
           )}
-          <button
-            onClick={() => toggleFavorito(pregunta.id)}
-            title="Marcar como favorita"
-            style={styles.quizFavoritoBtn}
-          >
-            {favoritos.includes(String(pregunta.id)) ? "⭐" : "☆"}
-          </button>
+<button
+              onClick={() => toggleFavorito(pregunta.id)}
+              title="Marcar como favorita"
+              style={styles.quizFavoritoBtn}
+            >
+              <img
+                src={favoritos.includes(String(pregunta.id)) ? iconoFavoritoLleno : iconoFavoritoVacio}
+                alt=""
+                style={styles.quizFavoritoIcono}
+              />
+            </button>
         </div>
       </div>
 
@@ -1030,11 +1037,11 @@ if (vista === "quiz" && pregunta) {
       {mostrar && (
         <>
           <div style={styles.quizFeedbackRow}>
-            <img
-              src={mensaje === "✅ Correcto" ? plantaFeliz : plantaTriste}
-              alt=""
-              style={styles.quizFeedbackIcono}
-            />
+          <img
+                src={mensaje === "Correcto" ? plantaFeliz : plantaTriste}
+                alt=""
+                style={styles.quizFeedbackIcono}
+              />
             <p style={styles.quizFeedbackTexto}>{mensaje}</p>
           </div>
 

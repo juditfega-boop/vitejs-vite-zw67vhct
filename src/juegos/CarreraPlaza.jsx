@@ -7,6 +7,10 @@ import heroCarreraPlaza from "../assets/kit/hero-carrera-plaza.png";
 import iconoPersonas from "../assets/bookbrand/icono-brand-personas.png";
 import iconoTurno from "../assets/bookbrand/icono-brand-turno.png";
 import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
+import iconoAciertoCheck from "../assets/kit/icono-fin-aciertos.png";
+import iconoErrorX from "../assets/kit/icono-sim-errores.png";
+import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
+import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
 
 const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
 
@@ -345,7 +349,10 @@ if (vista === "detalle") {
       </button>
 
       <button onClick={() => setVista("historial")} style={styles.linkVolver}>
-        🕓 Ver historial de partidas
+        <span style={styles.botonIconoTextoRow}>
+          <img src={iconoHistorial} alt="" style={styles.iconoInlinePequeno} />
+          Ver historial de partidas
+        </span>
       </button>
 
       <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
@@ -678,12 +685,13 @@ if (vista === "detalle") {
                 onClick={() => setJugadoraExpandida(jugadoraExpandida === i ? null : i)}
                 style={styles.filaJugadoraBtn}
               >
-                <span>
+<span>
                   {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} {j.nombre}
                 </span>
-                <b>
-                  {j.aciertos} ✅ / {j.errores} ❌{" "}
-                  {jugadoraExpandida === i ? "▲" : "▼"}
+                <b style={styles.inlineStatRow}>
+                  <img src={iconoAciertoCheck} alt="" style={styles.iconoInlinePequeno} /> {j.aciertos} /{" "}
+                  <img src={iconoErrorX} alt="" style={styles.iconoInlinePequeno} /> {j.errores}{" "}
+                  <span style={{ marginLeft: 4 }}>{jugadoraExpandida === i ? "▲" : "▼"}</span>
                 </b>
               </button>
 
@@ -717,7 +725,10 @@ if (vista === "detalle") {
         </button>
 
         <button onClick={() => setVista("historial")} style={styles.linkVolver}>
-          🕓 Ver historial
+          <span style={styles.botonIconoTextoRow}>
+            <img src={iconoHistorial} alt="" style={styles.iconoInlinePequeno} />
+            Ver historial
+          </span>
         </button>
 
         <button onClick={volverMenu} style={styles.linkVolver}>
@@ -749,8 +760,11 @@ if (vista === "detalle") {
           <p style={styles.configSubLabel}>Todavía no habéis jugado ninguna partida.</p>
         ) : (
           <>
-            <button onClick={confirmarVaciarHistorial} style={styles.linkVolver}>
-              🗑️ Vaciar historial
+<button onClick={confirmarVaciarHistorial} style={styles.linkVolver}>
+              <span style={styles.botonIconoTextoRow}>
+                <img src={iconoPapelera} alt="" style={styles.iconoInlinePequeno} />
+                Vaciar historial
+              </span>
             </button>
 
             {historial.map((partida, i) => (
@@ -762,7 +776,7 @@ if (vista === "detalle") {
                     title="Eliminar esta partida"
                     style={styles.borrarPartidaBtn}
                   >
-                    🗑️
+                    <img src={iconoPapelera} alt="" style={styles.iconoInlinePequeno} />
                   </button>
                 </div>
                 <p style={styles.configSubLabel}>
@@ -771,8 +785,9 @@ if (vista === "detalle") {
                 {partida.jugadores.map((j, k) => (
                   <div key={k} style={{ ...styles.resultRow, fontSize: 13 }}>
                     <span>{j.nombre}</span>
-                    <b>
-                      {j.aciertos} ✅ / {j.errores} ❌
+                    <b style={styles.inlineStatRow}>
+                      <img src={iconoAciertoCheck} alt="" style={styles.iconoInlinePequeno} /> {j.aciertos} /{" "}
+                      <img src={iconoErrorX} alt="" style={styles.iconoInlinePequeno} /> {j.errores}
                     </b>
                   </div>
                 ))}

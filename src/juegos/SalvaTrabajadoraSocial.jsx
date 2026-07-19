@@ -7,6 +7,7 @@ import muerteImg3 from "../assets/trabajadora-3.png";
 import muerteImgDerrota from "../assets/trabajadora-derrota.png";
 import muerteImgVictoria from "../assets/trabajadora-victoria.png";
 import heroSalvaTrabajadora from "../assets/kit/hero-salva-trabajadora.png";
+import iconoAciertoCheck from "../assets/kit/icono-fin-aciertos.png";
 import iconoPregunta from "../assets/bookbrand/icono-brand-pregunta.png";
 import iconoErrorX from "../assets/kit/icono-sim-errores.png";
 import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
@@ -141,7 +142,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     if (esCorrecta) {
       setMuerteRespuestaSeleccionada(i);
       setMuerteMostrar(true);
-      setMuerteMensaje("✅ Correcto");
+      setMuerteMensaje("Correcto");
       setMuerteAciertos((a) => a + 1);
     } else {
       perderMuerte();
@@ -387,9 +388,12 @@ if (vista === "detalle") {
               );
             })}
 
-            {muerteMostrar && (
+{muerteMostrar && (
               <>
-                <p>{muerteMensaje}</p>
+                <div style={styles.quizFeedbackRow}>
+                  <img src={iconoAciertoCheck} alt="" style={styles.quizFeedbackIcono} />
+                  <p style={styles.quizFeedbackTexto}>{muerteMensaje}</p>
+                </div>
 
                 <div style={styles.explicacionCaja}>
                   <p style={{ margin: 0 }}>

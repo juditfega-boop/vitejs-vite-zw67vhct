@@ -6,6 +6,8 @@ import iconoSimErrores from "../assets/kit/icono-sim-errores.png";
 import iconoSimBlancos from "../assets/kit/icono-sim-blancos.png";
 import iconoSimTiempo from "../assets/kit/icono-sim-tiempo.png";
 import heroSimulacroCompletado from "../assets/kit/hero-simulacro-completado.png";
+import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
+import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
 
 const DURACION_SIMULACRO_MINUTOS = 100;
 const CLAVE_HISTORIAL_SIMULACRO = "opo_simulacro_historial_v1";
@@ -215,11 +217,17 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
             <b>{DURACION_SIMULACRO_MINUTOS} min</b>
           </div>
           <div style={styles.resultRow}>
-            <span>✅ Acierto</span>
+            <span style={styles.resultRowLabel}>
+              <img src={iconoSimAciertos} alt="" style={styles.resultRowIcono} />
+              Acierto
+            </span>
             <b>+1 punto</b>
           </div>
           <div style={styles.resultRow}>
-            <span>❌ Error</span>
+            <span style={styles.resultRowLabel}>
+              <img src={iconoSimErrores} alt="" style={styles.resultRowIcono} />
+              Error
+            </span>
             <b>−1/3 punto</b>
           </div>
           <div style={{ ...styles.resultRow, borderBottom: "none" }}>
@@ -441,8 +449,11 @@ if (vista === "resultado" && resultadoSimulacro) {
           </button>
         )}
 
-        <button onClick={() => setVista("historial")} style={styles.linkVolver}>
-          🕓 Ver historial de simulacros
+<button onClick={() => setVista("historial")} style={styles.linkVolver}>
+          <span style={styles.botonIconoTextoRow}>
+            <img src={iconoHistorial} alt="" style={styles.iconoInlinePequeno} />
+            Ver historial de simulacros
+          </span>
         </button>
 
         <button onClick={volverMenu} style={styles.ctaButton}>
@@ -567,28 +578,33 @@ if (vista === "historial") {
         <p style={styles.configSubLabel}>Todavía no has completado ningún simulacro.</p>
       ) : (
         <>
-          <button onClick={confirmarVaciar} style={styles.linkVolver}>
-            🗑️ Vaciar historial
-          </button>
+<button onClick={confirmarVaciar} style={styles.linkVolver}>
+              <span style={styles.botonIconoTextoRow}>
+                <img src={iconoPapelera} alt="" style={styles.iconoInlinePequeno} />
+                Vaciar historial
+              </span>
+            </button>
 
           {historial.map((s, i) => (
             <div key={i} style={styles.configCard}>
-              <div style={styles.configRow}>
-                <p style={styles.configCardTitle}>{s.fecha}</p>
-                <button onClick={() => eliminarUno(i)} title="Eliminar este simulacro" style={styles.borrarPartidaBtn}>
-                  🗑️
-                </button>
-              </div>
+<div style={styles.configRow}>
+                  <p style={styles.configCardTitle}>{s.fecha}</p>
+                  <button onClick={() => eliminarUno(i)} title="Eliminar este simulacro" style={styles.borrarPartidaBtn}>
+                    <img src={iconoPapelera} alt="" style={styles.iconoInlinePequeno} />
+                  </button>
+                </div>
               <div style={{ ...styles.resultRow, fontSize: 13 }}>
                 <span>Nota</span>
                 <b>{s.nota} / 10</b>
               </div>
               <div style={{ ...styles.resultRow, fontSize: 13, borderBottom: "none" }}>
-                <span>
-                  ✅ {s.aciertos} · ❌ {s.errores} · ⬜ {s.blancos}
-                </span>
-                <span>⏱ {s.tiempo}</span>
-              </div>
+                  <span style={styles.inlineStatRow}>
+                    <img src={iconoSimAciertos} alt="" style={styles.iconoInlinePequeno} /> {s.aciertos}
+                    <img src={iconoSimErrores} alt="" style={styles.iconoInlinePequeno} /> {s.errores}
+                    <img src={iconoSimBlancos} alt="" style={styles.iconoInlinePequeno} /> {s.blancos}
+                  </span>
+                  <span>⏱ {s.tiempo}</span>
+                </div>
             </div>
           ))}
         </>

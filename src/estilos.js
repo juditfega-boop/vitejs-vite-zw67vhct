@@ -149,6 +149,12 @@ quizFavoritoBtn: {
   lineHeight: 1,
   padding: 0
 },
+quizFavoritoIcono: {
+  width: 25,
+  height: 25,
+  objectFit: "contain",
+  display: "block"
+},
 quizPreguntaTag: {
   display: "inline-block",
   background: "#faf3e8",
@@ -1563,6 +1569,13 @@ styles.perfilHeroImg = {
   width: 220,
   margin: "0 auto 22px"
 };
+styles.perfilNubeIcono = {
+  width: 30,
+  height: 30,
+  objectFit: "contain",
+  verticalAlign: "middle",
+  marginRight: 6
+};
 styles.perfilNotaCard = {
   display: "flex",
   alignItems: "center",
@@ -1696,6 +1709,28 @@ styles.repasarBoton = {
   fontWeight: 700,
   color: "#4a463f",
   cursor: "pointer"
+};
+
+styles.iconoInlinePequeno = {
+  width: 16,
+  height: 16,
+  objectFit: "contain",
+  verticalAlign: "middle"
+};
+styles.inlineStatRow = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4
+};
+styles.botonIconoTextoRow = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6
+};
+styles.heroRachaRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6
 };
 
 // 🗂️ Repasar errores — estado vacío por categoría
