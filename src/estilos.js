@@ -1578,10 +1578,10 @@ styles.simIntentoPill = {
   background: "#faf3e8",
   border: "1px dashed #e4ddcf",
   borderRadius: 14,
-  padding: "6px 16px",
-  fontSize: 12,
-  color: "#8a8578",
-  fontWeight: 600,
+  padding: "8px 20px",
+  fontSize: 14,
+  color: "#6b6558",
+  fontWeight: 700,
   marginBottom: 18
 };
 styles.simNotaCard = {
@@ -1610,20 +1610,40 @@ styles.simNotaSobre = {
 };
 styles.simStatGrid = {
   display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 10,
+  gridTemplateColumns: "repeat(4, 1fr)",
+  gap: 8,
   marginBottom: 16
 };
 styles.simStatCard = {
   background: "#fff",
-  borderRadius: 20,
-  padding: "16px 10px",
+  borderRadius: 16,
+  padding: "12px 4px",
   textAlign: "center",
   boxShadow: "0 3px 10px rgba(0,0,0,0.03)"
 };
-styles.simStatIcono = { width: 40, height: 40, objectFit: "contain", marginBottom: 4 };
-styles.simStatValor = { fontSize: 20, fontWeight: 700, color: "#4a463f", margin: "2px 0" };
-styles.simStatEtiqueta = { fontSize: 11, color: "#8a8578", margin: 0 };
+styles.simStatIcono = { width: 28, height: 28, objectFit: "contain", marginBottom: 4 };
+styles.simStatValor = { fontSize: 15, fontWeight: 700, color: "#4a463f", margin: "2px 0" };
+styles.simStatEtiqueta = { fontSize: 9, color: "#8a8578", margin: 0, lineHeight: 1.25 };
+styles.simHeroImg = {
+  display: "block",
+  width: 170,
+  margin: "0 auto 8px"
+};
+styles.simRepasoBoton = {
+  display: "block",
+  width: "100%",
+  border: "none",
+  borderRadius: 22,
+  padding: "16px 22px",
+  marginTop: 4,
+  marginBottom: 10,
+  fontSize: 15,
+  fontWeight: 700,
+  color: "#3f5a46",
+  background: "#c9e4d0",
+  cursor: "pointer",
+  textAlign: "center"
+};
 styles.simValoracionCard = {
   background: "#fff",
   borderRadius: 20,

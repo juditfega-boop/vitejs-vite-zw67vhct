@@ -68,6 +68,9 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
   const [resultadoSimulacro, setResultadoSimulacro] = useState(null);
   const [mostrarValoracion, setMostrarValoracion] = useState(false);
   const [refrescoHistorialSimulacro, setRefrescoHistorialSimulacro] = useState(0);
+  const [repasoIndice, setRepasoIndice] = useState(0);
+  const [repasoRespuestaSeleccionada, setRepasoRespuestaSeleccionada] = useState(null);
+  const [repasoMostrar, setRepasoMostrar] = useState(false);
   const pregunta = preguntas[indice];
 
   useEffect(() => {
@@ -117,6 +120,7 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     let erroresF = 0;
     let blancosF = 0;
     const bloquesTally = {};
+    const fallidas = [];
 
     preguntas.forEach((p, i) => {
       const r = respuestasSimulacro[i];
@@ -126,6 +130,12 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
       if (r === null || r === undefined) {
         blancosF++;
+        fallidas.push({
+          pregunta: p.pregunta,
+          respuestas: p.respuestas,
+          correcta: p.correcta,
+          explicacion: p.explicacion
+        });
       } else if (r === p.correcta) {
         aciertosF++;
         bloquesTally[bloque].aciertos += 1;
@@ -133,6 +143,12 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
       } else {
         erroresF++;
         registrarRespuesta(p, false);
+        fallidas.push({
+          pregunta: p.pregunta,
+          respuestas: p.respuestas,
+          correcta: p.correcta,
+          explicacion: p.explicacion
+        });
       }
     });
 
@@ -165,7 +181,8 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
       mejoresBloques,
       peoresBloques,
       notaAnterior,
-      intento: historialPrevio.length + 1
+      intento: historialPrevio.length + 1,
+      fallidas
     };
 
     guardarSimulacroHistorial(resultado);
@@ -173,6 +190,9 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     setResultadoSimulacro(resultado);
     setTiempoRestanteSimulacro(null);
     setMostrarValoracion(false);
+    setRepasoIndice(0);
+    setRepasoRespuestaSeleccionada(null);
+    setRepasoMostrar(false);
     setVista("resultado");
   }
 
@@ -333,7 +353,7 @@ if (vista === "resultado" && resultadoSimulacro) {
         <div style={styles.menuUnderline} />
       </div>
 
-      <img src={heroSimulacroCompletado} alt="" style={styles.finBloqueHeroImg} />
+      <img src={heroSimulacroCompletado} alt="" style={styles.simHeroImg} />
 
       <div style={{ textAlign: "center" }}>
         <span style={styles.simIntentoPill}>Intento nº {intento}</span>
@@ -407,18 +427,119 @@ if (vista === "resultado" && resultadoSimulacro) {
         )}
       </div>
 
-      <button onClick={() => setVista("historial")} style={styles.linkVolver}>
-        🕓 Ver historial de simulacros
-      </button>
+      {(errores > 0 || blancos > 0) && (
+          <button
+            onClick={() => {
+              setRepasoIndice(0);
+              setRepasoRespuestaSeleccionada(null);
+              setRepasoMostrar(false);
+              setVista("repaso");
+            }}
+            style={styles.simRepasoBoton}
+          >
+            📖 Repasar preguntas falladas
+          </button>
+        )}
 
-      <button onClick={volverMenu} style={styles.ctaButton}>
-        Volver al menú
-      </button>
-    </div>
-  );
-}
+        <button onClick={() => setVista("historial")} style={styles.linkVolver}>
+          🕓 Ver historial de simulacros
+        </button>
 
-// 🕓 HISTORIAL DE SIMULACROS
+        <button onClick={volverMenu} style={styles.ctaButton}>
+          Volver al menú
+        </button>
+      </div>
+    );
+  }
+
+  // 📖 REPASO DE PREGUNTAS FALLADAS
+  if (vista === "repaso") {
+    const fallidas = resultadoSimulacro?.fallidas || [];
+    const preguntaRepaso = fallidas[repasoIndice];
+
+    if (!preguntaRepaso) {
+      return (
+        <div style={styles.menuContainer}>
+          <div style={styles.menuHeader}>
+            <h1 style={styles.menuTitle}>Repaso completado</h1>
+            <div style={styles.menuUnderline} />
+          </div>
+          <p style={styles.configSubLabel}>
+            Has repasado todas las preguntas falladas de este simulacro.
+          </p>
+          <button onClick={() => setVista("resultado")} style={styles.ctaButton}>
+            Volver al resultado
+          </button>
+        </div>
+      );
+    }
+
+    function comprobarRepaso(i) {
+      setRepasoRespuestaSeleccionada(i);
+      setRepasoMostrar(true);
+    }
+
+    function siguienteRepaso() {
+      setRepasoRespuestaSeleccionada(null);
+      setRepasoMostrar(false);
+      setRepasoIndice((idx) => idx + 1);
+    }
+
+    return (
+      <div style={styles.menuContainer}>
+        <div style={styles.quizHeaderRow}>
+          <button onClick={() => setVista("resultado")} style={styles.quizVolverBtn}>
+            ⬅ Resultado
+          </button>
+        </div>
+
+        <span style={styles.quizPreguntaTag}>
+          Fallada {repasoIndice + 1} de {fallidas.length}
+        </span>
+
+        <div style={styles.quizPreguntaCard}>
+          <p style={styles.quizPreguntaTexto}>{preguntaRepaso.pregunta}</p>
+        </div>
+
+        {preguntaRepaso.respuestas.map((r, i) => {
+          let estadoEstilo = {};
+          if (repasoMostrar) {
+            if (i === preguntaRepaso.correcta) estadoEstilo = styles.quizRespuestaCorrecta;
+            else if (i === repasoRespuestaSeleccionada) estadoEstilo = styles.quizRespuestaIncorrecta;
+          }
+
+          return (
+            <button
+              key={i}
+              onClick={() => comprobarRepaso(i)}
+              disabled={repasoMostrar}
+              style={{ ...styles.quizRespuestaBtn, ...estadoEstilo }}
+            >
+              <span style={styles.quizRespuestaLetra}>{String.fromCharCode(65 + i)}</span>
+              <span>{r}</span>
+            </button>
+          );
+        })}
+
+        {repasoMostrar && (
+          <>
+            <div style={styles.explicacionCaja}>
+              <div style={styles.explicacionTituloRow}>
+                <b>Explicación:</b>
+              </div>
+              <p style={{ margin: 0 }}>{preguntaRepaso.explicacion}</p>
+            </div>
+
+            <button onClick={siguienteRepaso} style={styles.ctaButton}>
+              Siguiente →
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // 🕓 HISTORIAL DE SIMULACROS
 if (vista === "historial") {
   const historial = obtenerHistorialSimulacro();
   void refrescoHistorialSimulacro;
