@@ -1499,6 +1499,79 @@ styles.repasarFilaCard = {
 styles.repasarFilaIcono = { width: 56, height: 56, objectFit: "contain", flexShrink: 0 };
 styles.repasarFilaTitulo = { fontSize: 14, fontWeight: 700, color: "#4a463f", margin: "0 0 4px" };
 styles.repasarFilaTexto = { fontSize: 12, color: "#5a5650", margin: 0, lineHeight: 1.4 };
+// 📁 "Elige un expediente" (Conecta la Constitución)
+styles.expedienteCard = {
+  background: "#fff",
+  borderRadius: 24,
+  padding: "24px 20px",
+  marginBottom: 16,
+  textAlign: "center",
+  boxShadow: "0 4px 14px rgba(0,0,0,0.05)"
+};
+styles.expedienteIcono = {
+  width: 110,
+  height: 110,
+  objectFit: "contain",
+  margin: "0 auto 12px"
+};
+styles.expedienteTitulo = {
+  fontSize: 16,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: "0 0 6px"
+};
+styles.expedienteDescripcion = {
+  fontSize: 12,
+  color: "#8a8578",
+  margin: "0 0 16px",
+  lineHeight: 1.5
+};
+styles.expedienteBoton = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  border: "none",
+  borderRadius: 16,
+  padding: "12px 22px",
+  fontSize: 14,
+  fontWeight: 700,
+  color: "#4a463f",
+  cursor: "pointer"
+};
+
+// 👤 Mi perfil
+styles.perfilHeaderRow = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8
+};
+styles.perfilHeaderIcono = {
+  width: 36,
+  height: 36,
+  objectFit: "contain"
+};
+styles.perfilHeroImg = {
+  display: "block",
+  width: 220,
+  margin: "0 auto 22px"
+};
+styles.perfilNotaCard = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  background: "#faf3e8",
+  border: "1px dashed #e4ddcf",
+  borderRadius: 18,
+  padding: "14px 16px",
+  marginTop: 16,
+  marginBottom: 4,
+  fontSize: 12,
+  color: "#4a463f",
+  lineHeight: 1.5
+};
+
 styles.repasarBoton = {
   display: "block",
   width: "100%",

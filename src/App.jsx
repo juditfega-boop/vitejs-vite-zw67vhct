@@ -23,6 +23,8 @@ import iconoGrafico from "./assets/kit/icono-grafico-evolucion.png";
 import iconoCarpeta from "./assets/kit/icono-carpeta-favoritos.png";
 import iconoTaza from "./assets/kit/icono-taza-perfil.png";
 import iconoPlantita from "./assets/kit/icono-plantita-evolucion.png";
+import iconoPerfilSilueta from "./assets/kit/icono-perfil-silueta.png";
+import iconoPerfilHero from "./assets/kit/icono-perfil-hero.png";
 import {
   obtenerStats,
   guardarStats,
@@ -474,9 +476,14 @@ if (pantalla === "muerte") {
     return (
       <div style={styles.menuContainer}>
         <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>👤 Mi perfil</h1>
+          <div style={styles.perfilHeaderRow}>
+            <h1 style={styles.menuTitle}>Mi perfil</h1>
+            <img src={iconoPerfilSilueta} alt="" style={styles.perfilHeaderIcono} />
+          </div>
           <div style={styles.menuUnderline} />
         </div>
+
+        <img src={iconoPerfilHero} alt="" style={styles.perfilHeroImg} />
 
         <div style={styles.configCard}>
           <p style={styles.configCardTitle}>☁️ Tu código de progreso</p>
@@ -535,11 +542,18 @@ if (pantalla === "muerte") {
             </>
           )}
 
-          {mensajeSync && (
+{mensajeSync && (
             <p style={{ ...styles.configSubLabel, marginTop: 10 }}>
               {mensajeSync}
             </p>
           )}
+        </div>
+
+        <div style={styles.perfilNotaCard}>
+          <span style={{ fontSize: 22 }}>🌸</span>
+          <p style={{ margin: 0 }}>
+            Tu progreso es importante. Guárdalo y nunca perderás lo que has conseguido. 💗
+          </p>
         </div>
 
         <button onClick={volverMenu} style={styles.linkVolver}>

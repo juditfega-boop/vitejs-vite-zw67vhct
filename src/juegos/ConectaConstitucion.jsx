@@ -3,6 +3,8 @@ import { ARTICULOS_CONSTITUCION } from "../datosArticulosConstitucion";
 import { FECHAS_CONSTITUCION } from "../datosFechasConstitucion";
 import { styles, globalStyles } from "../estilos";
 import heroConectaConstitucion from "../assets/kit/hero-conecta-constitucion.png";
+import iconoExpedienteArticulos from "../assets/kit/icono-expediente-articulos.png";
+import iconoExpedienteFechas from "../assets/kit/icono-expediente-fechas.png";
 
 // 🔀 mezcla un array al azar (copia local, igual que en App.jsx)
 function mezclar(array) {
@@ -10,8 +12,24 @@ function mezclar(array) {
 }
 
 const EXPEDIENTES_CONECTA = [
-  { id: "articulos", nombre: "Artículos y contenido", emoji: "🛡️", datos: ARTICULOS_CONSTITUCION },
-  { id: "fechas", nombre: "Fechas importantes", emoji: "🗓️", datos: FECHAS_CONSTITUCION }
+  {
+    id: "articulos",
+    nombre: "Artículos y contenido",
+    descripcion: "Relaciona cada artículo con su contenido.",
+    icono: iconoExpedienteArticulos,
+    textoBoton: "Abrir expediente",
+    colorBoton: "#c9dcb5",
+    datos: ARTICULOS_CONSTITUCION
+  },
+  {
+    id: "fechas",
+    nombre: "Fechas importantes",
+    descripcion: "Relaciona cada fecha con su acontecimiento.",
+    icono: iconoExpedienteFechas,
+    textoBoton: "Comenzar",
+    colorBoton: "#cbdce8",
+    datos: FECHAS_CONSTITUCION
+  }
 ];
 
 // 📁 "Conecta la Constitución" — componente independiente y autocontenido.
@@ -184,33 +202,41 @@ if (vista === "detalle") {
   );
 }
 
-  // 📁 ELEGIR EXPEDIENTE
-  if (vista === "expedientes") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>📁 Elige un expediente</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-
-        {EXPEDIENTES_CONECTA.map((exp) => (
-          <button
-            key={exp.id}
-            onClick={() => comenzarJuegoArchivos(exp.datos)}
-            style={styles.filaMinijuegoBtn}
-          >
-            <span style={styles.miniaturaMinijuegoEmoji}>{exp.emoji}</span>
-            <span style={styles.filaMinijuegoTexto}>{exp.nombre}</span>
-            <span style={{ color: "#8a8578" }}>→</span>
-          </button>
-        ))}
-
-        <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
-          ⬅ Volver
-        </button>
+// 📁 ELEGIR EXPEDIENTE
+if (vista === "expedientes") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>📁 Elige un expediente</h1>
+        <div style={styles.menuUnderline} />
       </div>
-    );
-  }
+
+      <p style={{ ...styles.configSubLabel, textAlign: "center", marginBottom: 20 }}>
+        Todos los documentos han sido mezclados.
+        <br />
+        ¿Con cuál quieres empezar?
+      </p>
+
+      {EXPEDIENTES_CONECTA.map((exp) => (
+        <div key={exp.id} style={styles.expedienteCard}>
+          <img src={exp.icono} alt="" style={styles.expedienteIcono} />
+          <p style={styles.expedienteTitulo}>{exp.nombre}</p>
+          <p style={styles.expedienteDescripcion}>{exp.descripcion}</p>
+          <button
+            onClick={() => comenzarJuegoArchivos(exp.datos)}
+            style={{ ...styles.expedienteBoton, background: exp.colorBoton }}
+          >
+            {exp.textoBoton} →
+          </button>
+        </div>
+      ))}
+
+      <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
+        ⬅ Volver
+      </button>
+    </div>
+  );
+}
 
   // 📁 EN CURSO
   if (vista === "jugando") {
