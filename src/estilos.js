@@ -892,6 +892,40 @@ muertePreguntaCol: {
     flexShrink: 0
   },
 
+  // 🎮 portada/detalle de un minijuego (patrón reutilizable para los 4 juegos)
+  juegoDetalleHeroImg: {
+    display: "block",
+    width: "100%",
+    borderRadius: 24,
+    marginBottom: 20,
+    boxShadow: "0 4px 14px rgba(0,0,0,0.05)"
+  },
+  juegoDetalleFila: {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    padding: "12px 4px",
+    borderBottom: "1px solid #f0ece2"
+  },
+  juegoDetalleEmoji: {
+    fontSize: 22,
+    width: 30,
+    textAlign: "center",
+    flexShrink: 0
+  },
+  juegoDetalleTexto: {
+    margin: 0,
+    fontSize: 13,
+    color: "#4a463f",
+    lineHeight: 1.5
+  },
+  juegoDetalleEmojiTitulo: {
+    fontSize: 26,
+    display: "block",
+    textAlign: "center",
+    marginBottom: 4
+  },
+
   // 📁 layout del juego de emparejar "Conecta la Constitución"
   archivosColumnas: {
     display: "flex",

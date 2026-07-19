@@ -3,6 +3,7 @@ import { styles, globalStyles } from "../estilos";
 import video2Jugadoras from "../assets/carrera-video-2.mp4";
 import video3Jugadoras from "../assets/carrera-video-3.mp4";
 import video4Jugadoras from "../assets/carrera-video-4.mp4";
+import heroCarreraPlaza from "../assets/kit/hero-carrera-plaza.png";
 
 const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
 
@@ -297,35 +298,59 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
     return () => clearTimeout(id);
   }, [vista, tiempoRestanteJuego, juegoCronometroActivo, turnoActual]);
 
-  // 🏁 DETALLE
-  if (vista === "detalle") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>🏁 Carrera por la Plaza</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-
-        <p style={styles.configSubLabel}>
-          De 2 a 4 personas, un solo dispositivo. Cada persona responde su
-          propia tanda de preguntas por turnos, sin ver el resultado hasta
-          el final. Gana quien más aciertos consiga.
-        </p>
-
-        <button onClick={() => setVista("config")} style={styles.ctaButton}>
-          Jugar
-        </button>
-
-        <button onClick={() => setVista("historial")} style={styles.linkVolver}>
-          🕓 Ver historial de partidas
-        </button>
-
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver
+// 🏁 DETALLE
+if (vista === "detalle") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.quizHeaderRow}>
+        <button onClick={() => setPantalla("minijuegos")} style={styles.quizVolverBtn}>
+          ⬅
         </button>
       </div>
-    );
-  }
+
+      <div style={styles.menuHeader}>
+        <span style={styles.juegoDetalleEmojiTitulo}>🏁</span>
+        <h1 style={styles.menuTitle}>Carrera por la Plaza</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <img src={heroCarreraPlaza} alt="" style={styles.juegoDetalleHeroImg} />
+
+      <div style={styles.configCard}>
+        <div style={styles.juegoDetalleFila}>
+          <span style={styles.juegoDetalleEmoji}>👥</span>
+          <p style={styles.juegoDetalleTexto}>
+            De 2 a 4 personas
+            <br />
+            Un solo dispositivo
+          </p>
+        </div>
+        <div style={styles.juegoDetalleFila}>
+          <span style={styles.juegoDetalleEmoji}>🔄</span>
+          <p style={styles.juegoDetalleTexto}>Cada persona responde por turnos</p>
+        </div>
+        <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
+          <span style={styles.juegoDetalleEmoji}>🏆</span>
+          <p style={styles.juegoDetalleTexto}>
+            Gana quien consiga más aciertos y llegue primero a la meta
+          </p>
+        </div>
+      </div>
+
+      <button onClick={() => setVista("config")} style={styles.ctaButton}>
+        🚩 Empezar carrera
+      </button>
+
+      <button onClick={() => setVista("historial")} style={styles.linkVolver}>
+        🕓 Ver historial de partidas
+      </button>
+
+      <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+        🍃 Volver
+      </button>
+    </div>
+  );
+}
 
   // ⚙️ CONFIGURACIÓN
   if (vista === "config") {
