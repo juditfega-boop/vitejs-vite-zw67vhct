@@ -1,8 +1,44 @@
 import { useState, useEffect } from "react";
 import { registrarRespuesta } from "../servicios/progreso";
 import { styles } from "../estilos";
+import iconoSimAciertos from "../assets/kit/icono-fin-aciertos.png";
+import iconoSimErrores from "../assets/kit/icono-sim-errores.png";
+import iconoSimBlancos from "../assets/kit/icono-sim-blancos.png";
+import iconoSimTiempo from "../assets/kit/icono-sim-tiempo.png";
+import heroSimulacroCompletado from "../assets/kit/hero-simulacro-completado.png";
 
 const DURACION_SIMULACRO_MINUTOS = 100;
+const CLAVE_HISTORIAL_SIMULACRO = "opo_simulacro_historial_v1";
+
+function obtenerHistorialSimulacro() {
+  return JSON.parse(localStorage.getItem(CLAVE_HISTORIAL_SIMULACRO)) || [];
+}
+
+function guardarSimulacroHistorial(resultado) {
+  const historial = obtenerHistorialSimulacro();
+  const nuevo = [
+    {
+      fecha: new Date().toLocaleString(),
+      nota: resultado.nota,
+      aciertos: resultado.aciertos,
+      errores: resultado.errores,
+      blancos: resultado.blancos,
+      tiempo: resultado.tiempo
+    },
+    ...historial
+  ].slice(0, 50);
+  localStorage.setItem(CLAVE_HISTORIAL_SIMULACRO, JSON.stringify(nuevo));
+}
+
+function eliminarSimulacroHistorial(index) {
+  const historial = obtenerHistorialSimulacro();
+  historial.splice(index, 1);
+  localStorage.setItem(CLAVE_HISTORIAL_SIMULACRO, JSON.stringify(historial));
+}
+
+function vaciarHistorialSimulacro() {
+  localStorage.setItem(CLAVE_HISTORIAL_SIMULACRO, JSON.stringify([]));
+}
 
 function mezclar(array) {
   return [...array].sort(() => Math.random() - 0.5);
@@ -29,7 +65,9 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
   const [tiempoRestanteSimulacro, setTiempoRestanteSimulacro] = useState(null);
   const [respuestasSimulacro, setRespuestasSimulacro] = useState([]);
   const [horaInicioSimulacro, setHoraInicioSimulacro] = useState(null);
-  const [resultadoSimulacro, setResultadoSimulacro] = useState(null);  
+  const [resultadoSimulacro, setResultadoSimulacro] = useState(null);
+  const [mostrarValoracion, setMostrarValoracion] = useState(false);
+  const [refrescoHistorialSimulacro, setRefrescoHistorialSimulacro] = useState(0);
   const pregunta = preguntas[indice];
 
   useEffect(() => {
@@ -78,13 +116,19 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     let aciertosF = 0;
     let erroresF = 0;
     let blancosF = 0;
+    const bloquesTally = {};
 
     preguntas.forEach((p, i) => {
       const r = respuestasSimulacro[i];
+      const bloque = p.bloque || "Sin bloque";
+      if (!bloquesTally[bloque]) bloquesTally[bloque] = { total: 0, aciertos: 0 };
+      bloquesTally[bloque].total += 1;
+
       if (r === null || r === undefined) {
         blancosF++;
       } else if (r === p.correcta) {
         aciertosF++;
+        bloquesTally[bloque].aciertos += 1;
         registrarRespuesta(p, true);
       } else {
         erroresF++;
@@ -99,15 +143,36 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
       ? Math.round((Date.now() - horaInicioSimulacro) / 1000)
       : 0;
 
-    setResultadoSimulacro({
+    const bloquesOrdenados = Object.entries(bloquesTally)
+      .map(([nombre, datos]) => ({
+        nombre,
+        porcentaje: datos.total ? Math.round((datos.aciertos / datos.total) * 100) : 0
+      }))
+      .sort((a, b) => b.porcentaje - a.porcentaje);
+
+    const mejoresBloques = bloquesOrdenados.filter((b) => b.porcentaje >= 60);
+    const peoresBloques = bloquesOrdenados.filter((b) => b.porcentaje < 40);
+
+    const historialPrevio = obtenerHistorialSimulacro();
+    const notaAnterior = historialPrevio.length > 0 ? Number(historialPrevio[0].nota) : null;
+
+    const resultado = {
       nota: nota.toFixed(2),
       aciertos: aciertosF,
       errores: erroresF,
       blancos: blancosF,
-      tiempo: formatearTiempo(segundosEmpleados)
-    });
+      tiempo: formatearTiempo(segundosEmpleados),
+      mejoresBloques,
+      peoresBloques,
+      notaAnterior,
+      intento: historialPrevio.length + 1
+    };
 
+    guardarSimulacroHistorial(resultado);
+
+    setResultadoSimulacro(resultado);
     setTiempoRestanteSimulacro(null);
+    setMostrarValoracion(false);
     setVista("resultado");
   }
 
@@ -245,47 +310,175 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     );
   }
 
-  // 🏁 RESULTADO
-  if (vista === "resultado" && resultadoSimulacro) {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>Resultado del simulacro</h1>
-          <div style={styles.menuUnderline} />
-        </div>
+// 🏁 RESULTADO
+if (vista === "resultado" && resultadoSimulacro) {
+  const { nota, aciertos, errores, blancos, tiempo, mejoresBloques, peoresBloques, notaAnterior, intento } =
+    resultadoSimulacro;
 
-        <div style={styles.resultCard}>
-          <div style={{ textAlign: "center", marginBottom: 14 }}>
-            <span style={{ fontSize: 13, color: "#8a8578" }}>Nota final</span>
-            <div style={{ fontSize: 42, fontWeight: 700, color: "#4a463f" }}>
-              {resultadoSimulacro.nota}
-            </div>
-          </div>
-
-          <div style={styles.resultRow}>
-            <span>✅ Aciertos</span>
-            <b>{resultadoSimulacro.aciertos}</b>
-          </div>
-          <div style={styles.resultRow}>
-            <span>❌ Errores</span>
-            <b>{resultadoSimulacro.errores}</b>
-          </div>
-          <div style={styles.resultRow}>
-            <span>⬜ En blanco</span>
-            <b>{resultadoSimulacro.blancos}</b>
-          </div>
-          <div style={{ ...styles.resultRow, borderBottom: "none" }}>
-            <span>⏱ Tiempo empleado</span>
-            <b>{resultadoSimulacro.tiempo}</b>
-          </div>
-        </div>
-
-        <button onClick={volverMenu} style={styles.ctaButton}>
-          Volver al menú
-        </button>
-      </div>
-    );
+  let mensajeComparacion;
+  if (notaAnterior === null) {
+    mensajeComparacion = "Es tu primer simulacro completo. ¡Enhorabuena por terminarlo!";
+  } else if (Number(nota) > notaAnterior) {
+    mensajeComparacion = `Has mejorado respecto a tu simulacro anterior (${notaAnterior.toFixed(2)}).`;
+  } else if (Number(nota) < notaAnterior) {
+    mensajeComparacion = `Has bajado un poco respecto a tu simulacro anterior (${notaAnterior.toFixed(2)}).`;
+  } else {
+    mensajeComparacion = "Has mantenido la misma nota que tu simulacro anterior.";
   }
 
-  return null;
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>Simulacro completado</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <img src={heroSimulacroCompletado} alt="" style={styles.finBloqueHeroImg} />
+
+      <div style={{ textAlign: "center" }}>
+        <span style={styles.simIntentoPill}>Intento nº {intento}</span>
+      </div>
+
+      <div style={styles.simNotaCard}>
+        <p style={styles.simNotaEtiqueta}>Nota final</p>
+        <p style={styles.simNotaValor}>{nota}</p>
+        <p style={styles.simNotaSobre}>sobre 10</p>
+      </div>
+
+      <div style={styles.simStatGrid}>
+        <div style={styles.simStatCard}>
+          <img src={iconoSimAciertos} alt="" style={styles.simStatIcono} />
+          <p style={styles.simStatValor}>{aciertos}</p>
+          <p style={styles.simStatEtiqueta}>Aciertos</p>
+        </div>
+        <div style={styles.simStatCard}>
+          <img src={iconoSimErrores} alt="" style={styles.simStatIcono} />
+          <p style={styles.simStatValor}>{errores}</p>
+          <p style={styles.simStatEtiqueta}>Errores</p>
+        </div>
+        <div style={styles.simStatCard}>
+          <img src={iconoSimBlancos} alt="" style={styles.simStatIcono} />
+          <p style={styles.simStatValor}>{blancos}</p>
+          <p style={styles.simStatEtiqueta}>En blanco</p>
+        </div>
+        <div style={styles.simStatCard}>
+          <img src={iconoSimTiempo} alt="" style={styles.simStatIcono} />
+          <p style={styles.simStatValor}>{tiempo}</p>
+          <p style={styles.simStatEtiqueta}>Tiempo empleado</p>
+        </div>
+      </div>
+
+      <div style={styles.simValoracionCard}>
+        <button onClick={() => setMostrarValoracion((v) => !v)} style={styles.simValoracionToggle}>
+          <span>🌿 Valoración de este simulacro</span>
+          <span>{mostrarValoracion ? "▲" : "▼"}</span>
+        </button>
+
+        {mostrarValoracion && (
+          <>
+            <p style={styles.simValoracionTexto}>{mensajeComparacion}</p>
+
+            <p style={styles.simValoracionListaTitulo}>Mejores bloques</p>
+            {mejoresBloques.length === 0 ? (
+              <p style={styles.simValoracionTexto}>
+                Todavía no hay ningún bloque con un 60% o más de aciertos en este simulacro.
+              </p>
+            ) : (
+              mejoresBloques.map((b) => (
+                <p key={b.nombre} style={{ ...styles.simValoracionTexto, marginTop: 4 }}>
+                  🌿 {b.nombre} — {b.porcentaje}%
+                </p>
+              ))
+            )}
+
+            <p style={styles.simValoracionListaTitulo}>Bloques a reforzar</p>
+            {peoresBloques.length === 0 ? (
+              <p style={styles.simValoracionTexto}>
+                Ningún bloque por debajo del 40% de aciertos. ¡Buen trabajo!
+              </p>
+            ) : (
+              peoresBloques.map((b) => (
+                <p key={b.nombre} style={{ ...styles.simValoracionTexto, marginTop: 4 }}>
+                  🍂 {b.nombre} — {b.porcentaje}%
+                </p>
+              ))
+            )}
+          </>
+        )}
+      </div>
+
+      <button onClick={() => setVista("historial")} style={styles.linkVolver}>
+        🕓 Ver historial de simulacros
+      </button>
+
+      <button onClick={volverMenu} style={styles.ctaButton}>
+        Volver al menú
+      </button>
+    </div>
+  );
+}
+
+// 🕓 HISTORIAL DE SIMULACROS
+if (vista === "historial") {
+  const historial = obtenerHistorialSimulacro();
+  void refrescoHistorialSimulacro;
+
+  function confirmarVaciar() {
+    if (window.confirm("¿Borrar todo el historial de simulacros? Esto no se puede deshacer.")) {
+      vaciarHistorialSimulacro();
+      setRefrescoHistorialSimulacro((v) => v + 1);
+    }
+  }
+
+  function eliminarUno(i) {
+    eliminarSimulacroHistorial(i);
+    setRefrescoHistorialSimulacro((v) => v + 1);
+  }
+
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>Historial de simulacros</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      {historial.length === 0 ? (
+        <p style={styles.configSubLabel}>Todavía no has completado ningún simulacro.</p>
+      ) : (
+        <>
+          <button onClick={confirmarVaciar} style={styles.linkVolver}>
+            🗑️ Vaciar historial
+          </button>
+
+          {historial.map((s, i) => (
+            <div key={i} style={styles.configCard}>
+              <div style={styles.configRow}>
+                <p style={styles.configCardTitle}>{s.fecha}</p>
+                <button onClick={() => eliminarUno(i)} title="Eliminar este simulacro" style={styles.borrarPartidaBtn}>
+                  🗑️
+                </button>
+              </div>
+              <div style={{ ...styles.resultRow, fontSize: 13 }}>
+                <span>Nota</span>
+                <b>{s.nota} / 10</b>
+              </div>
+              <div style={{ ...styles.resultRow, fontSize: 13, borderBottom: "none" }}>
+                <span>
+                  ✅ {s.aciertos} · ❌ {s.errores} · ⬜ {s.blancos}
+                </span>
+                <span>⏱ {s.tiempo}</span>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      <button onClick={() => setVista("resultado")} style={styles.linkVolver}>
+        ⬅ Volver al resultado
+      </button>
+    </div>
+  );
+}
+
+return null;
 }

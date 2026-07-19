@@ -1572,6 +1572,93 @@ styles.perfilNotaCard = {
   lineHeight: 1.5
 };
 
+// 📝 Resultado del Simulacro (rediseño)
+styles.simIntentoPill = {
+  display: "inline-block",
+  background: "#faf3e8",
+  border: "1px dashed #e4ddcf",
+  borderRadius: 14,
+  padding: "6px 16px",
+  fontSize: 12,
+  color: "#8a8578",
+  fontWeight: 600,
+  marginBottom: 18
+};
+styles.simNotaCard = {
+  background: "#fff",
+  borderRadius: 24,
+  padding: "22px 20px",
+  textAlign: "center",
+  marginBottom: 16,
+  boxShadow: "0 3px 12px rgba(0,0,0,0.035)"
+};
+styles.simNotaEtiqueta = {
+  fontSize: 13,
+  color: "#8a8578",
+  margin: "0 0 4px"
+};
+styles.simNotaValor = {
+  fontSize: 42,
+  fontWeight: 700,
+  color: "#4a463f",
+  margin: 0
+};
+styles.simNotaSobre = {
+  fontSize: 12,
+  color: "#8a8578",
+  margin: "2px 0 0"
+};
+styles.simStatGrid = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 10,
+  marginBottom: 16
+};
+styles.simStatCard = {
+  background: "#fff",
+  borderRadius: 20,
+  padding: "16px 10px",
+  textAlign: "center",
+  boxShadow: "0 3px 10px rgba(0,0,0,0.03)"
+};
+styles.simStatIcono = { width: 40, height: 40, objectFit: "contain", marginBottom: 4 };
+styles.simStatValor = { fontSize: 20, fontWeight: 700, color: "#4a463f", margin: "2px 0" };
+styles.simStatEtiqueta = { fontSize: 11, color: "#8a8578", margin: 0 };
+styles.simValoracionCard = {
+  background: "#fff",
+  borderRadius: 20,
+  padding: "16px 18px",
+  marginBottom: 16,
+  boxShadow: "0 3px 12px rgba(0,0,0,0.035)"
+};
+styles.simValoracionToggle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  border: "none",
+  background: "transparent",
+  padding: 0,
+  fontSize: 14,
+  fontWeight: 700,
+  color: "#4a463f",
+  cursor: "pointer"
+};
+styles.simValoracionTexto = {
+  fontSize: 13,
+  color: "#4a463f",
+  lineHeight: 1.6,
+  marginTop: 12
+};
+styles.simValoracionListaTitulo = {
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#8a8578",
+  textTransform: "uppercase",
+  letterSpacing: 0.5,
+  margin: "14px 0 6px"
+};
+
 styles.repasarBoton = {
   display: "block",
   width: "100%",
