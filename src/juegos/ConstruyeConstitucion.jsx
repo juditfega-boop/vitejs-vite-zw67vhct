@@ -5,6 +5,7 @@ import construyeTecho from "../assets/construye-techo.png";
 import construyePlantaBaja from "../assets/construye-plantabaja.png";
 import construyeArchivero from "../assets/construye-archivero.png";
 import { styles, globalStyles } from "../estilos";
+import heroConstruyeConstitucion from "../assets/kit/hero-construye-constitucion.png";
 
 // 🔀 mezcla un array al azar (copia local, igual que la de App.jsx)
 function mezclar(array) {
@@ -228,31 +229,55 @@ export default function ConstruyeConstitucion({ setPantalla }) {
     mostrarSiguienteMensajeArchivero();
   }
 
-  // 🏛️ DETALLE
-  if (vista === "detalle") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>🏛️ Construye la Constitución</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-
-        <p style={styles.configSubLabel}>
-          La Constitución se ha desmontado. Tu misión es volver a
-          construirla, planta a planta: completa el artículo inicial y
-          final de cada título, capítulo y sección.
-        </p>
-
-        <button onClick={() => setVista("config")} style={styles.ctaButton}>
-          Construir
-        </button>
-
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver
+// 🏛️ DETALLE
+if (vista === "detalle") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.quizHeaderRow}>
+        <button onClick={() => setPantalla("minijuegos")} style={styles.quizVolverBtn}>
+          ⬅
         </button>
       </div>
-    );
-  }
+
+      <div style={styles.menuHeader}>
+        <span style={styles.juegoDetalleEmojiTitulo}>🏛️</span>
+        <h1 style={styles.menuTitle}>Construye la Constitución</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <img src={heroConstruyeConstitucion} alt="" style={styles.juegoDetalleHeroImg} />
+
+      <div style={styles.configCard}>
+        <div style={styles.juegoDetalleFila}>
+          <span style={styles.juegoDetalleEmoji}>🧱</span>
+          <p style={styles.juegoDetalleTexto}>
+            La Constitución se ha desmontado
+          </p>
+        </div>
+        <div style={styles.juegoDetalleFila}>
+          <span style={styles.juegoDetalleEmoji}>🏗️</span>
+          <p style={styles.juegoDetalleTexto}>
+            Vuelve a construirla, planta a planta
+          </p>
+        </div>
+        <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
+          <span style={styles.juegoDetalleEmoji}>🔢</span>
+          <p style={styles.juegoDetalleTexto}>
+            Completa el artículo inicial y final de cada título, capítulo y sección
+          </p>
+        </div>
+      </div>
+
+      <button onClick={() => setVista("config")} style={styles.ctaButton}>
+        🚩 Construir
+      </button>
+
+      <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+        🍃 Volver
+      </button>
+    </div>
+  );
+}
 
   // 🏛️ ELEGIR QUÉ CONSTRUIR
   if (vista === "config") {

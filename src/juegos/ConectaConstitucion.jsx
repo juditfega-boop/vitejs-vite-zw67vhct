@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ARTICULOS_CONSTITUCION } from "../datosArticulosConstitucion";
 import { FECHAS_CONSTITUCION } from "../datosFechasConstitucion";
 import { styles, globalStyles } from "../estilos";
+import heroConectaConstitucion from "../assets/kit/hero-conecta-constitucion.png";
 
 // 🔀 mezcla un array al azar (copia local, igual que en App.jsx)
 function mezclar(array) {
@@ -133,31 +134,55 @@ export default function ConectaConstitucion({ setPantalla, volverMenu }) {
     }
   }, [vista, archivosResueltos, archivosPareja]);
 
-  // 📁 DETALLE
-  if (vista === "detalle") {
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>📁 Conecta la Constitución</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-
-        <p style={styles.configSubLabel}>
-          Alguien ha mezclado los archivos de la Constitución. Tu misión es
-          volver a organizarlos: relaciona cada artículo con su contenido.
-          Cada partida elige 8 parejas al azar.
-        </p>
-
-        <button onClick={() => setVista("expedientes")} style={styles.ctaButton}>
-          Jugar
-        </button>
-
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver
+// 📁 DETALLE
+if (vista === "detalle") {
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.quizHeaderRow}>
+        <button onClick={() => setPantalla("minijuegos")} style={styles.quizVolverBtn}>
+          ⬅
         </button>
       </div>
-    );
-  }
+
+      <div style={styles.menuHeader}>
+        <span style={styles.juegoDetalleEmojiTitulo}>📁</span>
+        <h1 style={styles.menuTitle}>Conecta la Constitución</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <img src={heroConectaConstitucion} alt="" style={styles.juegoDetalleHeroImg} />
+
+      <div style={styles.configCard}>
+        <div style={styles.juegoDetalleFila}>
+          <span style={styles.juegoDetalleEmoji}>🗂️</span>
+          <p style={styles.juegoDetalleTexto}>
+            Alguien ha mezclado los archivos de la Constitución
+          </p>
+        </div>
+        <div style={styles.juegoDetalleFila}>
+          <span style={styles.juegoDetalleEmoji}>🔗</span>
+          <p style={styles.juegoDetalleTexto}>
+            Relaciona cada artículo con su contenido
+          </p>
+        </div>
+        <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
+          <span style={styles.juegoDetalleEmoji}>🎯</span>
+          <p style={styles.juegoDetalleTexto}>
+            Cada partida elige 8 parejas al azar
+          </p>
+        </div>
+      </div>
+
+      <button onClick={() => setVista("expedientes")} style={styles.ctaButton}>
+        🚩 Jugar
+      </button>
+
+      <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+        🍃 Volver
+      </button>
+    </div>
+  );
+}
 
   // 📁 ELEGIR EXPEDIENTE
   if (vista === "expedientes") {
