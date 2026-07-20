@@ -1,6 +1,6 @@
 import imagenesExplorador from '../../imagenesRegistry';
 
-export default function SalaCapitulo({ node, onSelect, onBack, getNodeState }) {
+export default function SalaCapitulo({ node, onSelect, onJump, onBack, getNodeState }) {
   const imagenFondo = node.imagenFondo ? imagenesExplorador[node.imagenFondo] : null;
 
   if (!imagenFondo) {
@@ -23,9 +23,10 @@ export default function SalaCapitulo({ node, onSelect, onBack, getNodeState }) {
   }
 
   const puertas = node.hotspots || {};
+  const atajos = node.atajos || {};
 
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth: '900px', margin: '0 auto' }}>
+<div style={{ position: 'relative', width: '100%' }}>
       {onBack && (
         <button onClick={onBack} style={{
           position: 'absolute', top: 10, left: 10, zIndex: 10,
@@ -43,7 +44,7 @@ export default function SalaCapitulo({ node, onSelect, onBack, getNodeState }) {
           style={{ width: '100%', height: 'auto', display: 'block', mixBlendMode: 'multiply' }}
         />
 
-        {Object.entries(puertas).map(([id, puerta]) => {
+{Object.entries(puertas).map(([id, puerta]) => {
           const estado = getNodeState ? getNodeState(id) : null;
           return (
             <button
@@ -64,6 +65,25 @@ export default function SalaCapitulo({ node, onSelect, onBack, getNodeState }) {
             />
           );
         })}
+
+        {Object.entries(atajos).map(([id, puerta]) => (
+          <button
+            key={id}
+            onClick={() => onJump(id)}
+            title={`atajo: ${id}`}
+            style={{
+              position: 'absolute',
+              top: puerta.top,
+              left: puerta.left,
+              width: puerta.width,
+              height: puerta.height,
+              background: 'rgba(0,255,150,0.3)',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+            }}
+          />
+        ))}
       </div>
     </div>
   );

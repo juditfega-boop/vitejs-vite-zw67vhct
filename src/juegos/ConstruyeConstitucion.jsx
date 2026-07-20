@@ -9,15 +9,19 @@ import iconoLadrillo from "../assets/bookbrand/icono-brand-ladrillo.png";
 import iconoGrua from "../assets/bookbrand/icono-brand-grua.png";
 import heroConstruyeConstitucion from "../assets/kit/hero-construye-constitucion.png";
 import LawExplorer from "../explorador/LawExplorer";
+import Calibrador from "../explorador/Calibrador";
+import imagenesExplorador from "../explorador/imagenesRegistry";
 import SalaCapitulo from "../explorador/skins/edificio/SalaCapitulo";
 import PlaceholderNivel from "../explorador/skins/edificio/PlaceholderNivel";
+import DetalleArticulo from "../explorador/skins/edificio/DetalleArticulo";
 import dataConstitucion from "../explorador/data/constitucion.json";
 
 const edificioSkinPrueba = {
+  titulos: SalaCapitulo,
   capitulos: SalaCapitulo,
-  secciones: PlaceholderNivel,
-  articulos: PlaceholderNivel,
-  leaf: PlaceholderNivel,
+  secciones: SalaCapitulo,
+  articulos: SalaCapitulo,
+  leaf: DetalleArticulo,
 };
 
 function tituloI() {
@@ -293,6 +297,10 @@ if (vista === "detalle") {
         🔍 Explorar Constitución
       </button>
 
+      <button onClick={() => setVista("calibrar")} style={styles.linkVolver}>
+        📐 Calibrar coordenadas
+      </button>
+
       <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
         🍃 Volver
       </button>
@@ -301,6 +309,16 @@ if (vista === "detalle") {
 }
 
 // 🔍 EXPLORAR (modo de prueba, solo Título I por ahora)
+if (vista === "calibrar") {
+  return (
+    <div style={{ ...styles.menuContainer, padding: 0, maxWidth: "100%" }}>
+      <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
+        ⬅ Volver
+      </button>
+      <Calibrador imagenSrc={imagenesExplorador['capitulo2-secciones']} />    </div>
+  );
+}
+
 if (vista === "explorar") {
   return (
     <div style={{ ...styles.menuContainer, padding: 0, maxWidth: "100%" }}>
@@ -308,8 +326,8 @@ if (vista === "explorar") {
         ⬅ Volver
       </button>
       <LawExplorer
-        data={tituloI()}
-        skin={edificioSkinPrueba}
+          data={dataConstitucion}
+          skin={edificioSkinPrueba}
         getNodeState={() => null}
         onLeafAction={(nodo) => console.log("practicar", nodo.id)}
       />
