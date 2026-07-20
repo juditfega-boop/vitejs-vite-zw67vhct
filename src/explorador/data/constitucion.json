@@ -1,0 +1,118 @@
+{
+    "id": "constitucion",
+    "label": "Constitución Española",
+    "vistaHijos": "titulos",
+    "children": [
+      {
+        "id": "titulo-preliminar",
+        "label": "Título Preliminar",
+        "subtitle": "Principios generales",
+        "vistaHijos": "articulos",
+        "children": [
+          {
+            "id": "articulo-1", "label": "Artículo 1",
+            "resumen": "PENDIENTE: rellenar", "contenido": "PENDIENTE: rellenar",
+            "children": []
+          },
+          {
+            "id": "articulo-9", "label": "Artículo 9",
+            "resumen": "Sujeción a la Constitución y apartado 9.2: promoción de la igualdad real",
+            "contenido": "9.2 — Corresponde a los poderes públicos promover las condiciones para que la libertad y la igualdad del individuo y de los grupos en que se integra sean reales y efectivas...",
+            "destacado": true,
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "titulo-1",
+        "label": "Título I",
+        "subtitle": "Derechos y deberes fundamentales",
+        "vistaHijos": "capitulos",
+        "imagenFondo": "titulo-1-capitulos",
+        "hotspots": {
+          "capitulo-1": { "top": "17%", "left": "44%", "width": "12%", "height": "13%" },
+          "capitulo-2": { "top": "33%", "left": "44%", "width": "12%", "height": "13%" },
+          "capitulo-3": { "top": "49%", "left": "44%", "width": "12%", "height": "13%" },
+          "capitulo-4": { "top": "65%", "left": "44%", "width": "12%", "height": "13%" },
+          "capitulo-5": { "top": "81%", "left": "44%", "width": "12%", "height": "13%" }
+        },
+        "children": [
+          {
+            "id": "capitulo-1", "label": "Capítulo I",
+            "subtitle": "De los españoles y extranjeros",
+            "vistaHijos": "articulos",
+            "children": [
+              { "id": "articulo-11", "label": "Artículo 11", "resumen": "PENDIENTE: rellenar", "children": [] },
+              { "id": "articulo-12", "label": "Artículo 12", "resumen": "PENDIENTE: rellenar", "children": [] },
+              { "id": "articulo-13", "label": "Artículo 13", "resumen": "PENDIENTE: rellenar", "children": [] }
+            ]
+          },
+          {
+            "id": "capitulo-2", "label": "Capítulo II",
+            "subtitle": "Derechos y libertades",
+            "vistaHijos": "secciones",
+            "children": [
+              {
+                "id": "seccion-1", "label": "Sección 1ª",
+                "subtitle": "De los derechos fundamentales y de las libertades públicas",
+                "vistaHijos": "articulos",
+                "children": [
+                  {
+                    "id": "articulo-14", "label": "Artículo 14",
+                    "resumen": "Igualdad ante la ley",
+                    "contenido": "Los españoles son iguales ante la ley, sin que pueda prevalecer discriminación alguna por razón de nacimiento, raza, sexo, religión, opinión o cualquier otra condición o circunstancia personal o social.",
+                    "destacado": true,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "seccion-2", "label": "Sección 2ª",
+                "subtitle": "De los derechos y deberes de los ciudadanos",
+                "vistaHijos": "articulos",
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "capitulo-3", "label": "Capítulo III",
+            "subtitle": "De los principios rectores de la política social y económica",
+            "destacado": true,
+            "vistaHijos": "articulos",
+            "children": [
+              { "id": "articulo-39", "label": "Artículo 39", "resumen": "PENDIENTE: rellenar (prioritario)", "children": [] },
+              { "id": "articulo-40", "label": "Artículo 40", "resumen": "PENDIENTE: rellenar (prioritario)", "children": [] }
+            ]
+          },
+          {
+            "id": "capitulo-4", "label": "Capítulo IV",
+            "subtitle": "De las garantías de las libertades y derechos fundamentales",
+            "destacado": true,
+            "vistaHijos": "articulos",
+            "children": [
+              {
+                "id": "articulo-53", "label": "Artículo 53",
+                "resumen": "Garantías de los derechos fundamentales",
+                "contenido": "Los derechos y libertades reconocidos en el Capítulo II del presente Título vinculan a todos los poderes públicos...",
+                "destacado": true, "children": []
+              },
+              {
+                "id": "articulo-54", "label": "Artículo 54",
+                "resumen": "El Defensor del Pueblo",
+                "contenido": "Una ley orgánica regulará la institución del Defensor del Pueblo, como alto comisionado de las Cortes Generales...",
+                "destacado": true, "children": []
+              }
+            ]
+          },
+          {
+            "id": "capitulo-5", "label": "Capítulo V",
+            "subtitle": "De la suspensión de los derechos y libertades",
+            "vistaHijos": "articulos",
+            "children": [
+              { "id": "articulo-55", "label": "Artículo 55", "resumen": "PENDIENTE: rellenar", "children": [] }
+            ]
+          }
+        ]
+      }
+    ]
+  }

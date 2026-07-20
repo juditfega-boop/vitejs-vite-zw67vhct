@@ -8,6 +8,21 @@ import { styles, globalStyles } from "../estilos";
 import iconoLadrillo from "../assets/bookbrand/icono-brand-ladrillo.png";
 import iconoGrua from "../assets/bookbrand/icono-brand-grua.png";
 import heroConstruyeConstitucion from "../assets/kit/hero-construye-constitucion.png";
+import LawExplorer from "../explorador/LawExplorer";
+import SalaCapitulo from "../explorador/skins/edificio/SalaCapitulo";
+import PlaceholderNivel from "../explorador/skins/edificio/PlaceholderNivel";
+import dataConstitucion from "../explorador/data/constitucion.json";
+
+const edificioSkinPrueba = {
+  capitulos: SalaCapitulo,
+  secciones: PlaceholderNivel,
+  articulos: PlaceholderNivel,
+  leaf: PlaceholderNivel,
+};
+
+function tituloI() {
+  return dataConstitucion.children.find((t) => t.id === "titulo-1");
+}
 
 // 🔀 mezcla un array al azar (copia local, igual que la de App.jsx)
 function mezclar(array) {
@@ -270,8 +285,12 @@ if (vista === "detalle") {
           </div>
         </div>
 
-      <button onClick={() => setVista("config")} style={styles.ctaButton}>
+        <button onClick={() => setVista("config")} style={styles.ctaButton}>
         🚩 Construir
+      </button>
+
+      <button onClick={() => setVista("explorar")} style={styles.linkVolver}>
+        🔍 Explorar Constitución
       </button>
 
       <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
@@ -281,8 +300,25 @@ if (vista === "detalle") {
   );
 }
 
-  // 🏛️ ELEGIR QUÉ CONSTRUIR
-  if (vista === "config") {
+// 🔍 EXPLORAR (modo de prueba, solo Título I por ahora)
+if (vista === "explorar") {
+  return (
+    <div style={{ ...styles.menuContainer, padding: 0, maxWidth: "100%" }}>
+      <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
+        ⬅ Volver
+      </button>
+      <LawExplorer
+        data={tituloI()}
+        skin={edificioSkinPrueba}
+        getNodeState={() => null}
+        onLeafAction={(nodo) => console.log("practicar", nodo.id)}
+      />
+    </div>
+  );
+}
+
+// 🏛️ ELEGIR QUÉ CONSTRUIR
+if (vista === "config") {
     const titulos = ESTRUCTURA_CONSTITUCION.filter((i) => i.tipo === "Título");
 
     return (
