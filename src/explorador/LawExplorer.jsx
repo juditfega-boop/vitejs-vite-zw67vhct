@@ -1,82 +1,134 @@
 import { useState, useMemo } from 'react';
+import ZoomTransition from './ZoomTransition';
 
-// Encuentra un nodo del árbol siguiendo una ruta de ids
+const DURACION_FEEDBACK = 130;
+const DURACION_ZOOM = 600;
+
 function resolverRuta(raiz, ids) {
-    let nodoActual = raiz;
-    const ruta = [raiz];
-    for (const id of ids) {
-      const siguiente = (nodoActual.children || []).find(n => n.id === id);
-      if (!siguiente) break;
-      nodoActual = siguiente;
-      ruta.push(nodoActual);
-    }
-    return ruta;
+  let nodoActual = raiz;
+  const ruta = [raiz];
+  for (const id of ids) {
+    const siguiente = (nodoActual.children || []).find(n => n.id === id);
+    if (!siguiente) break;
+    nodoActual = siguiente;
+    ruta.push(nodoActual);
   }
-  
-  // Busca un nodo en cualquier profundidad del árbol y devuelve la lista
-  // de ids desde la raíz hasta él (para los "atajos").
-  function encontrarRutaCompleta(raiz, idBuscado) {
-    function buscar(nodo, camino) {
-      if (nodo.id === idBuscado) return camino;
-      for (const hijo of nodo.children || []) {
-        const resultado = buscar(hijo, [...camino, hijo.id]);
-        if (resultado) return resultado;
-      }
-      return null;
+  return ruta;
+}
+
+function encontrarRutaCompleta(raiz, idBuscado) {
+  function buscar(nodo, camino) {
+    if (nodo.id === idBuscado) return camino;
+    for (const hijo of nodo.children || []) {
+      const resultado = buscar(hijo, [...camino, hijo.id]);
+      if (resultado) return resultado;
     }
-    return buscar(raiz, []);
+    return null;
   }
+  return buscar(raiz, []);
+}
 
 export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) {
-  // rutaIds: array de ids desde la raíz hasta donde estamos ahora
   const [rutaIds, setRutaIds] = useState([]);
-  const [direccion, setDireccion] = useState('adelante');
+  const [fase, setFase] = useState('reposo'); // reposo | feedback | zoom-in | zoom-out
+  const [hotspotActivo, setHotspotActivo] = useState(null);
+  const [rutaIdsDestino, setRutaIdsDestino] = useState(null);
 
   const ruta = useMemo(() => resolverRuta(data, rutaIds), [data, rutaIds]);
   const nodoActual = ruta[ruta.length - 1];
-  const esHoja = !nodoActual.children || nodoActual.children.length === 0;
-  const profundidad = ruta.length - 1;
 
-  function irAHijo(childId) {
-    setDireccion('adelante');
-    setRutaIds([...rutaIds, childId]);
+  const rutaDestinoResuelta = useMemo(
+    () => (rutaIdsDestino ? resolverRuta(data, rutaIdsDestino) : null),
+    [data, rutaIdsDestino]
+  );
+  const nodoDestino = rutaDestinoResuelta ? rutaDestinoResuelta[rutaDestinoResuelta.length - 1] : null;
+
+  function rendererDe(nodo) {
+    if (!nodo) return null;
+    const esHoja = !nodo.children || nodo.children.length === 0;
+    return esHoja ? skin.leaf : (skin[nodo.vistaHijos] || skin.default);
   }
 
-  // Para los "atajos": salta directamente a un nodo aunque no sea hijo
-  // inmediato (ej. el Artículo 14 desde la pantalla de Capítulo II).
-  function irAId(idDestino) {
-    const rutaCompleta = encontrarRutaCompleta(data, idDestino);
-    if (rutaCompleta) {
-      setDireccion('adelante');
-      setRutaIds(rutaCompleta);
+  function animarHacia(idsDestino, hotspot) {
+    setHotspotActivo(hotspot);
+    setRutaIdsDestino(idsDestino);
+    setFase('feedback');
+    setTimeout(() => {
+      setFase('zoom-in');
+      setTimeout(() => {
+        setFase('zoom-out');
+        setTimeout(() => {
+          setRutaIds(idsDestino);
+          setRutaIdsDestino(null);
+          setFase('reposo');
+          setHotspotActivo(null);
+        }, DURACION_ZOOM);
+      }, DURACION_ZOOM);
+    }, DURACION_FEEDBACK);
+  }
+
+  function irAHijo(childId) {
+    if (fase !== 'reposo') return;
+    const hotspot = (nodoActual.hotspots || {})[childId];
+    const atajo = (nodoActual.atajos || {})[childId];
+    const idsDestino = atajo ? encontrarRutaCompleta(data, childId) : [...rutaIds, childId];
+
+    if (!hotspot && !atajo) {
+      setRutaIds(idsDestino); // sin coordenadas conocidas: navega sin animar
+      return;
     }
+    animarHacia(idsDestino, hotspot || atajo);
   }
 
   function volver() {
-    setDireccion('atras');
-    setRutaIds(rutaIds.slice(0, -1));
+    if (fase !== 'reposo' || rutaIds.length === 0) return;
+    const idsDestino = rutaIds.slice(0, -1);
+    const padre = resolverRuta(data, idsDestino).slice(-1)[0];
+    const hotspot = (padre.hotspots || {})[nodoActual.id] || (padre.atajos || {})[nodoActual.id];
+
+    if (!hotspot) {
+      setRutaIds(idsDestino);
+      return;
+    }
+    animarHacia(idsDestino, hotspot);
   }
 
-  // Elegimos qué componente de la piel dibuja este nivel
-  const Renderer = esHoja
-  ? skin.leaf
-  : (skin[nodoActual.vistaHijos] || skin.default);
+  function irAId(idDestino) {
+    if (fase !== 'reposo') return;
+    const rutaCompleta = encontrarRutaCompleta(data, idDestino);
+    if (rutaCompleta) setRutaIds(rutaCompleta);
+  }
 
-  if (!Renderer) {
-    return <div>Falta un renderer para la profundidad {profundidad} en el skin.</div>;
+  function renderNodo(nodo, interactivo) {
+    const Renderer = rendererDe(nodo);
+    if (!Renderer) return <div>Falta un renderer para "{nodo.vistaHijos}"</div>;
+    return (
+      <Renderer
+        node={nodo}
+        ruta={interactivo ? ruta : (rutaDestinoResuelta || ruta)}
+        onSelect={interactivo ? irAHijo : () => {}}
+        onJump={interactivo ? irAId : () => {}}
+        onBack={interactivo && rutaIds.length > 0 ? volver : null}
+        getNodeState={getNodeState}
+        onLeafAction={
+          interactivo && (!nodo.children || nodo.children.length === 0)
+            ? () => onLeafAction(nodo)
+            : null
+        }
+      />
+    );
+  }
+
+  if (fase === 'reposo') {
+    return <div style={{ position: 'relative', width: '100%' }}>{renderNodo(nodoActual, true)}</div>;
   }
 
   return (
-    <div className={`explorador-transicion explorador-${direccion}`}>
-<Renderer
-        node={nodoActual}
-        ruta={ruta}
-        onSelect={irAHijo}
-        onJump={irAId}
-        onBack={rutaIds.length > 0 ? volver : null}
-        getNodeState={getNodeState}
-        onLeafAction={esHoja ? () => onLeafAction(nodoActual) : null}
-      />
-    </div>
+    <ZoomTransition
+      fase={fase}
+      hotspotSeleccionado={hotspotActivo}
+      nivelActual={renderNodo(nodoActual, false)}
+      nivelSiguiente={nodoDestino ? renderNodo(nodoDestino, false) : null}
+    />
   );
 }
