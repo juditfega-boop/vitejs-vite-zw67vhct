@@ -1,8 +1,10 @@
 import { useRef } from 'react';
 
-const DURACION_ZOOM = 550; // ms
-const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
-const ESCALA_MAXIMA = 3.2;
+const DURACION_ZOOM = 600; // ms
+// Curva muy marcada: arranca despacio, acelera fuerte en el centro, frena al llegar
+const EASING = 'cubic-bezier(0.83, 0, 0.17, 1)';
+const ESCALA_MAXIMA = 4.2;   // cuánto se acerca la imagen ACTUAL sobre la puerta pulsada
+const ESCALA_ENTRADA = 5.5;  // desde qué tamaño "nace" la imagen SIGUIENTE
 
 export default function ZoomTransition({
   nivelActual,
@@ -21,16 +23,18 @@ export default function ZoomTransition({
     const escala = Math.min(Math.max(escalaX, escalaY), ESCALA_MAXIMA);
     const dx = 50 - cx;
     const dy = 50 - cy;
-    return `scale(${escala}) translate(${dx}%, ${dy}%)`;
+    return { transform: `scale(${escala}) translate(${dx}%, ${dy}%)`, cx, cy };
   }
 
-  // El contenedor SIEMPRE tiene esta proporción fija — nunca depende
-  // de qué fase de la animación esté activa ni de qué imagen se vea.
+  const datosTransform = calcularTransform(hotspotSeleccionado);
+  const transformActual = fase === 'zoom-in' ? datosTransform.transform : 'scale(1) translate(0,0)';
+
   const estiloContenedor = {
     position: 'relative',
     width: '100%',
     aspectRatio: '2 / 3',
     overflow: 'hidden',
+    background: '#1a1410', // se ve un instante en el pico del zoom, mejor oscuro que blanco
   };
 
   const estiloActual = {
@@ -39,7 +43,7 @@ export default function ZoomTransition({
     transformOrigin: 'center center',
     willChange: 'transform',
     transition: fase === 'zoom-in' ? `transform ${DURACION_ZOOM}ms ${EASING}` : 'none',
-    transform: fase === 'zoom-in' ? calcularTransform(hotspotSeleccionado) : 'scale(1) translate(0,0)',
+    transform: transformActual,
     opacity: fase === 'zoom-out' ? 0 : 1,
     zIndex: fase === 'zoom-out' ? 1 : 2,
   };
@@ -50,14 +54,35 @@ export default function ZoomTransition({
     transformOrigin: 'center center',
     willChange: 'transform',
     transition: fase === 'zoom-out' ? `transform ${DURACION_ZOOM}ms ${EASING}` : 'none',
-    transform: fase === 'zoom-out' ? 'scale(1) translate(0,0)' : `scale(${ESCALA_MAXIMA}) translate(0,0)`,
+    transform: fase === 'zoom-out' ? 'scale(1) translate(0,0)' : `scale(${ESCALA_ENTRADA}) translate(0,0)`,
     opacity: fase === 'zoom-in' || fase === 'reposo' ? 0 : 1,
     zIndex: fase === 'zoom-out' ? 2 : 1,
+  };
+
+  // Viñeta: oscurece todo menos un "foco" alrededor de la puerta pulsada.
+  // Se mueve y escala EXACTAMENTE igual que la imagen actual (mismo transform),
+  // así el foco de luz se queda centrado en la puerta durante todo el zoom.
+  const mostrarVineta = hotspotSeleccionado && (fase === 'feedback' || fase === 'zoom-in');
+  const estiloVineta = {
+    position: 'absolute',
+    inset: 0,
+    pointerEvents: 'none',
+    transformOrigin: 'center center',
+    transition: fase === 'zoom-in'
+      ? `transform ${DURACION_ZOOM}ms ${EASING}, opacity ${DURACION_ZOOM}ms ease-out`
+      : 'opacity 150ms ease-out',
+    transform: transformActual,
+    opacity: mostrarVineta ? 1 : 0,
+    zIndex: 3,
+    background: hotspotSeleccionado
+      ? `radial-gradient(circle at ${datosTransform.cx}% ${datosTransform.cy}%, rgba(0,0,0,0) 12%, rgba(20,14,10,0.65) 55%)`
+      : 'transparent',
   };
 
   return (
     <div ref={contenedorRef} style={estiloContenedor}>
       <div style={estiloActual}>{nivelActual}</div>
+      <div style={estiloVineta} />
       {nivelSiguiente && <div style={estiloSiguiente}>{nivelSiguiente}</div>}
     </div>
   );
