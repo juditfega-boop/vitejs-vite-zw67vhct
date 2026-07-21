@@ -9,7 +9,6 @@ import iconoLadrillo from "../assets/bookbrand/icono-brand-ladrillo.png";
 import iconoGrua from "../assets/bookbrand/icono-brand-grua.png";
 import heroConstruyeConstitucion from "../assets/kit/hero-construye-constitucion.png";
 import LawExplorer from "../explorador/LawExplorer";
-import Calibrador from "../explorador/Calibrador";
 import imagenesExplorador from "../explorador/imagenesRegistry";
 import SalaCapitulo from "../explorador/skins/edificio/SalaCapitulo";
 import PlaceholderNivel from "../explorador/skins/edificio/PlaceholderNivel";
@@ -308,24 +307,10 @@ if (vista === "detalle") {
         🔍 Explorar Constitución
       </button>
 
-      <button onClick={() => setVista("calibrar")} style={styles.linkVolver}>
-        📐 Calibrar coordenadas
-      </button>
-
       <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
         🍃 Volver
       </button>
     </div>
-  );
-}
-
-if (vista === "calibrar") {
-  return (
-    <div style={{ ...styles.menuContainer, padding: 0, maxWidth: "100%" }}>
-      <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
-        ⬅ Volver
-      </button>
-      <Calibrador imagenSrc={imagenesExplorador['capitulo5-articulos']} />    </div>
   );
 }
 

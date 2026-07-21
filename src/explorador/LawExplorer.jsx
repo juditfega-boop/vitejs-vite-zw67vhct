@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import ZoomTransition from './ZoomTransition';
+import DoorTransition from './DoorTransition';
 
 const DURACION_FEEDBACK = 130;
 const DURACION_ZOOM = 600;
@@ -121,6 +122,25 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
 
   if (fase === 'reposo') {
     return <div style={{ position: 'relative', width: '100%' }}>{renderNodo(nodoActual, true)}</div>;
+  }
+
+  const esHacaArticulo = nodoDestino && (!nodoDestino.children || nodoDestino.children.length === 0);
+  const veniamosDeArticulo = !nodoDestino && (!nodoActual.children || nodoActual.children.length === 0);
+
+  if (esHacaArticulo || veniamosDeArticulo) {
+    return (
+      <DoorTransition
+        direccion={esHacaArticulo ? 'entrar' : 'salir'}
+        hotspotPuerta={hotspotActivo}
+        nivelPasillo={esHacaArticulo ? renderNodo(nodoActual, false) : renderNodo(nodoDestino, false)}
+        onComplete={() => {
+          setRutaIds(esHacaArticulo ? rutaIdsDestino : rutaIdsDestino);
+          setRutaIdsDestino(null);
+          setFase('reposo');
+          setHotspotActivo(null);
+        }}
+      />
+    );
   }
 
   return (
