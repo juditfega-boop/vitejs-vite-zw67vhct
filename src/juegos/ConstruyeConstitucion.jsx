@@ -14,6 +14,7 @@ import imagenesExplorador from "../explorador/imagenesRegistry";
 import SalaCapitulo from "../explorador/skins/edificio/SalaCapitulo";
 import PlaceholderNivel from "../explorador/skins/edificio/PlaceholderNivel";
 import DetalleArticulo from "../explorador/skins/edificio/DetalleArticulo";
+import PrototipoZoom from "../explorador/PrototipoZoom";
 import dataConstitucion from "../explorador/data/constitucion.json";
 
 const edificioSkinPrueba = {
@@ -301,6 +302,10 @@ if (vista === "detalle") {
         📐 Calibrar coordenadas
       </button>
 
+      <button onClick={() => setVista("prototipo-zoom")} style={styles.linkVolver}>
+        🔎 Prototipo zoom
+      </button>
+
       <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
         🍃 Volver
       </button>
@@ -309,6 +314,17 @@ if (vista === "detalle") {
 }
 
 // 🔍 EXPLORAR (modo de prueba, solo Título I por ahora)
+if (vista === "prototipo-zoom") {
+  return (
+    <div style={{ ...styles.menuContainer, padding: 0, maxWidth: "100%" }}>
+      <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
+        ⬅ Volver
+      </button>
+      <PrototipoZoom />
+    </div>
+  );
+}
+
 if (vista === "calibrar") {
   return (
     <div style={{ ...styles.menuContainer, padding: 0, maxWidth: "100%" }}>
