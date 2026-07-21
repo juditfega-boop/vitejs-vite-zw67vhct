@@ -55,7 +55,7 @@ export default function ZoomTransition({
     willChange: 'transform',
     transition: fase === 'zoom-out' ? `transform ${DURACION_ZOOM}ms ${EASING}` : 'none',
     transform: fase === 'zoom-out' ? 'scale(1) translate(0,0)' : `scale(${ESCALA_ENTRADA}) translate(0,0)`,
-    opacity: fase === 'zoom-in' || fase === 'reposo' ? 0 : 1,
+    opacity: fase === 'zoom-out' ? 1 : 0,
     zIndex: fase === 'zoom-out' ? 2 : 1,
   };
 

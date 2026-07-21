@@ -57,7 +57,7 @@ export default function SalaCapitulo({ node, onSelect, onJump, onBack, getNodeSt
                 left: puerta.left,
                 width: puerta.width,
                 height: puerta.height,
-                background: 'rgba(255,0,0,0.3)',
+                background: 'transparent',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -66,7 +66,7 @@ export default function SalaCapitulo({ node, onSelect, onJump, onBack, getNodeSt
           );
         })}
 
-        {Object.entries(atajos).map(([id, puerta]) => (
+{Object.entries(atajos).map(([id, puerta]) => (
           <button
             key={id}
             onClick={() => onJump(id)}
@@ -77,7 +77,7 @@ export default function SalaCapitulo({ node, onSelect, onJump, onBack, getNodeSt
               left: puerta.left,
               width: puerta.width,
               height: puerta.height,
-              background: 'rgba(0,255,150,0.3)',
+              background: 'transparent',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
