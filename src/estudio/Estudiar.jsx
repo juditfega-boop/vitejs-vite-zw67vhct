@@ -322,10 +322,20 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     setMostrar(false);
 
     if (indice + 1 < preguntas.length) {
-      setIndice((i) => i + 1);
+      setIndice((i) => {
+        console.log("avanzando indice", i, "->", i + 1, "total preguntas:", preguntas.length);
+        return i + 1;
+      });
     } else {
       setVista("resultado");
     }
+  }
+
+  function anterior() {
+    if (indice === 0) return;
+    setMensaje("");
+    setMostrar(false);
+    setIndice((i) => i - 1);
   }
 
   // ⚙️ CONFIGURACIÓN DE ESTUDIO
@@ -1007,9 +1017,18 @@ if (vista === "quiz" && pregunta) {
         </div>
       </div>
 
-      <span style={styles.quizPreguntaTag}>
-        Pregunta {indice + 1} de {preguntas.length}
-      </span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        {indice > 0 ? (
+          <button onClick={anterior} style={styles.quizVolverBtn}>
+            ⬅ Anterior
+          </button>
+        ) : (
+          <span />
+        )}
+        <span style={styles.quizPreguntaTag}>
+          Pregunta {indice + 1} de {preguntas.length}
+        </span>
+      </div>
 
       <div style={styles.quizPreguntaCard}>
         <p style={styles.quizPreguntaTexto}>{pregunta.pregunta}</p>
@@ -1049,7 +1068,7 @@ if (vista === "quiz" && pregunta) {
             const s = obtenerStats()[String(pregunta.id)];
             if (!s) return null;
 
-            const acertoAhora = mensaje === "✅ Correcto";
+            const acertoAhora = mensaje === "Correcto";
 
             if (acertoAhora) {
               if (s.errores >= 3) {

@@ -150,18 +150,23 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
   }
 
   function siguienteMuerte() {
+    console.log("siguienteMuerte llamada, muerteIndice actual:", muerteIndice, "total:", muertePreguntas.length);
     setMuerteMensaje("");
     setMuerteMostrar(false);
     setMuerteRespuestaSeleccionada(null);
 
-    const siguienteIndice = muerteIndice + 1;
+    setMuerteIndice((indiceActual) => {
+      const siguienteIndice = indiceActual + 1;
+      console.log("actualizando muerteIndice", indiceActual, "->", siguienteIndice);
 
-    if (siguienteIndice >= muertePreguntas.length) {
-      setVista("victoria");
-    } else {
-      setMuerteIndice(siguienteIndice);
+      if (siguienteIndice >= muertePreguntas.length) {
+        setVista("victoria");
+        return indiceActual;
+      }
+
       setMuerteTiempoRestante(muerteCronometroActivo ? 60 : null);
-    }
+      return siguienteIndice;
+    });
   }
 
   // ⏱️ cuenta atrás (si el cronómetro está activo)
