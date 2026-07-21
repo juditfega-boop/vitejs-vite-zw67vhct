@@ -22,18 +22,60 @@
         "label": "Título Preliminar",
         "subtitle": "Principios generales",
         "vistaHijos": "articulos",
+        "imagenFondo": "titulo-preliminar-articulos",
         "children": [
           {
             "id": "articulo-1", "label": "Artículo 1",
+            "resumen": "España se constituye en Estado social y democrático de Derecho",
+            "contenido": "España se constituye en un Estado social y democrático de Derecho, que propugna como valores superiores de su ordenamiento jurídico la libertad, la justicia, la igualdad y el pluralismo político.",
+            "destacado": true, "children": []
+          },
+          {
+            "id": "articulo-2", "label": "Artículo 2",
+            "resumen": "Unidad de la Nación y autonomía de nacionalidades y regiones",
+            "contenido": "La Constitución se fundamenta en la unidad indisoluble de la Nación española, patria común e indivisible de todos los españoles.",
+            "children": []
+          },
+          {
+            "id": "articulo-3", "label": "Artículo 3",
+            "resumen": "El castellano y las demás lenguas oficiales",
+            "contenido": "El castellano es la lengua española oficial del Estado. Las demás lenguas españolas serán también oficiales en las respectivas Comunidades Autónomas de acuerdo con sus Estatutos.",
+            "children": []
+          },
+          {
+            "id": "articulo-4", "label": "Artículo 4",
+            "resumen": "La bandera de España",
+            "contenido": "La bandera de España está formada por tres bandas horizontales, roja, amarilla y roja, siendo la amarilla de doble anchura que cada una de las rojas.",
+            "children": []
+          },
+          {
+            "id": "articulo-5", "label": "Artículo 5",
+            "resumen": "La capital del Estado",
+            "contenido": "La capital del Estado es la villa de Madrid. El Estado podrá trasladar su sede a otra localidad dentro del territorio español.",
+            "children": []
+          },
+          {
+            "id": "articulo-6", "label": "Artículo 6",
+            "resumen": "Los partidos políticos",
+            "contenido": "Los partidos políticos expresan el pluralismo político, concurren a la formación y manifestación de la voluntad popular y son instrumento fundamental para la participación política.",
+            "children": []
+          },
+          {
+            "id": "articulo-7", "label": "Artículo 7",
             "resumen": "PENDIENTE: rellenar", "contenido": "PENDIENTE: rellenar",
             "children": []
           },
           {
-            "id": "articulo-9", "label": "Artículo 9",
-            "resumen": "Sujeción a la Constitución y apartado 9.2: promoción de la igualdad real",
-            "contenido": "9.2 — Corresponde a los poderes públicos promover las condiciones para que la libertad y la igualdad del individuo y de los grupos en que se integra sean reales y efectivas...",
-            "destacado": true,
+            "id": "articulo-8", "label": "Artículo 8",
+            "resumen": "Las Fuerzas Armadas",
+            "contenido": "Las Fuerzas Armadas garantizan la soberanía e independencia de España, defienden su integridad territorial y el ordenamiento constitucional.",
             "children": []
+          },
+          {
+            "id": "articulo-9", "label": "Artículo 9",
+            "resumen": "Sujeción a la Constitución y promoción de la igualdad real",
+            "contenido": "Los ciudadanos y los poderes públicos están sujetos a la Constitución y al resto del ordenamiento jurídico. Promueven las condiciones para que la libertad y la igualdad del individuo y de los grupos en que se integra sean reales y efectivas.",
+            "destacado": true, "children": []
           }
         ]
       },
@@ -80,7 +122,24 @@
                 "id": "seccion-1", "label": "Sección 1ª",
                 "subtitle": "De los derechos fundamentales y de las libertades públicas",
                 "vistaHijos": "articulos",
+                "imagenFondo": "capitulo2-seccion1-articulos",
                 "children": [
+                  {
+                    "id": "articulo-15", "label": "Artículo 15", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-16", "label": "Artículo 16", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-17", "label": "Artículo 17", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-18", "label": "Artículo 18", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-19", "label": "Artículo 19", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-20", "label": "Artículo 20", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-21", "label": "Artículo 21", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-22", "label": "Artículo 22", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-23", "label": "Artículo 23", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-24", "label": "Artículo 24", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-25", "label": "Artículo 25", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-26", "label": "Artículo 26", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-27", "label": "Artículo 27", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-28", "label": "Artículo 28", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-29", "label": "Artículo 29", "resumen": "PENDIENTE: rellenar", "children": [] },
                   {
                     "id": "articulo-14", "label": "Artículo 14",
                     "resumen": "Igualdad ante la ley",
@@ -94,7 +153,18 @@
                 "id": "seccion-2", "label": "Sección 2ª",
                 "subtitle": "De los derechos y deberes de los ciudadanos",
                 "vistaHijos": "articulos",
-                "children": []
+                "imagenFondo": "capitulo2-seccion2-articulos",
+                "children": [
+                  { "id": "articulo-30", "label": "Artículo 30", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-31", "label": "Artículo 31", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-32", "label": "Artículo 32", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-33", "label": "Artículo 33", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-34", "label": "Artículo 34", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-35", "label": "Artículo 35", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-36", "label": "Artículo 36", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-37", "label": "Artículo 37", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  { "id": "articulo-38", "label": "Artículo 38", "resumen": "PENDIENTE: rellenar", "children": [] }
+                ]
               }
             ]
           },
