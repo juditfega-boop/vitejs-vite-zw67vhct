@@ -46,7 +46,12 @@
           { "id": "articulo-4", "label": "Artículo 4", "resumen": "La bandera de España", "contenido": "La bandera de España está formada por tres bandas horizontales, roja, amarilla y roja, siendo la amarilla de doble anchura que cada una de las rojas.", "children": [] },
           { "id": "articulo-5", "label": "Artículo 5", "resumen": "La capital del Estado", "contenido": "La capital del Estado es la villa de Madrid. El Estado podrá trasladar su sede a otra localidad dentro del territorio español.", "children": [] },
           { "id": "articulo-6", "label": "Artículo 6", "resumen": "Los partidos políticos", "contenido": "Los partidos políticos expresan el pluralismo político, concurren a la formación y manifestación de la voluntad popular y son instrumento fundamental para la participación política.", "children": [] },
-          { "id": "articulo-7", "label": "Artículo 7", "resumen": "PENDIENTE: rellenar", "contenido": "PENDIENTE: rellenar", "children": [] },
+          {
+            "id": "articulo-7", "label": "Artículo 7",
+            "resumen": "Sindicatos y organizaciones empresariales",
+            "contenido": "Los sindicatos de trabajadores y las asociaciones empresariales contribuyen a la defensa y promoción de los intereses económicos y sociales que les son propios. Su creación y el ejercicio de su actividad son libres dentro del respeto a la Constitución y a la ley. Su estructura interna y funcionamiento deberán ser democráticos.",
+            "children": []
+          },
           { "id": "articulo-8", "label": "Artículo 8", "resumen": "Las Fuerzas Armadas", "contenido": "Las Fuerzas Armadas garantizan la soberanía e independencia de España, defienden su integridad territorial y el ordenamiento constitucional.", "children": [] },
           {
             "id": "articulo-9", "label": "Artículo 9",
@@ -81,9 +86,24 @@
                     "articulo-13": { "top": "45.9%", "left": "63.3%", "width": "19.7%", "height": "45.9%" }
                   },
                 "children": [
-              { "id": "articulo-11", "label": "Artículo 11", "resumen": "PENDIENTE: rellenar", "children": [] },
-              { "id": "articulo-12", "label": "Artículo 12", "resumen": "PENDIENTE: rellenar", "children": [] },
-              { "id": "articulo-13", "label": "Artículo 13", "resumen": "PENDIENTE: rellenar", "children": [] }
+                  {
+                    "id": "articulo-11", "label": "Artículo 11",
+                    "resumen": "La nacionalidad española",
+                    "contenido": "1. La nacionalidad española se adquiere, se conserva y se pierde de acuerdo con lo establecido por la ley. 2. Ningún español de origen podrá ser privado de su nacionalidad. 3. El Estado podrá concertar tratados de doble nacionalidad con los países iberoamericanos o con aquellos que hayan tenido o tengan una particular vinculación con España. En estos mismos países, aun cuando no reconozcan a sus ciudadanos un derecho recíproco, podrán naturalizarse los españoles sin perder su nacionalidad de origen.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-12", "label": "Artículo 12",
+                    "resumen": "Mayoría de edad",
+                    "contenido": "Los españoles son mayores de edad a los dieciocho años.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-13", "label": "Artículo 13",
+                    "resumen": "Derechos y libertades de los extranjeros",
+                    "contenido": "1. Los extranjeros gozarán en España de las libertades públicas que garantiza el presente Título en los términos que establezcan los tratados y la ley. 2. Solamente los españoles serán titulares de los derechos reconocidos en el artículo 23, salvo lo que, atendiendo a criterios de reciprocidad, pueda establecerse por tratado o ley para el derecho de sufragio activo y pasivo en las elecciones municipales. 3. La extradición sólo se concederá en cumplimiento de un tratado o de la ley, atendiendo al principio de reciprocidad. Quedan excluidos de la extradición los delitos políticos, no considerándose como tales los actos de terrorismo. 4. La ley establecerá los términos en que los ciudadanos de otros países y los apátridas podrán gozar del derecho de asilo en España.",
+                    "children": []
+                  }
             ]
           },
           {
@@ -122,21 +142,96 @@
                   "articulo-28": { "top": "85.1%", "left": "55.3%", "width": "6.9%", "height": "10.7%" }
                 },
                 "children": [
-                  { "id": "articulo-15", "label": "Artículo 15", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-16", "label": "Artículo 16", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-17", "label": "Artículo 17", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-18", "label": "Artículo 18", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-19", "label": "Artículo 19", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-20", "label": "Artículo 20", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-21", "label": "Artículo 21", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-22", "label": "Artículo 22", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-23", "label": "Artículo 23", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-24", "label": "Artículo 24", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-25", "label": "Artículo 25", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-26", "label": "Artículo 26", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-27", "label": "Artículo 27", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-28", "label": "Artículo 28", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-29", "label": "Artículo 29", "resumen": "PENDIENTE: rellenar", "children": [] },
+                  {
+                    "id": "articulo-15", "label": "Artículo 15",
+                    "resumen": "Derecho a la vida y a la integridad física y moral",
+                    "contenido": "Todos tienen derecho a la vida y a la integridad física y moral, sin que, en ningún caso, puedan ser sometidos a tortura ni a penas o tratos inhumanos o degradantes. Queda abolida la pena de muerte, salvo lo que puedan disponer las leyes penales militares para tiempos de guerra.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-16", "label": "Artículo 16",
+                    "resumen": "Libertad ideológica, religiosa y de culto",
+                    "contenido": "1. Se garantiza la libertad ideológica, religiosa y de culto de los individuos y las comunidades sin más limitación, en sus manifestaciones, que la necesaria para el mantenimiento del orden público protegido por la ley. 2. Nadie podrá ser obligado a declarar sobre su ideología, religión o creencias. 3. Ninguna confesión tendrá carácter estatal. Los poderes públicos tendrán en cuenta las creencias religiosas de la sociedad española y mantendrán las consiguientes relaciones de cooperación con la Iglesia Católica y las demás confesiones.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-17", "label": "Artículo 17",
+                    "resumen": "Derecho a la libertad y seguridad",
+                    "contenido": "1. Toda persona tiene derecho a la libertad y a la seguridad. Nadie puede ser privado de su libertad, sino con la observancia de lo establecido en este artículo y en los casos y en la forma previstos en la ley. 2. La detención preventiva no podrá durar más del tiempo estrictamente necesario para la realización de las averiguaciones tendentes al esclarecimiento de los hechos, y, en todo caso, en el plazo máximo de setenta y dos horas, el detenido deberá ser puesto en libertad o a disposición de la autoridad judicial. 3. Toda persona detenida debe ser informada de forma inmediata, y de modo que le sea comprensible, de sus derechos y de las razones de su detención, no pudiendo ser obligada a declarar. Se garantiza la asistencia de abogado al detenido en las diligencias policiales y judiciales, en los términos que la ley establezca. 4. La ley regulará un procedimiento de «habeas corpus» para producir la inmediata puesta a disposición judicial de toda persona detenida ilegalmente. Asimismo, por ley se determinará el plazo máximo de duración de la prisión provisional.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-18", "label": "Artículo 18",
+                    "resumen": "Honor, intimidad e inviolabilidad del domicilio",
+                    "contenido": "1. Se garantiza el derecho al honor, a la intimidad personal y familiar y a la propia imagen. 2. El domicilio es inviolable. Ninguna entrada o registro podrá hacerse en él sin consentimiento del titular o resolución judicial, salvo en caso de flagrante delito. 3. Se garantiza el secreto de las comunicaciones y, en especial, de las postales, telegráficas y telefónicas, salvo resolución judicial. 4. La ley limitará el uso de la informática para garantizar el honor y la intimidad personal y familiar de los ciudadanos y el pleno ejercicio de sus derechos.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-19", "label": "Artículo 19",
+                    "resumen": "Libertad de residencia y circulación",
+                    "contenido": "Los españoles tienen derecho a elegir libremente su residencia y a circular por el territorio nacional. Asimismo, tienen derecho a entrar y salir libremente de España en los términos que la ley establezca. Este derecho no podrá ser limitado por motivos políticos o ideológicos.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-20", "label": "Artículo 20",
+                    "resumen": "Libertad de expresión, información y producción literaria y artística",
+                    "contenido": "1. Se reconocen y protegen los derechos: a) A expresar y difundir libremente los pensamientos, ideas y opiniones mediante la palabra, el escrito o cualquier otro medio de reproducción. b) A la producción y creación literaria, artística, científica y técnica. c) A la libertad de cátedra. d) A comunicar o recibir libremente información veraz por cualquier medio de difusión. La ley regulará el derecho a la cláusula de conciencia y al secreto profesional en el ejercicio de estas libertades. 2. El ejercicio de estos derechos no puede restringirse mediante ningún tipo de censura previa. 3. La ley regulará la organización y el control parlamentario de los medios de comunicación social dependientes del Estado o de cualquier ente público y garantizará el acceso a dichos medios de los grupos sociales y políticos significativos, respetando el pluralismo de la sociedad y de las diversas lenguas de España. 4. Estas libertades tienen su límite en el respeto a los derechos reconocidos en este Título, en los preceptos de las leyes que lo desarrollen y, especialmente, en el derecho al honor, a la intimidad, a la propia imagen y a la protección de la juventud y de la infancia. 5. Sólo podrá acordarse el secuestro de publicaciones, grabaciones y otros medios de información en virtud de resolución judicial.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-21", "label": "Artículo 21",
+                    "resumen": "Derecho de reunión",
+                    "contenido": "1. Se reconoce el derecho de reunión pacífica y sin armas. El ejercicio de este derecho no necesitará autorización previa. 2. En los casos de reuniones en lugares de tránsito público y manifestaciones se dará comunicación previa a la autoridad, que sólo podrá prohibirlas cuando existan razones fundadas de alteración del orden público, con peligro para personas o bienes.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-22", "label": "Artículo 22",
+                    "resumen": "Derecho de asociación",
+                    "contenido": "1. Se reconoce el derecho de asociación. 2. Las asociaciones que persigan fines o utilicen medios tipificados como delito son ilegales. 3. Las asociaciones constituidas al amparo de este artículo deberán inscribirse en un registro a los solos efectos de publicidad. 4. Las asociaciones sólo podrán ser disueltas o suspendidas en sus actividades en virtud de resolución judicial motivada. 5. Se prohíben las asociaciones secretas y las de carácter paramilitar.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-23", "label": "Artículo 23",
+                    "resumen": "Derecho de participación política",
+                    "contenido": "1. Los ciudadanos tienen el derecho a participar en los asuntos públicos, directamente o por medio de representantes, libremente elegidos en elecciones periódicas por sufragio universal. 2. Asimismo, tienen derecho a acceder en condiciones de igualdad a las funciones y cargos públicos, con los requisitos que señalen las leyes.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-24", "label": "Artículo 24",
+                    "resumen": "Tutela judicial efectiva y garantías procesales",
+                    "contenido": "1. Todas las personas tienen derecho a obtener la tutela efectiva de los jueces y tribunales en el ejercicio de sus derechos e intereses legítimos, sin que, en ningún caso, pueda producirse indefensión. 2. Asimismo, todos tienen derecho al Juez ordinario predeterminado por la ley, a la defensa y a la asistencia de letrado, a ser informados de la acusación formulada contra ellos, a un proceso público sin dilaciones indebidas y con todas las garantías, a utilizar los medios de prueba pertinentes para su defensa, a no declarar contra sí mismos, a no confesarse culpables y a la presunción de inocencia. La ley regulará los casos en que, por razón de parentesco o de secreto profesional, no se estará obligado a declarar sobre hechos presuntamente delictivos.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-25", "label": "Artículo 25",
+                    "resumen": "Principio de legalidad penal",
+                    "contenido": "1. Nadie puede ser condenado o sancionado por acciones u omisiones que en el momento de producirse no constituyan delito, falta o infracción administrativa, según la legislación vigente en aquel momento. 2. Las penas privativas de libertad y las medidas de seguridad estarán orientadas hacia la reeducación y reinserción social y no podrán consistir en trabajos forzados. El condenado a pena de prisión que estuviere cumpliendo la misma gozará de los derechos fundamentales de este Capítulo, a excepción de los que se vean expresamente limitados por el contenido del fallo condenatorio, el sentido de la pena y la ley penitenciaria. En todo caso, tendrá derecho a un trabajo remunerado y a los beneficios correspondientes de la Seguridad Social, así como al acceso a la cultura y al desarrollo integral de su personalidad. 3. La Administración civil no podrá imponer sanciones que, directa o subsidiariamente, impliquen privación de libertad.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-26", "label": "Artículo 26",
+                    "resumen": "Prohibición de tribunales de honor",
+                    "contenido": "Se prohíben los Tribunales de Honor en el ámbito de la Administración civil y de las organizaciones profesionales.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-27", "label": "Artículo 27",
+                    "resumen": "Derecho a la educación",
+                    "contenido": "1. Todos tienen el derecho a la educación. Se reconoce la libertad de enseñanza. 2. La educación tendrá por objeto el pleno desarrollo de la personalidad humana en el respeto a los principios democráticos de convivencia y a los derechos y libertades fundamentales. 3. Los poderes públicos garantizan el derecho que asiste a los padres para que sus hijos reciban la formación religiosa y moral que esté de acuerdo con sus propias convicciones. 4. La enseñanza básica es obligatoria y gratuita. 5. Los poderes públicos garantizan el derecho de todos a la educación, mediante una programación general de la enseñanza, con participación efectiva de todos los sectores afectados y la creación de centros docentes. 6. Se reconoce a las personas físicas y jurídicas la libertad de creación de centros docentes, dentro del respeto a los principios constitucionales. 7. Los profesores, los padres y, en su caso, los alumnos intervendrán en el control y gestión de todos los centros sostenidos por la Administración con fondos públicos, en los términos que la ley establezca. 8. Los poderes públicos inspeccionarán y homologarán el sistema educativo para garantizar el cumplimiento de las leyes. 9. Los poderes públicos ayudarán a los centros docentes que reúnan los requisitos que la ley establezca. 10. Se reconoce la autonomía de las Universidades, en los términos que la ley establezca.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-28", "label": "Artículo 28",
+                    "resumen": "Libertad sindical y derecho de huelga",
+                    "contenido": "1. Todos tienen derecho a sindicarse libremente. La ley podrá limitar o exceptuar el ejercicio de este derecho a las Fuerzas o Institutos armados o a los demás Cuerpos sometidos a disciplina militar y regulará las peculiaridades de su ejercicio para los funcionarios públicos. La libertad sindical comprende el derecho a fundar sindicatos y a afiliarse al de su elección, así como el derecho de los sindicatos a formar confederaciones y a fundar organizaciones sindicales internacionales o afiliarse a las mismas. Nadie podrá ser obligado a afiliarse a un sindicato. 2. Se reconoce el derecho a la huelga de los trabajadores para la defensa de sus intereses. La ley que regule el ejercicio de este derecho establecerá las garantías precisas para asegurar el mantenimiento de los servicios esenciales de la comunidad.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-29", "label": "Artículo 29",
+                    "resumen": "Derecho de petición",
+                    "contenido": "1. Todos los españoles tendrán el derecho de petición individual y colectiva, por escrito, en la forma y con los efectos que determine la ley. 2. Los miembros de las Fuerzas o Institutos armados o de los Cuerpos sometidos a disciplina militar podrán ejercer este derecho sólo individualmente y con arreglo a lo dispuesto en su legislación específica.",
+                    "children": []
+                  },
                   {
                     "id": "articulo-14", "label": "Artículo 14",
                     "resumen": "Igualdad ante la ley",
@@ -163,15 +258,60 @@
                   "articulo-38": { "top": "73.1%", "left": "78.2%", "width": "7.7%", "height": "14.1%" }
                 },
                 "children": [
-                  { "id": "articulo-30", "label": "Artículo 30", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-31", "label": "Artículo 31", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-32", "label": "Artículo 32", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-33", "label": "Artículo 33", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-34", "label": "Artículo 34", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-35", "label": "Artículo 35", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-36", "label": "Artículo 36", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-37", "label": "Artículo 37", "resumen": "PENDIENTE: rellenar", "children": [] },
-                  { "id": "articulo-38", "label": "Artículo 38", "resumen": "PENDIENTE: rellenar", "children": [] }
+                  {
+                    "id": "articulo-30", "label": "Artículo 30",
+                    "resumen": "Defensa de España y objeción de conciencia",
+                    "contenido": "1. Los españoles tienen el derecho y el deber de defender a España. 2. La ley fijará las obligaciones militares de los españoles y regulará, con las debidas garantías, la objeción de conciencia, así como las demás causas de exención del servicio militar obligatorio, pudiendo imponer, en su caso, una prestación social sustitutoria. 3. Podrá establecerse un servicio civil para el cumplimiento de fines de interés general. 4. Mediante ley podrán regularse los deberes de los ciudadanos en los casos de grave riesgo, catástrofe o calamidad pública.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-31", "label": "Artículo 31",
+                    "resumen": "Deber de contribuir al sostenimiento del gasto público",
+                    "contenido": "1. Todos contribuirán al sostenimiento de los gastos públicos de acuerdo con su capacidad económica mediante un sistema tributario justo inspirado en los principios de igualdad y progresividad que, en ningún caso, tendrá alcance confiscatorio. 2. El gasto público realizará una asignación equitativa de los recursos públicos, y su programación y ejecución responderán a los criterios de eficiencia y economía. 3. Sólo podrán establecerse prestaciones personales o patrimoniales de carácter público con arreglo a la ley.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-32", "label": "Artículo 32",
+                    "resumen": "El matrimonio",
+                    "contenido": "1. El hombre y la mujer tienen derecho a contraer matrimonio con plena igualdad jurídica. 2. La ley regulará las formas de matrimonio, la edad y capacidad para contraerlo, los derechos y deberes de los cónyuges, las causas de separación y disolución y sus efectos.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-33", "label": "Artículo 33",
+                    "resumen": "Derecho a la propiedad privada",
+                    "contenido": "1. Se reconoce el derecho a la propiedad privada y a la herencia. 2. La función social de estos derechos delimitará su contenido, de acuerdo con las leyes. 3. Nadie podrá ser privado de sus bienes y derechos sino por causa justificada de utilidad pública o interés social, mediante la correspondiente indemnización y de conformidad con lo dispuesto por las leyes.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-34", "label": "Artículo 34",
+                    "resumen": "Derecho de fundación",
+                    "contenido": "1. Se reconoce el derecho de fundación para fines de interés general, con arreglo a la ley. 2. Regirá también para las fundaciones lo dispuesto en los apartados 2 y 4 del artículo 22.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-35", "label": "Artículo 35",
+                    "resumen": "Derecho y deber al trabajo",
+                    "contenido": "1. Todos los españoles tienen el deber de trabajar y el derecho al trabajo, a la libre elección de profesión u oficio, a la promoción a través del trabajo y a una remuneración suficiente para satisfacer sus necesidades y las de su familia, sin que en ningún caso pueda hacerse discriminación por razón de sexo. 2. La ley regulará un estatuto de los trabajadores.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-36", "label": "Artículo 36",
+                    "resumen": "Colegios profesionales",
+                    "contenido": "La ley regulará las peculiaridades propias del régimen jurídico de los Colegios Profesionales y el ejercicio de las profesiones tituladas. La estructura interna y el funcionamiento de los Colegios deberán ser democráticos.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-37", "label": "Artículo 37",
+                    "resumen": "Negociación colectiva y derecho al conflicto laboral",
+                    "contenido": "1. La ley garantizará el derecho a la negociación colectiva laboral entre los representantes de los trabajadores y empresarios, así como la fuerza vinculante de los convenios. 2. Se reconoce el derecho de los trabajadores y empresarios a adoptar medidas de conflicto colectivo. La ley que regule el ejercicio de este derecho, sin perjuicio de las limitaciones que pueda establecer, incluirá las garantías precisas para asegurar el funcionamiento de los servicios esenciales de la comunidad.",
+                    "children": []
+                  },
+                  {
+                    "id": "articulo-38", "label": "Artículo 38",
+                    "resumen": "Libertad de empresa",
+                    "contenido": "Se reconoce la libertad de empresa en el marco de la economía de mercado. Los poderes públicos garantizan y protegen su ejercicio y la defensa de la productividad, de acuerdo con las exigencias de la economía general y, en su caso, de la planificación.",
+                    "children": []
+                  }
                 ]
               }
             ]
@@ -319,7 +459,12 @@
               "articulo-55": { "top": "40.7%", "left": "36.5%", "width": "25.2%", "height": "37.5%" }
             },
             "children": [
-              { "id": "articulo-55", "label": "Artículo 55", "resumen": "PENDIENTE: rellenar", "children": [] }
+              {
+                "id": "articulo-55", "label": "Artículo 55",
+                "resumen": "Suspensión de derechos y libertades",
+                "contenido": "1. Los derechos reconocidos en los artículos 17, 18, apartados 2 y 3, artículos 19, 20, apartados 1, a) y d), y 5, artículos 21, 28, apartado 2, y artículo 37, apartado 2, podrán ser suspendidos cuando se acuerde la declaración del estado de excepción o de sitio en los términos previstos en la Constitución. Se exceptúa de lo establecido anteriormente el apartado 3 del artículo 17 para el supuesto de declaración de estado de excepción. 2. Una ley orgánica podrá determinar la forma y los casos en los que, de forma individual y con la necesaria intervención judicial y el adecuado control parlamentario, los derechos reconocidos en los artículos 17, apartado 2, y 18, apartados 2 y 3, pueden ser suspendidos para personas determinadas, en relación con las investigaciones correspondientes a la actuación de bandas armadas o elementos terroristas. La utilización injustificada o abusiva de las facultades reconocidas en dicha ley orgánica producirá responsabilidad penal, como violación de los derechos y libertades reconocidos por las leyes.",
+                "children": []
+              }
             ]
           }
         ]
