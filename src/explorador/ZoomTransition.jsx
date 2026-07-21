@@ -1,21 +1,20 @@
 import { useRef } from 'react';
 
 const DURACION_ZOOM = 600; // ms
-// Curva muy marcada: arranca despacio, acelera fuerte en el centro, frena al llegar
 const EASING = 'cubic-bezier(0.83, 0, 0.17, 1)';
-const ESCALA_MAXIMA = 4.2;   // cuánto se acerca la imagen ACTUAL sobre la puerta pulsada
-const ESCALA_ENTRADA = 5.5;  // desde qué tamaño "nace" la imagen SIGUIENTE
+const ESCALA_MAXIMA = 4.2;
+const ESCALA_ENTRADA = 5.5;
 
 export default function ZoomTransition({
   nivelActual,
   nivelSiguiente,
   hotspotSeleccionado,
-  fase, // 'reposo' | 'feedback' | 'zoom-in' | 'zoom-out'
+  fase,
 }) {
   const contenedorRef = useRef(null);
 
   function calcularTransform(hotspot) {
-    if (!hotspot) return 'scale(1) translate(0, 0)';
+    if (!hotspot) return { transform: 'scale(1) translate(0, 0)', cx: 50, cy: 50 };
     const cx = parseFloat(hotspot.left) + parseFloat(hotspot.width) / 2;
     const cy = parseFloat(hotspot.top) + parseFloat(hotspot.height) / 2;
     const escalaX = 100 / parseFloat(hotspot.width);
@@ -29,12 +28,22 @@ export default function ZoomTransition({
   const datosTransform = calcularTransform(hotspotSeleccionado);
   const transformActual = fase === 'zoom-in' ? datosTransform.transform : 'scale(1) translate(0,0)';
 
-  const estiloContenedor = {
+  // Caja con proporción fija SIN depender de aspect-ratio: el padding-bottom
+  // en % siempre se calcula sobre el ancho real del propio elemento, así que
+  // es inmune a problemas de layout flex/grid del contenedor padre.
+  const estiloContenedorExterior = {
     position: 'relative',
     width: '100%',
-    aspectRatio: '2 / 3',
+  };
+  const estiloCajaProporcion = {
+    width: '100%',
+    paddingBottom: '150%', // 2:3 -> alto = ancho * 1.5
+  };
+  const estiloCapaAbsoluta = {
+    position: 'absolute',
+    inset: 0,
     overflow: 'hidden',
-    background: '#1a1410', // se ve un instante en el pico del zoom, mejor oscuro que blanco
+    background: '#1a1410',
   };
 
   const estiloActual = {
@@ -59,9 +68,6 @@ export default function ZoomTransition({
     zIndex: fase === 'zoom-out' ? 2 : 1,
   };
 
-  // Viñeta: oscurece todo menos un "foco" alrededor de la puerta pulsada.
-  // Se mueve y escala EXACTAMENTE igual que la imagen actual (mismo transform),
-  // así el foco de luz se queda centrado en la puerta durante todo el zoom.
   const mostrarVineta = hotspotSeleccionado && (fase === 'feedback' || fase === 'zoom-in');
   const estiloVineta = {
     position: 'absolute',
@@ -80,10 +86,13 @@ export default function ZoomTransition({
   };
 
   return (
-    <div ref={contenedorRef} style={estiloContenedor}>
-      <div style={estiloActual}>{nivelActual}</div>
-      <div style={estiloVineta} />
-      {nivelSiguiente && <div style={estiloSiguiente}>{nivelSiguiente}</div>}
+    <div ref={contenedorRef} style={estiloContenedorExterior}>
+      <div style={estiloCajaProporcion} />
+      <div style={estiloCapaAbsoluta}>
+        <div style={estiloActual}>{nivelActual}</div>
+        <div style={estiloVineta} />
+        {nivelSiguiente && <div style={estiloSiguiente}>{nivelSiguiente}</div>}
+      </div>
     </div>
   );
 }
