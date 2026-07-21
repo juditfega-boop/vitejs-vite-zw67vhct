@@ -315,7 +315,7 @@ if (vista === "calibrar") {
       <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
         ⬅ Volver
       </button>
-      <Calibrador imagenSrc={imagenesExplorador['capitulo2-secciones']} />    </div>
+      <Calibrador imagenSrc={imagenesExplorador['capitulo2-seccion2-articulos']} />    </div>
   );
 }
 

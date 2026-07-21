@@ -23,6 +23,17 @@
         "subtitle": "Principios generales",
         "vistaHijos": "articulos",
         "imagenFondo": "titulo-preliminar-articulos",
+        "hotspots": {
+          "articulo-1": { "top": "16.9%", "left": "42.4%", "width": "14.3%", "height": "12.8%" },
+          "articulo-2": { "top": "33.0%", "left": "33.5%", "width": "12.6%", "height": "12.8%" },
+          "articulo-3": { "top": "33.9%", "left": "54.4%", "width": "11.2%", "height": "11.7%" },
+          "articulo-4": { "top": "49.0%", "left": "34.7%", "width": "11.2%", "height": "13.2%" },
+          "articulo-5": { "top": "49.2%", "left": "53.6%", "width": "12.6%", "height": "13.0%" },
+          "articulo-6": { "top": "66.0%", "left": "30.4%", "width": "10.6%", "height": "12.6%" },
+          "articulo-7": { "top": "65.4%", "left": "45.6%", "width": "8.0%", "height": "12.6%" },
+          "articulo-8": { "top": "65.8%", "left": "59.0%", "width": "8.6%", "height": "12.2%" },
+          "articulo-9": { "top": "81.9%", "left": "44.1%", "width": "10.6%", "height": "12.4%" }
+        },
         "children": [
           {
             "id": "articulo-1", "label": "Artículo 1",
@@ -114,8 +125,12 @@
             "subtitle": "Derechos y libertades",
             "vistaHijos": "secciones",
             "imagenFondo": "capitulo2-secciones",
+            "hotspots": {
+              "seccion-1": { "top": "21.7%", "left": "12.0%", "width": "18.3%", "height": "60.6%" },
+              "seccion-2": { "top": "21.7%", "left": "70.8%", "width": "17.2%", "height": "61.0%" }
+            },
             "atajos": {
-              "articulo-14": { "top": "PENDIENTE", "left": "PENDIENTE", "width": "PENDIENTE", "height": "PENDIENTE" }
+              "articulo-14": { "top": "25.6%", "left": "40.1%", "width": "18.6%", "height": "58.5%" }
             },
             "children": [
               {
@@ -123,6 +138,23 @@
                 "subtitle": "De los derechos fundamentales y de las libertades públicas",
                 "vistaHijos": "articulos",
                 "imagenFondo": "capitulo2-seccion1-articulos",
+                "hotspots": {
+                  "articulo-15": { "top": "23.0%", "left": "35.0%", "width": "8.9%", "height": "10.1%" },
+                  "articulo-16": { "top": "23.2%", "left": "49.3%", "width": "7.7%", "height": "10.3%" },
+                  "articulo-17": { "top": "22.5%", "left": "63.0%", "width": "7.7%", "height": "11.3%" },
+                  "articulo-18": { "top": "22.1%", "left": "76.2%", "width": "7.7%", "height": "11.1%" },
+                  "articulo-19": { "top": "38.3%", "left": "39.0%", "width": "9.5%", "height": "11.7%" },
+                  "articulo-20": { "top": "38.7%", "left": "57.6%", "width": "8.9%", "height": "11.3%" },
+                  "articulo-21": { "top": "54.6%", "left": "33.8%", "width": "9.2%", "height": "11.3%" },
+                  "articulo-22": { "top": "54.7%", "left": "47.3%", "width": "8.3%", "height": "11.3%" },
+                  "articulo-23": { "top": "54.4%", "left": "61.0%", "width": "7.2%", "height": "11.7%" },
+                  "articulo-29": { "top": "54.7%", "left": "74.2%", "width": "7.7%", "height": "11.5%" },
+                  "articulo-24": { "top": "70.2%", "left": "38.7%", "width": "7.7%", "height": "10.5%" },
+                  "articulo-25": { "top": "70.8%", "left": "50.7%", "width": "9.7%", "height": "9.9%" },
+                  "articulo-26": { "top": "70.8%", "left": "65.6%", "width": "7.2%", "height": "10.5%" },
+                  "articulo-27": { "top": "84.7%", "left": "38.1%", "width": "8.0%", "height": "10.9%" },
+                  "articulo-28": { "top": "85.1%", "left": "55.3%", "width": "6.9%", "height": "10.7%" }
+                },
                 "children": [
                   {
                     "id": "articulo-15", "label": "Artículo 15", "resumen": "PENDIENTE: rellenar", "children": [] },
@@ -154,6 +186,17 @@
                 "subtitle": "De los derechos y deberes de los ciudadanos",
                 "vistaHijos": "articulos",
                 "imagenFondo": "capitulo2-seccion2-articulos",
+                "hotspots": {
+                  "articulo-30": { "top": "25.1%", "left": "41.5%", "width": "11.5%", "height": "13.6%" },
+                  "articulo-31": { "top": "25.5%", "left": "61.3%", "width": "12.3%", "height": "13.8%" },
+                  "articulo-32": { "top": "48.1%", "left": "39.0%", "width": "11.5%", "height": "14.7%" },
+                  "articulo-33": { "top": "48.4%", "left": "57.6%", "width": "9.2%", "height": "14.5%" },
+                  "articulo-34": { "top": "48.6%", "left": "73.6%", "width": "8.9%", "height": "14.5%" },
+                  "articulo-35": { "top": "72.3%", "left": "34.7%", "width": "10.6%", "height": "14.5%" },
+                  "articulo-36": { "top": "72.9%", "left": "49.6%", "width": "9.5%", "height": "14.3%" },
+                  "articulo-37": { "top": "73.1%", "left": "64.2%", "width": "8.3%", "height": "14.1%" },
+                  "articulo-38": { "top": "73.1%", "left": "78.2%", "width": "7.7%", "height": "14.1%" }
+                },
                 "children": [
                   { "id": "articulo-30", "label": "Artículo 30", "resumen": "PENDIENTE: rellenar", "children": [] },
                   { "id": "articulo-31", "label": "Artículo 31", "resumen": "PENDIENTE: rellenar", "children": [] },
