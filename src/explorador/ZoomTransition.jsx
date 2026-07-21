@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useLayoutEffect } from 'react';
 
 const DURACION_ZOOM = 600; // ms
 const EASING = 'cubic-bezier(0.83, 0, 0.17, 1)';
@@ -12,6 +12,20 @@ export default function ZoomTransition({
   fase,
 }) {
   const contenedorRef = useRef(null);
+  const [anchoPx, setAnchoPx] = useState(null);
+
+  // Medimos el ancho real del padre en píxeles, en vez de confiar en que
+  // el % se resuelva bien dentro del posicionamiento absoluto anidado.
+  useLayoutEffect(() => {
+    function medir() {
+      if (contenedorRef.current && contenedorRef.current.parentElement) {
+        setAnchoPx(contenedorRef.current.parentElement.clientWidth);
+      }
+    }
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, []);
 
   function calcularTransform(hotspot) {
     if (!hotspot) return { transform: 'scale(1) translate(0, 0)', cx: 50, cy: 50 };
@@ -33,7 +47,7 @@ export default function ZoomTransition({
   // es inmune a problemas de layout flex/grid del contenedor padre.
   const estiloContenedorExterior = {
     position: 'relative',
-    width: '100%',
+    width: anchoPx ? `${anchoPx}px` : '100%',
   };
   const estiloCajaProporcion = {
     width: '100%',
