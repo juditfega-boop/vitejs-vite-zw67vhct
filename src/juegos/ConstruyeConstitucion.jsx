@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ESTRUCTURA_CONSTITUCION } from "../construyeConstitucion";
 import { MENSAJES_ANDER_EGG } from "../data/anderEggMensajes";
 import construyeTecho from "../assets/construye-techo.png";
@@ -49,6 +49,17 @@ const FRASES_COMPROBAR_INCORRECTO = [
 // Recibe por prop solo lo que necesita para volver al hub de minijuegos.
 export default function ConstruyeConstitucion({ setPantalla }) {
   const [vista, setVista] = useState("detalle"); // "detalle" | "config" | "jugando"
+
+  // Oculta la casita de navegación global mientras se explora el edificio,
+  // para no romper la inmersión — se restaura al salir de esta pantalla.
+  useEffect(() => {
+    const boton = document.getElementById('boton-panico');
+    if (!boton) return;
+    boton.style.display = vista === 'explorar' ? 'none' : '';
+    return () => {
+      boton.style.display = '';
+    };
+  }, [vista]);
 
   // 🖐️ posición arrastrable del botón de Ezequiel
   const [archiveroPos, setArchiveroPos] = useState(() => ({
