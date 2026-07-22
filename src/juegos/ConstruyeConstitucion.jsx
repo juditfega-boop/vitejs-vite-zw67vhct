@@ -8,6 +8,7 @@ import { styles, globalStyles } from "../estilos";
 import iconoLadrillo from "../assets/bookbrand/icono-brand-ladrillo.png";
 import iconoGrua from "../assets/bookbrand/icono-brand-grua.png";
 import heroConstruyeConstitucion from "../assets/kit/hero-construye-constitucion.png";
+import iconoLupaExplorar from "../assets/kit/icono-lupa-explorar.png";
 import LawExplorer from "../explorador/LawExplorer";
 import imagenesExplorador from "../explorador/imagenesRegistry";
 import SalaCapitulo from "../explorador/skins/edificio/SalaCapitulo";
@@ -303,8 +304,10 @@ if (vista === "detalle") {
         🚩 Construir
       </button>
 
-      <button onClick={() => setVista("explorar")} style={styles.linkVolver}>
-        🔍 Explorar Constitución
+      <button onClick={() => setVista("explorar")} style={styles.filaMinijuegoBtn}>
+        <img src={iconoLupaExplorar} alt="" style={styles.miniaturaMinijuego} />
+        <span style={styles.filaMinijuegoTexto}>Explorar Constitución</span>
+        <span style={{ color: "#8a8578" }}>→</span>
       </button>
 
       <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>

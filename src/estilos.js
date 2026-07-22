@@ -631,7 +631,9 @@ resultCard: {
   resultRow: {
     display: "flex",
     justifyContent: "space-between",
-    padding: "10px 0",
+    alignItems: "center",
+    gap: 16,
+    padding: "12px 0",
     borderBottom: "1px solid #f0ece2",
     fontSize: 14
   },
@@ -640,7 +642,9 @@ resultCard: {
     alignItems: "center",
     gap: 10,
     color: "#4a463f",
-    fontWeight: 600
+    fontWeight: 600,
+    flex: 1,
+    minWidth: 0
   },
   resultRowIcono: {
     width: 22,

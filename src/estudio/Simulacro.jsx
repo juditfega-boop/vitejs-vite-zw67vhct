@@ -4,7 +4,9 @@ import { styles } from "../estilos";
 import iconoSimAciertos from "../assets/kit/icono-fin-aciertos.png";
 import iconoSimErrores from "../assets/kit/icono-sim-errores.png";
 import iconoSimBlancos from "../assets/kit/icono-sim-blancos.png";
+import iconoHojaBlanco from "../assets/kit/icono-hoja-blanco.png";
 import iconoSimTiempo from "../assets/kit/icono-sim-tiempo.png";
+import iconoExplicacion from "../assets/kit/icono-explicacion-libreta.png";
 import heroSimulacroCompletado from "../assets/kit/hero-simulacro-completado.png";
 import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
 import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
@@ -208,12 +210,18 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
         </div>
 
         <div style={styles.configCard}>
-          <div style={styles.resultRow}>
-            <span>📋 Nº de preguntas</span>
+        <div style={styles.resultRow}>
+            <span style={styles.resultRowLabel}>
+              <img src={iconoExplicacion} alt="" style={styles.resultRowIcono} />
+              Nº de preguntas
+            </span>
             <b>100</b>
           </div>
           <div style={styles.resultRow}>
-            <span>⏱ Tiempo total</span>
+            <span style={styles.resultRowLabel}>
+              <img src={iconoSimTiempo} alt="" style={styles.resultRowIcono} />
+              Tiempo total
+            </span>
             <b>{DURACION_SIMULACRO_MINUTOS} min</b>
           </div>
           <div style={styles.resultRow}>
@@ -231,7 +239,10 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
             <b>−1/3 punto</b>
           </div>
           <div style={{ ...styles.resultRow, borderBottom: "none" }}>
-            <span>⬜ En blanco</span>
+            <span style={styles.resultRowLabel}>
+              <img src={iconoHojaBlanco} alt="" style={styles.resultRowIcono} />
+              En blanco
+            </span>
             <b>No penaliza</b>
           </div>
         </div>

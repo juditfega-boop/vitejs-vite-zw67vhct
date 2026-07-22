@@ -401,8 +401,7 @@ if (pantalla === "minijuegos") {
 if (pantalla === "desarrollo") {
   return (
     <div style={styles.placeholderContainer}>
-      <div style={styles.placeholderCard}>
-        <div style={styles.placeholderEmoji}>🧩</div>
+<div style={styles.placeholderCard}>
         <h2>Desarrollo</h2>
         <p style={styles.configSubLabel}>Próximamente</p>
         <button onClick={volverMenu} style={styles.linkVolver}>
