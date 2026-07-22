@@ -97,6 +97,9 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
   const [muerteTiempoRestante, setMuerteTiempoRestante] = useState(null);
   const [muerteRespuestaSeleccionada, setMuerteRespuestaSeleccionada] = useState(null);
   const [fraseDerrota, setFraseDerrota] = useState("");
+  const [preguntaFallida, setPreguntaFallida] = useState(null);
+  const [respuestaFallidaIndice, setRespuestaFallidaIndice] = useState(null);
+  const [mostrarPorQueMurio, setMostrarPorQueMurio] = useState(false);
 
   function toggleBloqueMuerte(nombre) {
     setMuerteBloquesSeleccionados((prev) =>
@@ -122,13 +125,19 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     setMuerteMostrar(false);
     setMuerteRespuestaSeleccionada(null);
     setMuerteTiempoRestante(muerteCronometroActivo ? 60 : null);
+    setPreguntaFallida(null);
+    setRespuestaFallidaIndice(null);
+    setMostrarPorQueMurio(false);
     setVista("jugando");
   }
 
-  function perderMuerte() {
+  function perderMuerte(pregunta, indiceElegido) {
     setFraseDerrota(
       FRASES_DERROTA_MUERTE[Math.floor(Math.random() * FRASES_DERROTA_MUERTE.length)]
     );
+    setPreguntaFallida(pregunta || null);
+    setRespuestaFallidaIndice(typeof indiceElegido === "number" ? indiceElegido : null);
+    setMostrarPorQueMurio(false);
     setVista("derrota");
   }
 
@@ -145,7 +154,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
       setMuerteMensaje("Correcto");
       setMuerteAciertos((a) => a + 1);
     } else {
-      perderMuerte();
+      perderMuerte(pregunta, i);
     }
   }
 
@@ -418,37 +427,67 @@ if (vista === "detalle") {
     );
   }
 
-  // ☠️ DERROTA
-  if (vista === "derrota") {
-    return (
-      <div style={styles.derrotaContainer}>
-        <img src={muerteImgDerrota} alt="La burocracia gana" style={styles.derrotaImagenFondo} />
+// ☠️ DERROTA
+if (vista === "derrota") {
+  return (
+    <div style={styles.derrotaContainer}>
+      <img src={muerteImgDerrota} alt="La burocracia gana" style={styles.derrotaImagenFondo} />
 
-        <p style={styles.derrotaTituloTop}>
-          LA BUROCRACIA ACABÓ CON MARY ELLEN RICHMOND Y TÚ ERES RESPONSABLE
-          POR NO HABER ESTUDIADO
+      <p style={styles.derrotaTituloTop}>
+        LA BUROCRACIA ACABÓ CON MARY ELLEN RICHMOND Y TÚ ERES RESPONSABLE
+        POR NO HABER ESTUDIADO
+      </p>
+
+      <div style={styles.derrotaOverlayInferior}>
+        <button onClick={comenzarMuerteSubita} style={styles.derrotaBoton}>
+          Inténtalo de nuevo
+        </button>
+
+        <p style={styles.derrotaSubtitulo}>
+          Llegaste a la pregunta {muerteIndice + 1} / {muertePreguntas.length}
         </p>
 
-        <div style={styles.derrotaOverlayInferior}>
-          <button onClick={comenzarMuerteSubita} style={styles.derrotaBoton}>
-            Inténtalo de nuevo
+        {preguntaFallida && !mostrarPorQueMurio && (
+          <button
+            onClick={() => setMostrarPorQueMurio(true)}
+            style={styles.derrotaLinkVolver}
+          >
+            💀 ¿Quieres saber por qué murió?
           </button>
+        )}
 
-          <p style={styles.derrotaSubtitulo}>
-            Llegaste a la pregunta {muerteIndice + 1} / {muertePreguntas.length}
-          </p>
+        {preguntaFallida && mostrarPorQueMurio && (
+          <div style={{ ...styles.explicacionCaja, textAlign: "left", marginTop: 10 }}>
+            <p style={{ margin: "0 0 10px" }}>
+              <b>{preguntaFallida.pregunta}</b>
+            </p>
+            {preguntaFallida.respuestas.map((r, i) => {
+              let bg = "transparent";
+              if (i === preguntaFallida.correcta) bg = "#d4edda";
+              else if (i === respuestaFallidaIndice) bg = "#f5c6cb";
+              return (
+                <p key={i} style={{ margin: "4px 0", padding: "4px 8px", borderRadius: 6, background: bg }}>
+                  {formatearTextoLargo(r)}
+                </p>
+              );
+            })}
+            <div style={{ marginTop: 10 }}>
+              {renderizarTextoConNegrita(preguntaFallida.explicacion)}
+            </div>
+          </div>
+        )}
 
-          <button onClick={() => setPantalla("minijuegos")} style={styles.derrotaLinkVolver}>
-            ⬅ Volver a minijuegos
-          </button>
+        <button onClick={() => setPantalla("minijuegos")} style={styles.derrotaLinkVolver}>
+          ⬅ Volver a minijuegos
+        </button>
 
-          <button onClick={volverMenu} style={styles.derrotaLinkVolver}>
-            ⬅ Volver al menú
-          </button>
-        </div>
+        <button onClick={volverMenu} style={styles.derrotaLinkVolver}>
+          ⬅ Volver al menú
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
 // 🎉 VICTORIA
 if (vista === "victoria") {

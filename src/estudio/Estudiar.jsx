@@ -322,13 +322,17 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     setMostrar(false);
 
     if (indice + 1 < preguntas.length) {
-      setIndice((i) => {
-        console.log("avanzando indice", i, "->", i + 1, "total preguntas:", preguntas.length);
-        return i + 1;
-      });
+      setIndice((i) => i + 1);
     } else {
       setVista("resultado");
     }
+  }
+
+  function anterior() {
+    if (indice === 0) return;
+    setMensaje("");
+    setMostrar(false);
+    setIndice((i) => i - 1);
   }
 
   function anterior() {
@@ -1052,6 +1056,12 @@ if (vista === "quiz" && pregunta) {
           </button>
         );
       })}
+
+      {indice > 0 && (
+        <button onClick={anterior} style={styles.linkVolver}>
+          ⬅ Pregunta anterior
+        </button>
+      )}
 
       {mostrar && (
         <>

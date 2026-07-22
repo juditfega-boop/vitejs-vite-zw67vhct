@@ -124,17 +124,18 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
     return <div style={{ position: 'relative', width: '100%' }}>{renderNodo(nodoActual, true)}</div>;
   }
 
-  const esHacaArticulo = nodoDestino && (!nodoDestino.children || nodoDestino.children.length === 0);
-  const veniamosDeArticulo = !nodoDestino && (!nodoActual.children || nodoActual.children.length === 0);
+  const esHoja = (nodo) => nodo && (!nodo.children || nodo.children.length === 0);
+  const vamosHaciaArticulo = esHoja(nodoDestino);
+  const veniamosDeArticulo = esHoja(nodoActual);
 
-  if (esHacaArticulo || veniamosDeArticulo) {
+  if (vamosHaciaArticulo || veniamosDeArticulo) {
     return (
       <DoorTransition
-        direccion={esHacaArticulo ? 'entrar' : 'salir'}
+        direccion={vamosHaciaArticulo ? 'entrar' : 'salir'}
         hotspotPuerta={hotspotActivo}
-        nivelPasillo={esHacaArticulo ? renderNodo(nodoActual, false) : renderNodo(nodoDestino, false)}
+        nivelPasillo={vamosHaciaArticulo ? renderNodo(nodoActual, false) : renderNodo(nodoDestino, false)}
         onComplete={() => {
-          setRutaIds(esHacaArticulo ? rutaIdsDestino : rutaIdsDestino);
+          setRutaIds(rutaIdsDestino);
           setRutaIdsDestino(null);
           setFase('reposo');
           setHotspotActivo(null);
