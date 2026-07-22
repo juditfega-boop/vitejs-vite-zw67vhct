@@ -1021,18 +1021,9 @@ if (vista === "quiz" && pregunta) {
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        {indice > 0 ? (
-          <button onClick={anterior} style={styles.quizVolverBtn}>
-            ⬅ Anterior
-          </button>
-        ) : (
-          <span />
-        )}
-        <span style={styles.quizPreguntaTag}>
-          Pregunta {indice + 1} de {preguntas.length}
-        </span>
-      </div>
+      <span style={styles.quizPreguntaTag}>
+        Pregunta {indice + 1} de {preguntas.length}
+      </span>
 
       <div style={styles.quizPreguntaCard}>
         <p style={styles.quizPreguntaTexto}>{pregunta.pregunta}</p>

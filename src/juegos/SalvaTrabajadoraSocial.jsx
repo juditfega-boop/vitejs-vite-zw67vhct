@@ -456,26 +456,32 @@ if (vista === "derrota") {
           </button>
         )}
 
-        {preguntaFallida && mostrarPorQueMurio && (
-          <div style={{ ...styles.explicacionCaja, textAlign: "left", marginTop: 10 }}>
-            <p style={{ margin: "0 0 10px" }}>
-              <b>{preguntaFallida.pregunta}</b>
-            </p>
-            {preguntaFallida.respuestas.map((r, i) => {
-              let bg = "transparent";
-              if (i === preguntaFallida.correcta) bg = "#d4edda";
-              else if (i === respuestaFallidaIndice) bg = "#f5c6cb";
-              return (
-                <p key={i} style={{ margin: "4px 0", padding: "4px 8px", borderRadius: 6, background: bg }}>
-                  {formatearTextoLargo(r)}
-                </p>
-              );
-            })}
-            <div style={{ marginTop: 10 }}>
-              {renderizarTextoConNegrita(preguntaFallida.explicacion)}
+{preguntaFallida && mostrarPorQueMurio && (
+            <div style={{ ...styles.explicacionCaja, textAlign: "left", marginTop: 10 }}>
+              <p style={{ margin: "0 0 10px" }}>
+                <b>{preguntaFallida.pregunta}</b>
+              </p>
+              {preguntaFallida.respuestas.map((r, i) => {
+                const esLaQueElegiste = i === respuestaFallidaIndice;
+                return (
+                  <p
+                    key={i}
+                    style={{
+                      margin: "4px 0",
+                      padding: "4px 8px",
+                      borderRadius: 6,
+                      background: esLaQueElegiste ? "#f5c6cb" : "transparent",
+                    }}
+                  >
+                    {formatearTextoLargo(r)}
+                  </p>
+                );
+              })}
+              <div style={{ marginTop: 10 }}>
+                {renderizarTextoConNegrita(preguntaFallida.explicacion)}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         <button onClick={() => setPantalla("minijuegos")} style={styles.derrotaLinkVolver}>
           ⬅ Volver a minijuegos

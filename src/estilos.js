@@ -929,7 +929,8 @@ muertePreguntaCol: {
     margin: 0,
     fontSize: 13,
     color: "#4a463f",
-    lineHeight: 1.5
+    lineHeight: 1.5,
+    textAlign: "left"
   },
   juegoDetalleEmojiTitulo: {
     fontSize: 26,
