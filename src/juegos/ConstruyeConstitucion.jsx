@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ESTRUCTURA_CONSTITUCION } from "../construyeConstitucion";
-import { MENSAJES_ANDER_EGG } from "../data/anderEggMensajes";
+import { MENSAJES_ANDER_EGG_CONSTRUIR } from "../data/anderEggMensajes";
 import construyeTecho from "../assets/construye-techo.png";
 import construyePlantaBaja from "../assets/construye-plantabaja.png";
 import PersonajeFlotante from "../personajes/PersonajeFlotante";
@@ -380,6 +380,7 @@ if (vista === "config") {
         </button>
 
         <PersonajeFlotante
+          poolMensajesExtra={MENSAJES_ANDER_EGG_CONSTRUIR}
           mensajeContextual={
             construyeHintTexto
               ? { texto: construyeHintTexto }

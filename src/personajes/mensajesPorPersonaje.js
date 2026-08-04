@@ -1,8 +1,7 @@
-import { MENSAJES_ANDER_EGG } from "../data/anderEggMensajes";
+import { MENSAJES_ANDER_EGG_GENERAL } from "../data/anderEggMensajes";
 
 const mensajesPorPersonaje = {
-  "ander-egg": MENSAJES_ANDER_EGG
-  // "mary-richmond": MENSAJES_MARY_RICHMOND,
+  "ander-egg": MENSAJES_ANDER_EGG_GENERAL
+  // "mary-richmond": MENSAJES_MARY_RICHMOND_GENERAL,
 };
-
 export default mensajesPorPersonaje;

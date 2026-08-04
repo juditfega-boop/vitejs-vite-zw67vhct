@@ -14,10 +14,14 @@ function mezclar(array) {
  * personaje diga algo concreto (ej. ofrecer una pista), le pasa
  * `mensajeContextual` — si no, el personaje charla con su pool de frases.
  */
-export default function PersonajeFlotante({ mensajeContextual }) {
-  const personajeId = obtenerPersonajeActivo();
-  const personaje = registroPersonajes[personajeId] || registroPersonajes["ander-egg"];
-  const poolBase = mensajesPorPersonaje[personajeId] || [];
+export default function PersonajeFlotante({ mensajeContextual, poolMensajesExtra }) {
+    const personajeId = obtenerPersonajeActivo();
+    const personaje = registroPersonajes[personajeId] || registroPersonajes["ander-egg"];
+    const poolGeneral = mensajesPorPersonaje[personajeId] || [];
+    // Dentro de un juego concreto (ej. Construir), se añaden frases propias de
+    // ese juego a las generales del personaje — solo si el personaje activo es
+    // el mismo al que pertenecen esas frases extra.
+    const poolBase = poolMensajesExtra ? [...poolGeneral, ...poolMensajesExtra] : poolGeneral;
 
   const [pos, setPos] = useState(() => ({
     x: window.innerWidth - 80,
