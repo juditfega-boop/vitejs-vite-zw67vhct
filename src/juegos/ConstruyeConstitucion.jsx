@@ -3,7 +3,7 @@ import { ESTRUCTURA_CONSTITUCION } from "../construyeConstitucion";
 import { MENSAJES_ANDER_EGG } from "../data/anderEggMensajes";
 import construyeTecho from "../assets/construye-techo.png";
 import construyePlantaBaja from "../assets/construye-plantabaja.png";
-import construyeArchivero from "../assets/construye-archivero.png";
+import PersonajeFlotante from "../personajes/PersonajeFlotante";
 import { styles, globalStyles } from "../estilos";
 import iconoLadrillo from "../assets/bookbrand/icono-brand-ladrillo.png";
 import iconoGrua from "../assets/bookbrand/icono-brand-grua.png";
@@ -61,56 +61,15 @@ export default function ConstruyeConstitucion({ setPantalla }) {
     };
   }, [vista]);
 
-  // 🖐️ posición arrastrable del botón de Ezequiel
-  const [archiveroPos, setArchiveroPos] = useState(() => ({
-    x: window.innerWidth - 80,
-    y: window.innerHeight - 150
-  }));
-  const arrastrandoRef = useState({ current: false })[0];
-  const offsetRef = useState({ current: { x: 0, y: 0 } })[0];
-  const seMovioRef = useState({ current: false })[0];
-
-  function iniciarArrastreArchivero(e) {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    arrastrandoRef.current = true;
-    seMovioRef.current = false;
-    offsetRef.current = {
-      x: e.clientX - archiveroPos.x,
-      y: e.clientY - archiveroPos.y
-    };
-  }
-
-  function moverArchivero(e) {
-    if (!arrastrandoRef.current) return;
-    seMovioRef.current = true;
-
-    const nuevoX = Math.min(
-      Math.max(10, e.clientX - offsetRef.current.x),
-      window.innerWidth - 70
-    );
-    const nuevoY = Math.min(
-      Math.max(10, e.clientY - offsetRef.current.y),
-      window.innerHeight - 70
-    );
-
-    setArchiveroPos({ x: nuevoX, y: nuevoY });
-  }
-
-  function soltarArchivero() {
-    arrastrandoRef.current = false;
-  }
-
   const [construyeAmbito, setConstruyeAmbito] = useState([]);
   const [construyeRespuestas, setConstruyeRespuestas] = useState({});
   const [construyeResultados, setConstruyeResultados] = useState({});
   const [construyeCompleto, setConstruyeCompleto] = useState(false);
   const [construyeFeedback, setConstruyeFeedback] = useState({});
   const [construyeIntentos, setConstruyeIntentos] = useState({});
-  const [construyeMensajesPool, setConstruyeMensajesPool] = useState([]);
-  const [construyeMensajeActual, setConstruyeMensajeActual] = useState("");
   const [construyePistaOferta, setConstruyePistaOferta] = useState(null);
+  const [construyeHintTexto, setConstruyeHintTexto] = useState(null);
   const [construyeDeclinado, setConstruyeDeclinado] = useState({});
-  const [archiveroAbierto, setArchiveroAbierto] = useState(false);
 
   function iniciarConstruye(ambito) {
     setConstruyeAmbito(ambito);
@@ -119,13 +78,9 @@ export default function ConstruyeConstitucion({ setPantalla }) {
     setConstruyeCompleto(false);
     setConstruyeFeedback({});
     setConstruyeIntentos({});
-    setConstruyeMensajesPool([]);
-    setConstruyeMensajeActual(
-      "¡Hola! Soy Ezequiel Ander-Egg. Me puedes mover a donde quieras, y cada vez que me pinches te contaré algo distinto sobre mí."
-    );
     setConstruyePistaOferta(null);
+    setConstruyeHintTexto(null);
     setConstruyeDeclinado({});
-    setArchiveroAbierto(true);
     setVista("jugando");
   }
 
@@ -194,42 +149,9 @@ export default function ConstruyeConstitucion({ setPantalla }) {
     );
 
     if (apartadoDificil) {
+      setConstruyeHintTexto(null);
       setConstruyePistaOferta(apartadoDificil.id);
-      setArchiveroAbierto(true);
     }
-  }
-
-  function mostrarSiguienteMensajeArchivero() {
-    let pool = construyeMensajesPool;
-    if (pool.length === 0) {
-      pool = mezclar(MENSAJES_ANDER_EGG);
-    }
-    const [siguiente, ...resto] = pool;
-    setConstruyeMensajeActual(siguiente.texto);
-    setConstruyeMensajesPool(resto);
-  }
-
-  function abrirArchivero() {
-    if (archiveroAbierto) {
-      setArchiveroAbierto(false);
-      return;
-    }
-
-    const apartadoDificil = construyeAmbito.find(
-      (item) =>
-        (construyeIntentos[item.id] || 0) >= 3 &&
-        construyeResultados[item.id] !== "correcto" &&
-        !construyeDeclinado[item.id]
-    );
-
-    if (apartadoDificil) {
-      setConstruyePistaOferta(apartadoDificil.id);
-    } else {
-      setConstruyePistaOferta(null);
-      mostrarSiguienteMensajeArchivero();
-    }
-
-    setArchiveroAbierto(true);
   }
 
   function aceptarPistaArchivero(apartadoId) {
@@ -249,7 +171,7 @@ export default function ConstruyeConstitucion({ setPantalla }) {
         texto = `Este apartado empieza después del artículo ${item.inicio - 1}.`;
       }
 
-      setConstruyeMensajeActual(texto);
+      setConstruyeHintTexto(texto);
     }
 
     setConstruyePistaOferta(null);
@@ -258,7 +180,7 @@ export default function ConstruyeConstitucion({ setPantalla }) {
   function declinarPistaArchivero(apartadoId) {
     setConstruyeDeclinado((prev) => ({ ...prev, [apartadoId]: true }));
     setConstruyePistaOferta(null);
-    mostrarSiguienteMensajeArchivero();
+    setConstruyeHintTexto(null);
   }
 
 // 🏛️ DETALLE
@@ -457,68 +379,21 @@ if (vista === "config") {
           Comprobar
         </button>
 
-        <div
-          style={{
-            position: "fixed",
-            left: archiveroPos.x,
-            top: archiveroPos.y,
-            zIndex: 50
-          }}
-        >
-          <button
-            onPointerDown={iniciarArrastreArchivero}
-            onPointerMove={moverArchivero}
-            onPointerUp={soltarArchivero}
-            onClick={() => {
-              if (!seMovioRef.current) abrirArchivero();
-            }}
-            style={{
-              ...styles.archiveroBotonFlotante,
-              position: "relative",
-              touchAction: "none"
-            }}
-          >
-            <img src={construyeArchivero} alt="Ezequiel, el Archivero" style={styles.archiveroFotoFlotante} />
-          </button>
-
-          {archiveroAbierto && (
-            <div
-              style={{
-                ...styles.archiveroGloboFlotante,
-                ...(archiveroPos.y > window.innerHeight / 2
-                  ? { bottom: 70, top: "auto" }
-                  : { top: 70, bottom: "auto" }),
-                ...(archiveroPos.x > window.innerWidth / 2
-                  ? { right: 0, left: "auto" }
-                  : { left: 0, right: "auto" })
-              }}
-            >
-            {construyePistaOferta ? (
-              <>
-                <p style={{ margin: "0 0 10px" }}>
-                  Parece que esta planta se está resistiendo... ¿Quieres una pista?
-                </p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    onClick={() => aceptarPistaArchivero(construyePistaOferta)}
-                    style={styles.archiveroBotonSi}
-                  >
-                    Sí, dame una pista
-                  </button>
-                  <button
-                    onClick={() => declinarPistaArchivero(construyePistaOferta)}
-                    style={styles.archiveroBotonNo}
-                  >
-                    Prefiero seguir intentando
-                  </button>
-                </div>
-              </>
-) : (
-  <p style={{ margin: 0 }}>{construyeMensajeActual}</p>
-)}
-</div>
-)}
-</div>
+        <PersonajeFlotante
+          mensajeContextual={
+            construyeHintTexto
+              ? { texto: construyeHintTexto }
+              : construyePistaOferta
+              ? {
+                  texto: "Parece que esta planta se está resistiendo... ¿Quieres una pista?",
+                  botones: [
+                    { texto: "Sí, dame una pista", onClick: () => aceptarPistaArchivero(construyePistaOferta) },
+                    { texto: "Prefiero seguir intentando", onClick: () => declinarPistaArchivero(construyePistaOferta) }
+                  ]
+                }
+              : null
+          }
+        />
 
         <button onClick={() => setVista("config")} style={styles.linkVolver}>
           ⬅ Elegir otra vez qué construir
