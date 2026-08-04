@@ -11,6 +11,7 @@ import iconoAciertoCheck from "../assets/kit/icono-fin-aciertos.png";
 import iconoPregunta from "../assets/bookbrand/icono-brand-pregunta.png";
 import iconoErrorX from "../assets/kit/icono-sim-errores.png";
 import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
+import PersonajeFlotante from "../personajes/PersonajeFlotante";
 
 import {
   registrarRespuesta,
@@ -421,8 +422,10 @@ if (vista === "detalle") {
                 </button>
               </>
             )}
-          </div>
+</div>
         </div>
+
+        <PersonajeFlotante />
       </div>
     );
   }
