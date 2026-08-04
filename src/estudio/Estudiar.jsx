@@ -38,6 +38,7 @@ import iconoFavoritoVacio from "../assets/bookbrand/icono-brand-favorito-vacio.p
 import iconoFolderVacio from "../assets/kit/icono-favoritos-corazon-carpeta.png";
 import iconoRachaLlama from "../assets/bookbrand/icono-brand-racha-llama.png";
 import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
+import { renderizarTextoConNegrita } from "../utils/renderizarTexto";
 
 // CSS del interruptor tipo "pastilla" (encendido/apagado), igual al que ya usa el resto de la app
 const estudiarEstilosLocales = `
@@ -123,24 +124,6 @@ function formatearTextoLargo(texto) {
   return texto.replace(/\.(?=[A-ZÁÉÍÓÚÑ])/g, ".\n");
 }
 
-function renderizarTextoConNegrita(texto) {
-  const textoConSaltos = formatearTextoLargo(texto);
-  const parrafos = textoConSaltos.split("\n").filter((p) => p.trim() !== "");
-  return parrafos.map((parrafo, i) => {
-    const partes = parrafo.split(/(\*\*.+?\*\*)/g);
-    return (
-      <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0" }}>
-        {partes.map((parte, j) =>
-          parte.startsWith("**") && parte.endsWith("**") ? (
-            <b key={j}>{parte.slice(2, -2)}</b>
-          ) : (
-            parte
-          )
-        )}
-      </p>
-    );
-  });
-}
 
 // 📖 "Estudiar" + Quiz + Mi progreso — componente independiente y autocontenido.
 // vistaInicial permite entrar directamente en "config" (botón Estudiar del menú)

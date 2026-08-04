@@ -15,6 +15,7 @@ import PersonajeFlotante from "../personajes/PersonajeFlotante";
 import registroPersonajes from "../personajes/registroPersonajes";
 import { obtenerPersonajeActivo } from "../personajes/personajeActivo";
 import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
+import { renderizarTextoConNegrita } from "../utils/renderizarTexto";
 
 import {
   registrarRespuesta,

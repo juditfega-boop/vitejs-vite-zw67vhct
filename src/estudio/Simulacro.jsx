@@ -10,6 +10,7 @@ import iconoExplicacion from "../assets/kit/icono-explicacion-libreta.png";
 import heroSimulacroCompletado from "../assets/kit/hero-simulacro-completado.png";
 import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
 import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
+import { renderizarTextoConNegrita } from "../utils/renderizarTexto";
 
 const DURACION_SIMULACRO_MINUTOS = 100;
 const CLAVE_HISTORIAL_SIMULACRO = "opo_simulacro_historial_v1";
