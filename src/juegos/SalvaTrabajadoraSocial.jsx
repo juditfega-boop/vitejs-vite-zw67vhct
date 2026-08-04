@@ -14,6 +14,7 @@ import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
 import PersonajeFlotante from "../personajes/PersonajeFlotante";
 import registroPersonajes from "../personajes/registroPersonajes";
 import { obtenerPersonajeActivo } from "../personajes/personajeActivo";
+import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
 
 import {
   registrarRespuesta,
@@ -521,6 +522,8 @@ if (vista === "detalle") {
                   </p>
                   {renderizarTextoConNegrita(preguntaMuerte.explicacion)}
                 </div>
+
+                <ImpugnarPregunta pregunta={preguntaMuerte} origen="salva-ts" />
 
                 <button onClick={siguienteMuerte} style={styles.button}>
                   Siguiente →

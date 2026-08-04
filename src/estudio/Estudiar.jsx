@@ -37,6 +37,7 @@ import iconoFavoritoLleno from "../assets/bookbrand/icono-brand-favorito-lleno.p
 import iconoFavoritoVacio from "../assets/bookbrand/icono-brand-favorito-vacio.png";
 import iconoFolderVacio from "../assets/kit/icono-favoritos-corazon-carpeta.png";
 import iconoRachaLlama from "../assets/bookbrand/icono-brand-racha-llama.png";
+import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
 
 // CSS del interruptor tipo "pastilla" (encendido/apagado), igual al que ya usa el resto de la app
 const estudiarEstilosLocales = `
@@ -1083,7 +1084,7 @@ if (vista === "quiz" && pregunta) {
             return null;
           })()}
 
-          {conExplicacion && (
+{conExplicacion && (
             <div style={styles.explicacionCaja}>
               <div style={styles.explicacionTituloRow}>
                 <img src={iconoExplicacion} alt="" style={styles.explicacionIcono} />
@@ -1092,6 +1093,8 @@ if (vista === "quiz" && pregunta) {
               {renderizarTextoConNegrita(pregunta.explicacion)}
             </div>
           )}
+
+          <ImpugnarPregunta pregunta={pregunta} origen="estudiar" />
 
           <button onClick={siguiente} style={styles.ctaButton}>
             Siguiente →
