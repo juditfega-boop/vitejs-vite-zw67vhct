@@ -31,6 +31,14 @@ export default function PersonajeFlotante({ mensajeContextual }) {
   const seMovioRef = useRef(false);
   const offsetRef = useRef({ x: 0, y: 0 });
 
+  // Si el juego ofrece una pista de forma proactiva (con botones), la
+  // burbuja se abre sola para que no pase desapercibida.
+  useEffect(() => {
+    if (mensajeContextual && mensajeContextual.botones) {
+      setAbierto(true);
+    }
+  }, [mensajeContextual]);
+
   function iniciarArrastre(e) {
     arrastrandoRef.current = true;
     seMovioRef.current = false;
