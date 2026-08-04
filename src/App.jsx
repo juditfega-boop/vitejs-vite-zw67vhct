@@ -8,6 +8,7 @@ import iconoHubSalvaTrabajadora from "./assets/kit/icono-hub-salva-trabajadora.p
 import iconoHubConectaConstitucion from "./assets/kit/icono-hub-conecta-constitucion.png";
 import iconoHubConstruyeConstitucion from "./assets/kit/icono-hub-construye-constitucion.png";
 import { globalStyles, styles } from "./estilos";
+import PersonajeFlotante from "./personajes/PersonajeFlotante";
 import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
 import CarreraPlaza from "./juegos/CarreraPlaza";
@@ -38,6 +39,17 @@ import {
   CLAVE_RACHA,
   CLAVE_TIEMPOS
 } from "./servicios/progreso";
+
+// 🧑‍🤝‍🧑 envuelve una pantalla con el personaje flotante global — se omite
+// en la portada y en los juegos que ya tienen su propia burbuja interna
+function conPersonaje(contenido) {
+  return (
+    <>
+      {contenido}
+      <PersonajeFlotante />
+    </>
+  );
+}
 
 // 📌 Array de frases de bienvenida — añade aquí nuevas cuando quieras
 const FRASES_BIENVENIDA = [
@@ -207,9 +219,9 @@ if (pantalla === "inicio") {
     ? Math.round((bloquesFavorables / bloquesConDatos.length) * 100)
     : 0;
 
-  return (
-    <div style={styles.menuContainer}>
-      <div style={styles.inicioHeader}>
+    return conPersonaje(
+      <div style={styles.menuContainer}>
+        <div style={styles.inicioHeader}>
         <img src={casaIcono} alt="" style={styles.inicioCasaIcono} />
         <span style={styles.inicioHeaderTexto}>Inicio</span>
       </div>
@@ -362,7 +374,7 @@ if (pantalla === "minijuegos") {
     }
   ];
 
-  return (
+  return conPersonaje(
     <div style={styles.menuContainer}>
       <style>{globalStyles}</style>
 
@@ -399,7 +411,7 @@ if (pantalla === "minijuegos") {
 
 // DESARROLLO (próximamente)
 if (pantalla === "desarrollo") {
-  return (
+  return conPersonaje(
     <div style={styles.placeholderContainer}>
 <div style={styles.placeholderCard}>
         <h2>Desarrollo</h2>
@@ -425,7 +437,7 @@ if (pantalla === "muerte") {
 
   // 📖 ESTUDIAR
   if (pantalla === "estudiar-estudio") {
-    return (
+    return conPersonaje(
       <Estudiar
         preguntasBase={preguntasBase}
         volverMenu={volverMenu}
@@ -437,7 +449,7 @@ if (pantalla === "muerte") {
 
   // 📈 MI EVOLUCIÓN
   if (pantalla === "estudiar-progreso") {
-    return (
+    return conPersonaje(
       <Estudiar
         preguntasBase={preguntasBase}
         volverMenu={volverMenu}
@@ -470,12 +482,12 @@ if (pantalla === "muerte") {
 
   // 📁 CONECTA LA CONSTITUCIÓN
   if (pantalla === "archivos") {
-    return <ConectaConstitucion setPantalla={setPantalla} volverMenu={volverMenu} />;
+    return conPersonaje(<ConectaConstitucion setPantalla={setPantalla} volverMenu={volverMenu} />);
   }
 
   // ⚙️ AJUSTES — perfil y código de sincronización
   if (pantalla === "ajustes") {
-    return (
+    return conPersonaje(
       <div style={styles.menuContainer}>
         <div style={styles.menuHeader}>
           <div style={styles.perfilHeaderRow}>
