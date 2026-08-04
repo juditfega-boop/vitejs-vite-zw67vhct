@@ -12,6 +12,8 @@ import iconoPregunta from "../assets/bookbrand/icono-brand-pregunta.png";
 import iconoErrorX from "../assets/kit/icono-sim-errores.png";
 import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
 import PersonajeFlotante from "../personajes/PersonajeFlotante";
+import registroPersonajes from "../personajes/registroPersonajes";
+import { obtenerPersonajeActivo } from "../personajes/personajeActivo";
 
 import {
   registrarRespuesta,
@@ -102,6 +104,31 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
   const [respuestaFallidaIndice, setRespuestaFallidaIndice] = useState(null);
   const [mostrarPorQueMurio, setMostrarPorQueMurio] = useState(false);
 
+  const [modoVidas, setModoVidas] = useState("subita"); // "subita" | "1vida" | "2vidas"
+  const [ayudaActiva, setAyudaActiva] = useState(false);
+  const [vidasRestantes, setVidasRestantes] = useState(0);
+  const [ayudaDisponible, setAyudaDisponible] = useState(false);
+  const [respuestaDescartada, setRespuestaDescartada] = useState(null);
+
+  const personajeActivo = registroPersonajes[obtenerPersonajeActivo()] || registroPersonajes["ander-egg"];
+
+  function fallosPermitidos(modo) {
+    if (modo === "1vida") return 1;
+    if (modo === "2vidas") return 2;
+    return 0; // muerte súbita
+  }
+
+  function pedirAyuda() {
+    if (!ayudaDisponible || muerteMostrar) return;
+    const pregunta = muertePreguntas[muerteIndice];
+    const opcionesIncorrectas = pregunta.respuestas
+      .map((_, i) => i)
+      .filter((i) => i !== pregunta.correcta);
+    const elegida = opcionesIncorrectas[Math.floor(Math.random() * opcionesIncorrectas.length)];
+    setRespuestaDescartada(elegida);
+    setAyudaDisponible(false);
+  }
+
   function toggleBloqueMuerte(nombre) {
     setMuerteBloquesSeleccionados((prev) =>
       prev.includes(nombre) ? prev.filter((b) => b !== nombre) : [...prev, nombre]
@@ -129,6 +156,9 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     setPreguntaFallida(null);
     setRespuestaFallidaIndice(null);
     setMostrarPorQueMurio(false);
+    setVidasRestantes(fallosPermitidos(modoVidas));
+    setAyudaDisponible(ayudaActiva);
+    setRespuestaDescartada(null);
     setVista("jugando");
   }
 
@@ -154,9 +184,18 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
       setMuerteMostrar(true);
       setMuerteMensaje("Correcto");
       setMuerteAciertos((a) => a + 1);
-    } else {
-      perderMuerte(pregunta, i);
+      return;
     }
+
+    if (vidasRestantes > 0) {
+      setVidasRestantes((v) => v - 1);
+      setMuerteRespuestaSeleccionada(i);
+      setMuerteMostrar(true);
+      setMuerteMensaje("Incorrecto");
+      return;
+    }
+
+    perderMuerte(pregunta, i);
   }
 
   function siguienteMuerte() {
@@ -164,6 +203,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     setMuerteMensaje("");
     setMuerteMostrar(false);
     setMuerteRespuestaSeleccionada(null);
+    setRespuestaDescartada(null);
 
     setMuerteIndice((indiceActual) => {
       const siguienteIndice = indiceActual + 1;
@@ -321,6 +361,47 @@ if (vista === "detalle") {
         </div>
 
         <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Vidas</p>
+          <div style={styles.pillGroup}>
+            <button
+              className="pill"
+              onClick={() => setModoVidas("subita")}
+              style={{ ...styles.pillBtn, ...(modoVidas === "subita" ? styles.pillBtnActiva : {}) }}
+            >
+              Muerte súbita
+            </button>
+            <button
+              className="pill"
+              onClick={() => setModoVidas("1vida")}
+              style={{ ...styles.pillBtn, ...(modoVidas === "1vida" ? styles.pillBtnActiva : {}) }}
+            >
+              1 vida extra
+            </button>
+            <button
+              className="pill"
+              onClick={() => setModoVidas("2vidas")}
+              style={{ ...styles.pillBtn, ...(modoVidas === "2vidas" ? styles.pillBtnActiva : {}) }}
+            >
+              2 vidas extra
+            </button>
+          </div>
+        </div>
+
+        <div style={styles.configCard}>
+          <div style={styles.configRow}>
+            <p style={styles.configCardTitle}>Ayuda de {personajeActivo.nombre} (1 por partida)</p>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={ayudaActiva}
+                onChange={() => setAyudaActiva((v) => !v)}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div style={styles.configCard}>
           <div style={styles.configRow}>
             <p style={styles.configCardTitle}>Activar cronómetro (1 min / pregunta)</p>
             <label className="switch">
@@ -358,10 +439,13 @@ if (vista === "detalle") {
 
     return (
       <div style={styles.muerteJugandoContainer}>
-        <div style={styles.simHeaderBar}>
+<div style={styles.simHeaderBar}>
           <span style={styles.simTimer}>
             Pregunta {muerteIndice + 1} / {muertePreguntas.length}
           </span>
+          {modoVidas !== "subita" && (
+            <span style={styles.simTimer}>❤️ {vidasRestantes}</span>
+          )}
           {muerteCronometroActivo && (
             <span style={styles.simTimer}>
               ⏱ {formatearTiempo(muerteTiempoRestante || 0)}
@@ -381,21 +465,42 @@ if (vista === "detalle") {
           </div>
 
           <div style={styles.muertePreguntaCol}>
+            {ayudaActiva && (
+              <div style={{ marginBottom: 10 }}>
+                {ayudaDisponible ? (
+                  <button onClick={pedirAyuda} style={styles.linkVolver}>
+                    🧑‍🤝‍🧑 Pedir ayuda a {personajeActivo.nombre}
+                  </button>
+                ) : respuestaDescartada !== null ? (
+                  <p style={styles.configSubLabel}>
+                    {personajeActivo.nombre} descarta la opción {String.fromCharCode(65 + respuestaDescartada)}.
+                  </p>
+                ) : (
+                  <p style={styles.configSubLabel}>Ya has usado tu ayuda en esta partida.</p>
+                )}
+              </div>
+            )}
+
             {preguntaMuerte.respuestas.map((r, i) => {
               let bg = "#fff";
               if (muerteMostrar && i === preguntaMuerte.correcta) bg = "#d4edda";
+              else if (muerteMostrar && i === muerteRespuestaSeleccionada) bg = "#f8d7da";
+
+              const descartada = i === respuestaDescartada;
 
               return (
                 <button
                   key={i}
                   onClick={() => comprobarMuerte(i)}
-                  disabled={muerteMostrar}
+                  disabled={muerteMostrar || descartada}
                   style={{
                     ...styles.button,
                     background: bg,
                     textAlign: "left",
                     lineHeight: 1.5,
-                    whiteSpace: "pre-line"
+                    whiteSpace: "pre-line",
+                    opacity: descartada ? 0.4 : 1,
+                    textDecoration: descartada ? "line-through" : "none"
                   }}
                 >
                   {formatearTextoLargo(r)}
