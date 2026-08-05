@@ -38,6 +38,7 @@ import iconoFavoritoVacio from "../assets/bookbrand/icono-brand-favorito-vacio.p
 import iconoFolderVacio from "../assets/kit/icono-favoritos-corazon-carpeta.png";
 import iconoRachaLlama from "../assets/bookbrand/icono-brand-racha-llama.png";
 import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
+import BuscadorBloques, { filtrarBloques } from "../componentes/BuscadorBloques";
 
 // CSS del interruptor tipo "pastilla" (encendido/apagado), igual al que ya usa el resto de la app
 const estudiarEstilosLocales = `
@@ -168,6 +169,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [favoritos, setFavoritos] = useState(() => obtenerFavoritos());
   const [expedientesResueltos, setExpedientesResueltos] = useState(0);
   const [tabErroresVacio, setTabErroresVacio] = useState("prioritarios");
+  const [buscarBloque, setBuscarBloque] = useState("");
 
   const pregunta = preguntas[indice];
 
@@ -345,7 +347,10 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
 
   // ⚙️ CONFIGURACIÓN DE ESTUDIO
   if (vista === "config") {
-    const bloquesDisponibles = Object.keys(agruparPorBloques(preguntasBase));
+    const bloquesDisponibles = filtrarBloques(
+      Object.keys(agruparPorBloques(preguntasBase)),
+      buscarBloque
+    );
     const puedeComenzar = tipoEstudio === "general" || bloquesSeleccionados.length > 0;
 
     return (
@@ -383,8 +388,10 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
           </div>
 
           {tipoEstudio === "bloques" && (
-            <div style={styles.bloquesGrid}>
-              {bloquesDisponibles.map((b) => (
+            <>
+              <BuscadorBloques valor={buscarBloque} onChange={setBuscarBloque} />
+              <div style={styles.bloquesGrid}>
+                {bloquesDisponibles.map((b) => (
                 <button
                   key={b}
                   className="bloque-chip"
@@ -396,9 +403,10 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
                 >
                   {b}
                 </button>
-              ))}
-            </div>
-          )}
+))}
+</div>
+</>
+)}
         </div>
 
         <div style={styles.configCard}>

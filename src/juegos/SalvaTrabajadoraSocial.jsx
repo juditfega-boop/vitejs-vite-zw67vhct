@@ -15,6 +15,7 @@ import PersonajeFlotante from "../personajes/PersonajeFlotante";
 import registroPersonajes from "../personajes/registroPersonajes";
 import { obtenerPersonajeActivo } from "../personajes/personajeActivo";
 import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
+import BuscadorBloques, { filtrarBloques } from "../componentes/BuscadorBloques";
 import { renderizarTextoConNegrita } from "../utils/renderizarTexto";
 
 import {
@@ -91,6 +92,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
   const [vidasRestantes, setVidasRestantes] = useState(0);
   const [ayudaDisponible, setAyudaDisponible] = useState(false);
   const [respuestaDescartada, setRespuestaDescartada] = useState(null);
+  const [buscarBloqueMuerte, setBuscarBloqueMuerte] = useState("");
 
   const personajeActivo = registroPersonajes[obtenerPersonajeActivo()] || registroPersonajes["ander-egg"];
 
@@ -267,7 +269,10 @@ if (vista === "detalle") {
 
   // ⚙️ CONFIGURACIÓN
   if (vista === "config") {
-    const bloquesDisponiblesMuerte = Object.keys(agruparPorBloques(preguntasBase));
+    const bloquesDisponiblesMuerte = filtrarBloques(
+      Object.keys(agruparPorBloques(preguntasBase)),
+      buscarBloqueMuerte
+    );
 
     let listaFuenteMuerte = preguntasBase;
     if (muerteTipo === "bloques") {
@@ -317,8 +322,10 @@ if (vista === "detalle") {
           </div>
 
           {muerteTipo === "bloques" && (
-            <div style={styles.bloquesGrid}>
-              {bloquesDisponiblesMuerte.map((b) => (
+            <>
+              <BuscadorBloques valor={buscarBloqueMuerte} onChange={setBuscarBloqueMuerte} />
+              <div style={styles.bloquesGrid}>
+                {bloquesDisponiblesMuerte.map((b) => (
                 <button
                   key={b}
                   className="bloque-chip"
@@ -330,9 +337,10 @@ if (vista === "detalle") {
                 >
                   {b}
                 </button>
-              ))}
-            </div>
-          )}
+))}
+</div>
+</>
+)}
 
           {!hayPreguntasSuficientesMuerte && (
             <p style={{ ...styles.configSubLabel, color: "#c96a6a", marginTop: 8 }}>
