@@ -10,6 +10,7 @@ import iconoHubConstruyeConstitucion from "./assets/kit/icono-hub-construye-cons
 import { globalStyles, styles } from "./estilos";
 import PersonajeFlotante from "./personajes/PersonajeFlotante";
 import CuentaUsuario from "./componentes/CuentaUsuario";
+import MisImpugnaciones from "./componentes/MisImpugnaciones";
 import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
 import CarreraPlaza from "./juegos/CarreraPlaza";
@@ -500,7 +501,9 @@ if (pantalla === "muerte") {
 
         <img src={iconoPerfilHero} alt="" style={styles.perfilHeroImg} />
 
-<CuentaUsuario />
+        <CuentaUsuario />
+
+<MisImpugnaciones />
 
 <div style={styles.configCard}>
 <p style={styles.configCardTitle}>

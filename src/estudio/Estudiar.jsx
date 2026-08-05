@@ -1084,7 +1084,7 @@ if (vista === "quiz" && pregunta) {
             return null;
           })()}
 
-          {conExplicacion && (
+{conExplicacion && (
             <div style={styles.explicacionCaja}>
               <div style={styles.explicacionTituloRow}>
                 <img src={iconoExplicacion} alt="" style={styles.explicacionIcono} />
@@ -1093,6 +1093,8 @@ if (vista === "quiz" && pregunta) {
               {renderizarTextoConNegrita(pregunta.explicacion)}
             </div>
           )}
+
+          <ImpugnarPregunta pregunta={pregunta} origen="estudiar" />
 
           <button onClick={siguiente} style={styles.ctaButton}>
             Siguiente →
