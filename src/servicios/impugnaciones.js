@@ -1,5 +1,15 @@
-import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
+
+export async function eliminarImpugnacion(id) {
+  try {
+    await deleteDoc(doc(db, "impugnaciones", id));
+    return true;
+  } catch (e) {
+    console.error("Error al eliminar la impugnación:", e);
+    return false;
+  }
+}
 
 export async function obtenerMisImpugnaciones() {
   if (!auth.currentUser) return [];

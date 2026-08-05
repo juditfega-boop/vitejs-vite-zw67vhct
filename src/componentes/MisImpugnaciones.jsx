@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { obtenerMisImpugnaciones } from "../servicios/impugnaciones";
+import { obtenerMisImpugnaciones, eliminarImpugnacion } from "../servicios/impugnaciones";
 import { observarSesion } from "../servicios/auth";
 import { styles } from "../estilos";
 
@@ -22,11 +22,22 @@ const ETIQUETAS_ESTADO = {
       .replace(/[\u0300-\u036f]/g, ""); // quita acentos: é->e, á->a, etc.
   }
 
-export default function MisImpugnaciones() {
-  const [usuario, setUsuario] = useState(undefined);
-  const [lista, setLista] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [abierto, setAbierto] = useState(false);
+  export default function MisImpugnaciones() {
+    const [usuario, setUsuario] = useState(undefined);
+    const [lista, setLista] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [abierto, setAbierto] = useState(false);
+    const [borrandoId, setBorrandoId] = useState(null);
+  
+    async function borrar(id) {
+      if (!window.confirm("¿Eliminar esta impugnación? No se puede deshacer.")) return;
+      setBorrandoId(id);
+      const ok = await eliminarImpugnacion(id);
+      if (ok) {
+        setLista((prev) => prev.filter((imp) => imp.id !== id));
+      }
+      setBorrandoId(null);
+    }
 
   useEffect(() => {
     const unsubscribe = observarSesion((u) => setUsuario(u));
@@ -73,32 +84,45 @@ export default function MisImpugnaciones() {
             <div style={{ marginTop: 10 }}>
               {lista.map((imp) => {
    const estado = ETIQUETAS_ESTADO[normalizarEstado(imp.estado)] || ETIQUETAS_ESTADO.pendiente;
-                return (
-                  <div
-                    key={imp.id}
-                    style={{
-                      background: "#faf7f2", borderRadius: 14, padding: "12px 14px",
-                      marginBottom: 10, fontSize: 13
-                    }}
-                  >
-                    <p style={{ margin: "0 0 6px", color: "#4a463f", lineHeight: 1.4 }}>
-                      {imp.textoPregunta || "Pregunta sin texto guardado"}
-                    </p>
-                    <p style={{ margin: "0 0 4px", color: "#8a8578" }}>
-                      Motivo: {imp.motivo}
-                    </p>
-                    <p style={{ margin: 0, fontWeight: 700, color: estado.color }}>
-                      {estado.texto}
-                    </p>
-                    {imp.respuesta && (
-                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px dashed #e4ddcf" }}>
-                        <p style={{ margin: 0, color: "#4a463f" }}>
-                          <b>Respuesta:</b> {imp.respuesta}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
+   return (
+    <div
+      key={imp.id}
+      style={{
+        background: "#faf7f2", borderRadius: 14, padding: "12px 14px",
+        marginBottom: 10, fontSize: 13
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+        <p style={{ margin: "0 0 6px", color: "#4a463f", lineHeight: 1.4, flex: 1 }}>
+          {imp.textoPregunta || "Pregunta sin texto guardado"}
+        </p>
+        <button
+          onClick={() => borrar(imp.id)}
+          disabled={borrandoId === imp.id}
+          title="Eliminar esta impugnación"
+          style={{
+            border: "none", background: "transparent", cursor: "pointer",
+            fontSize: 14, color: "#b08a8a", flexShrink: 0, padding: 0
+          }}
+        >
+          {borrandoId === imp.id ? "..." : "🗑"}
+        </button>
+      </div>
+      <p style={{ margin: "0 0 4px", color: "#8a8578" }}>
+        Motivo: {imp.motivo}
+      </p>
+      <p style={{ margin: 0, fontWeight: 700, color: estado.color }}>
+        {estado.texto}
+      </p>
+      {imp.respuesta && (
+        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px dashed #e4ddcf" }}>
+          <p style={{ margin: 0, color: "#4a463f" }}>
+            <b>Respuesta:</b> {imp.respuesta}
+          </p>
+        </div>
+      )}
+    </div>
+  );
               })}
             </div>
           )}
