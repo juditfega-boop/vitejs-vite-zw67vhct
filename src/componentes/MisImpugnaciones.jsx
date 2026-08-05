@@ -4,11 +4,23 @@ import { observarSesion } from "../servicios/auth";
 import { styles } from "../estilos";
 
 const ETIQUETAS_ESTADO = {
-  pendiente: { texto: "Pendiente de revisión", color: "#8a8578" },
-  resuelto: { texto: "Resuelta", color: "#6a9a6a" },
-  revisado: { texto: "Revisada", color: "#6a9a6a" },
-  rechazado: { texto: "No procede", color: "#c96a6a" }
-};
+    pendiente: { texto: "Pendiente de revisión", color: "#8a8578" },
+    resuelto: { texto: "Resuelta", color: "#6a9a6a" },
+    resuelta: { texto: "Resuelta", color: "#6a9a6a" },
+    revisado: { texto: "Revisada", color: "#6a9a6a" },
+    revisada: { texto: "Revisada", color: "#6a9a6a" },
+    rechazado: { texto: "No procede", color: "#c96a6a" },
+    rechazada: { texto: "No procede", color: "#c96a6a" }
+  };
+  
+  function normalizarEstado(valor) {
+    if (!valor) return "pendiente";
+    return valor
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // quita acentos: é->e, á->a, etc.
+  }
 
 export default function MisImpugnaciones() {
   const [usuario, setUsuario] = useState(undefined);
@@ -60,7 +72,7 @@ export default function MisImpugnaciones() {
           ) : (
             <div style={{ marginTop: 10 }}>
               {lista.map((imp) => {
-                const estado = ETIQUETAS_ESTADO[imp.estado] || ETIQUETAS_ESTADO.pendiente;
+   const estado = ETIQUETAS_ESTADO[normalizarEstado(imp.estado)] || ETIQUETAS_ESTADO.pendiente;
                 return (
                   <div
                     key={imp.id}
