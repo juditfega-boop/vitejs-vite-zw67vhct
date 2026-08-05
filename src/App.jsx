@@ -9,6 +9,7 @@ import iconoHubConectaConstitucion from "./assets/kit/icono-hub-conecta-constitu
 import iconoHubConstruyeConstitucion from "./assets/kit/icono-hub-construye-constitucion.png";
 import { globalStyles, styles } from "./estilos";
 import PersonajeFlotante from "./personajes/PersonajeFlotante";
+import CuentaUsuario from "./componentes/CuentaUsuario";
 import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
 import CarreraPlaza from "./juegos/CarreraPlaza";
@@ -499,11 +500,13 @@ if (pantalla === "muerte") {
 
         <img src={iconoPerfilHero} alt="" style={styles.perfilHeroImg} />
 
-        <div style={styles.configCard}>
-        <p style={styles.configCardTitle}>
-            <img src={iconoNube} alt="" style={styles.perfilNubeIcono} />
-            Tu código de progreso
-          </p>
+<CuentaUsuario />
+
+<div style={styles.configCard}>
+<p style={styles.configCardTitle}>
+    <img src={iconoNube} alt="" style={styles.perfilNubeIcono} />
+    Tu código de progreso
+  </p>
 
           {codigo ? (
             <>
