@@ -62,26 +62,6 @@ function formatearTextoLargo(texto) {
   return texto.replace(/\.(?=[A-ZÁÉÍÓÚÑ])/g, ".\n");
 }
 
-function renderizarTextoConNegrita(texto) {
-  const textoConSaltos = formatearTextoLargo(texto);
-  const parrafos = textoConSaltos.split("\n").filter((p) => p.trim() !== "");
-
-  return parrafos.map((parrafo, i) => {
-    const partes = parrafo.split(/(\*\*.+?\*\*)/g);
-    return (
-      <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0" }}>
-        {partes.map((parte, j) =>
-          parte.startsWith("**") && parte.endsWith("**") ? (
-            <b key={j}>{parte.slice(2, -2)}</b>
-          ) : (
-            parte
-          )
-        )}
-      </p>
-    );
-  });
-}
-
 function imagenMuerteSubita(aciertos) {
   const etapa = Math.min(3, Math.floor(aciertos / 5));
   return [muerteImg0, muerteImg1, muerteImg2, muerteImg3][etapa];
