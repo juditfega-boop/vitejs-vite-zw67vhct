@@ -59,8 +59,13 @@ export async function cargarPreguntas() {
     // Cabeceras reales de tu Sheet:
     // id, bloque, tema, pregunta, r1, r2, r3, correcta, articulo, explicacion, grupo
     const cabeceras = filas[0].map((c) =>
-      c.replace(/"/g, "").trim().toLowerCase()
-    );
+    c
+      .replace(/"/g, "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // quita acentos: í->i, ó->o, etc.
+  );
 
     const preguntasProcesadas = filas
       .slice(1)
