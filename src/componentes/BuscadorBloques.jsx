@@ -18,8 +18,15 @@ export default function BuscadorBloques({ valor, onChange }) {
   );
 }
 
+function quitarAcentos(str) {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 export function filtrarBloques(bloques, texto) {
   if (!texto.trim()) return bloques;
-  const t = texto.trim().toLowerCase();
-  return bloques.filter((b) => b.toLowerCase().includes(t));
+  const t = quitarAcentos(texto.trim());
+  return bloques.filter((b) => quitarAcentos(b).includes(t));
 }
