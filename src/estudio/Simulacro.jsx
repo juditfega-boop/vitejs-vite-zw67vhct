@@ -13,6 +13,7 @@ import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
 
 
 const DURACION_SIMULACRO_MINUTOS = 100;
+const DURACION_PAUSA_SEGUNDOS = 5 * 60;
 const CLAVE_HISTORIAL_SIMULACRO = "opo_simulacro_historial_v1";
 
 function obtenerHistorialSimulacro() {
@@ -45,13 +46,19 @@ function vaciarHistorialSimulacro() {
   localStorage.setItem(CLAVE_HISTORIAL_SIMULACRO, JSON.stringify([]));
 }
 
+// Barajado justo (Fisher-Yates)
 function mezclar(array) {
-  return [...array].sort(() => Math.random() - 0.5);
+  const copia = [...array];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
 }
 
 function prepararPregunta(p) {
   const respuestas = p.respuestas.map((r, i) => ({ texto: r, indexOriginal: i }));
-  const mezcladas = respuestas.sort(() => Math.random() - 0.5);
+  const mezcladas = mezclar(respuestas);
   const nuevaCorrecta = mezcladas.findIndex((r) => r.indexOriginal === p.correcta);
   return { ...p, respuestas: mezcladas.map((r) => r.texto), correcta: nuevaCorrecta };
 }
@@ -76,11 +83,63 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
   const [repasoIndice, setRepasoIndice] = useState(0);
   const [repasoRespuestaSeleccionada, setRepasoRespuestaSeleccionada] = useState(null);
   const [repasoMostrar, setRepasoMostrar] = useState(false);
+  const [enPausa, setEnPausa] = useState(false);
+  const [pausaUsada, setPausaUsada] = useState(false);
+  const [pausaRestante, setPausaRestante] = useState(DURACION_PAUSA_SEGUNDOS);
   const pregunta = preguntas[indice];
 
   useEffect(() => {
     if (vista !== "examen" || tiempoRestanteSimulacro === null) return;
-
+    useEffect(() => {
+      if (vista !== "examen" || tiempoRestanteSimulacro === null || enPausa) return;
+  
+      if (tiempoRestanteSimulacro <= 0) {
+        finalizarSimulacro();
+        return;
+      }
+  
+      const id = setTimeout(() => {
+        setTiempoRestanteSimulacro((t) => (t !== null ? t - 1 : null));
+      }, 1000);
+  
+      return () => clearTimeout(id);
+    }, [vista, tiempoRestanteSimulacro, enPausa]);
+  
+    // 🚻 cuenta atrás de la pausa (5 min, una sola vez por examen)
+    useEffect(() => {
+      if (!enPausa) return;
+      if (pausaRestante <= 0) {
+        setEnPausa(false);
+        return;
+      }
+      const id = setTimeout(() => setPausaRestante((t) => t - 1), 1000);
+      return () => clearTimeout(id);
+    }, [enPausa, pausaRestante]);
+  
+    // al cambiar de pregunta, la pantalla sube al enunciado
+    useEffect(() => {
+      if (vista === "examen") window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [indice, vista]);
+  
+    function empezarPausa() {
+      if (pausaUsada) return;
+      setPausaUsada(true);
+      setPausaRestante(DURACION_PAUSA_SEGUNDOS);
+      setEnPausa(true);
+    }
+  
+    function terminarPausa() {
+      setEnPausa(false);
+    }
+  
+    function confirmarFinalizar() {
+      const sinResponder = respuestasSimulacro.filter((r) => r === null || r === undefined).length;
+      const texto =
+        sinResponder > 0
+          ? `Te quedan ${sinResponder} preguntas sin responder. ¿Seguro que quieres entregar el examen?`
+          : "¿Entregar el examen?";
+      if (window.confirm(texto)) finalizarSimulacro();
+    }
     if (tiempoRestanteSimulacro <= 0) {
       finalizarSimulacro();
       return;
@@ -109,6 +168,9 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     setTiempoRestanteSimulacro(DURACION_SIMULACRO_MINUTOS * 60);
     setHoraInicioSimulacro(Date.now());
     setResultadoSimulacro(null);
+    setEnPausa(false);
+    setPausaUsada(false);
+    setPausaRestante(DURACION_PAUSA_SEGUNDOS);
     setVista("examen");
   }
 
@@ -160,9 +222,11 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     const notaBruta = aciertosF * 1 - erroresF * (1 / 3);
     const nota = Math.max(0, notaBruta);
 
-    const segundosEmpleados = horaInicioSimulacro
-      ? Math.round((Date.now() - horaInicioSimulacro) / 1000)
-      : 0;
+    // tiempo real de examen (sin contar la pausa)
+    const segundosEmpleados =
+      tiempoRestanteSimulacro !== null
+        ? DURACION_SIMULACRO_MINUTOS * 60 - Math.max(0, tiempoRestanteSimulacro)
+        : 0;
 
     const bloquesOrdenados = Object.entries(bloquesTally)
       .map(([nombre, datos]) => ({
@@ -194,6 +258,7 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
     setResultadoSimulacro(resultado);
     setTiempoRestanteSimulacro(null);
+    setEnPausa(false);
     setMostrarValoracion(false);
     setRepasoIndice(0);
     setRepasoRespuestaSeleccionada(null);
@@ -248,12 +313,25 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
           </div>
         </div>
 
-        <p style={styles.configSubLabel}>
-          Puedes dejar preguntas en blanco y volver a ellas más adelante, mientras te quede tiempo.
-        </p>
+        <div style={{ ...styles.configCard, background: "#f3eefa" }}>
+          <p style={styles.configCardTitle}>Antes de empezar</p>
+          <p style={styles.configSubLabel}>
+            🌿 Asegúrate de estar en un espacio tranquilo y sin interrupciones.
+          </p>
+          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
+            ⏱ El cronómetro no se para, igual que en el examen real.
+          </p>
+          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
+            🚻 Tienes una única pausa de 5 minutos (por ejemplo, para ir al baño). Durante la pausa
+            el reloj se congela y la pregunta se oculta.
+          </p>
+          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
+            📝 Puedes dejar preguntas en blanco y volver a ellas más adelante, mientras te quede tiempo.
+          </p>
+        </div>
 
         <button onClick={iniciarSimulacro} style={styles.ctaButton}>
-          Comenzar simulacro
+          ¡¡Comenzar simulacro!!
         </button>
 
         <button onClick={volverMenu} style={styles.linkVolver}>
@@ -267,6 +345,31 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
   if (vista === "examen" && pregunta) {
     const respondidas = respuestasSimulacro.filter((r) => r !== null && r !== undefined).length;
 
+    if (enPausa) {
+      return (
+        <div style={styles.menuContainer}>
+          <div style={{ ...styles.configCard, textAlign: "center", marginTop: 40 }}>
+            <img
+              src={iconoSimTiempo}
+              alt=""
+              style={{ width: 90, height: 90, objectFit: "contain", display: "block", margin: "0 auto 10px" }}
+            />
+            <p style={styles.configCardTitle}>Pausa</p>
+            <p style={{ fontSize: 40, fontWeight: 700, color: "#5b4a3a", margin: "6px 0 10px" }}>
+              {formatearTiempo(pausaRestante)}
+            </p>
+            <p style={styles.configSubLabel}>
+              El examen está congelado en {formatearTiempo(tiempoRestanteSimulacro || 0)}. Cuando
+              acabe la pausa, seguirá solo.
+            </p>
+            <button onClick={terminarPausa} style={{ ...styles.ctaButton, marginTop: 16 }}>
+              He vuelto, seguir con el examen
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={styles.menuContainer}>
         <div style={styles.simHeaderBar}>
@@ -274,10 +377,16 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
           <span style={styles.configSubLabel}>
             {respondidas} / {preguntas.length} respondidas
           </span>
-          <button onClick={finalizarSimulacro} style={styles.simFinalizarBtn}>
+          <button onClick={confirmarFinalizar} style={styles.simFinalizarBtn}>
             Finalizar
           </button>
         </div>
+
+        {!pausaUsada && (
+          <button onClick={empezarPausa} style={styles.linkVolver}>
+            🚻 Usar mi pausa de 5 minutos
+          </button>
+        )}
 
         <div style={styles.simDotsWrap}>
           {preguntas.map((p, i) => (
@@ -339,7 +448,7 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
             </button>
           ) : (
             <button
-              onClick={finalizarSimulacro}
+              onClick={confirmarFinalizar}
               style={{ ...styles.simNavBtn, ...styles.btnPurple }}
             >
               Finalizar simulacro

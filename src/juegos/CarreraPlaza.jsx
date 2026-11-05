@@ -43,13 +43,19 @@ const POSICIONES_VIDEO = {
 };
 
 // 🔀 utilidades locales (copias de las de App.jsx, para no depender de él)
+// Barajado justo (Fisher-Yates)
 function mezclar(array) {
-  return [...array].sort(() => Math.random() - 0.5);
+  const copia = [...array];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
 }
 
 function prepararPregunta(p) {
   const respuestas = p.respuestas.map((r, i) => ({ texto: r, indexOriginal: i }));
-  const mezcladas = respuestas.sort(() => Math.random() - 0.5);
+  const mezcladas = mezclar(respuestas);
   const nuevaCorrecta = mezcladas.findIndex((r) => r.indexOriginal === p.correcta);
   return { ...p, respuestas: mezcladas.map((r) => r.texto), correcta: nuevaCorrecta };
 }
@@ -115,6 +121,22 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
   const [jugadoraExpandida, setJugadoraExpandida] = useState(null);
   const [mostrarNombresVideo, setMostrarNombresVideo] = useState(false);
   const [refrescoHistorial, setRefrescoHistorial] = useState(0);
+  const [enPausa, setEnPausa] = useState(false);
+  const [pausaDesde, setPausaDesde] = useState(null);
+
+  function pausarJuego() {
+    setEnPausa(true);
+    setPausaDesde(Date.now());
+  }
+
+  // al reanudar, el tiempo de pausa no cuenta para el desempate
+  function reanudarJuego() {
+    if (pausaDesde && inicioTurno) {
+      setInicioTurno((t) => t + (Date.now() - pausaDesde));
+    }
+    setPausaDesde(null);
+    setEnPausa(false);
+  }
 
   const totalTurnosJuego = juegoNumJugadores * juegoNumPreguntas;
   const jugadorActualIndice = turnoActual % juegoNumJugadores;
@@ -196,6 +218,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
     setRespuestaSeleccionadaJuego(null);
     setTiempoRestanteJuego(juegoCronometroActivo ? 60 : null);
     setInicioTurno(Date.now());
+    setEnPausa(false);
     setVista("jugando");
   }
 
@@ -265,7 +288,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
 
   // ⏱️ cuenta atrás del minijuego (1 min por turno, si el cronómetro está activo)
   useEffect(() => {
-    if (vista !== "jugando" || !juegoCronometroActivo || tiempoRestanteJuego === null) return;
+    if (vista !== "jugando" || !juegoCronometroActivo || tiempoRestanteJuego === null || enPausa) return;
 
     if (tiempoRestanteJuego <= 0) {
       if (respuestaSeleccionadaJuego === null) {
@@ -303,7 +326,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
     }, 1000);
 
     return () => clearTimeout(id);
-  }, [vista, tiempoRestanteJuego, juegoCronometroActivo, turnoActual]);
+  }, [vista, tiempoRestanteJuego, juegoCronometroActivo, turnoActual, enPausa]);
 
 // 🏁 DETALLE
 if (vista === "detalle") {
@@ -553,14 +576,39 @@ if (vista === "detalle") {
   if (vista === "jugando" && preguntaJuego) {
     const nombreActual = puntuacionesJuego[jugadorActualIndice]?.nombre || "Persona";
 
+    if (enPausa) {
+      return (
+        <div style={styles.menuContainer}>
+          <div style={{ ...styles.configCard, textAlign: "center", marginTop: 40 }}>
+            <img
+              src={heroCarreraPlaza}
+              alt=""
+              style={{ width: 140, height: 140, objectFit: "contain", display: "block", margin: "0 auto 12px" }}
+            />
+            <p style={styles.configCardTitle}>Carrera en pausa</p>
+            <p style={styles.configSubLabel}>
+              Turno de {nombreActual}. El reloj está parado en {formatearTiempo(tiempoRestanteJuego || 0)}.
+            </p>
+            <button onClick={reanudarJuego} style={{ ...styles.ctaButton, marginTop: 16 }}>
+              Seguir jugando
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={styles.menuContainer}>
         <div style={styles.simHeaderBar}>
           <span style={styles.simTimer}>👤 {nombreActual}</span>
           {juegoCronometroActivo && (
-            <span style={styles.simTimer}>
-              ⏱ {formatearTiempo(tiempoRestanteJuego || 0)}
-            </span>
+            <button
+              onClick={pausarJuego}
+              title="Pausar"
+              style={{ background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", ...styles.simTimer }}
+            >
+              ⏱ {formatearTiempo(tiempoRestanteJuego || 0)} ⏸
+            </button>
           )}
         </div>
 

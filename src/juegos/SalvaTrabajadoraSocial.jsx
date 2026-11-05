@@ -31,13 +31,19 @@ const FRASES_DERROTA_MUERTE = [
 ];
 
 // 🔀 utilidades locales (copias de las de App.jsx, para no depender de él)
+// Barajado justo (Fisher-Yates)
 function mezclar(array) {
-  return [...array].sort(() => Math.random() - 0.5);
+  const copia = [...array];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
 }
 
 function prepararPregunta(p) {
   const respuestas = p.respuestas.map((r, i) => ({ texto: r, indexOriginal: i }));
-  const mezcladas = respuestas.sort(() => Math.random() - 0.5);
+  const mezcladas = mezclar(respuestas);
   const nuevaCorrecta = mezcladas.findIndex((r) => r.indexOriginal === p.correcta);
   return { ...p, respuestas: mezcladas.map((r) => r.texto), correcta: nuevaCorrecta };
 }
@@ -93,6 +99,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
   const [ayudaDisponible, setAyudaDisponible] = useState(false);
   const [respuestaDescartada, setRespuestaDescartada] = useState(null);
   const [buscarBloqueMuerte, setBuscarBloqueMuerte] = useState("");
+  const [enPausa, setEnPausa] = useState(false);
 
   const personajeActivo = registroPersonajes[obtenerPersonajeActivo()] || registroPersonajes["ander-egg"];
 
@@ -143,6 +150,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     setVidasRestantes(fallosPermitidos(modoVidas));
     setAyudaDisponible(ayudaActiva);
     setRespuestaDescartada(null);
+    setEnPausa(false);
     setVista("jugando");
   }
 
@@ -205,7 +213,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
 
   // ⏱️ cuenta atrás (si el cronómetro está activo)
   useEffect(() => {
-    if (vista !== "jugando" || !muerteCronometroActivo || muerteTiempoRestante === null) return;
+    if (vista !== "jugando" || !muerteCronometroActivo || muerteTiempoRestante === null || enPausa) return;
 
     if (muerteTiempoRestante <= 0) {
       perderMuerte();
@@ -217,7 +225,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     }, 1000);
 
     return () => clearTimeout(id);
-  }, [vista, muerteTiempoRestante, muerteCronometroActivo]);
+  }, [vista, muerteTiempoRestante, muerteCronometroActivo, enPausa]);
 
 // ☠️ DETALLE
 if (vista === "detalle") {
@@ -427,6 +435,28 @@ if (vista === "detalle") {
   if (vista === "jugando" && muertePreguntas[muerteIndice]) {
     const preguntaMuerte = muertePreguntas[muerteIndice];
 
+    if (enPausa) {
+      return (
+        <div style={styles.menuContainer}>
+          <div style={{ ...styles.configCard, textAlign: "center", marginTop: 40 }}>
+            <img
+              src={imagenMuerteSubita(muerteAciertos)}
+              alt=""
+              style={{ width: 140, height: 140, objectFit: "contain", display: "block", margin: "0 auto 12px" }}
+            />
+            <p style={styles.configCardTitle}>Tu trabajadora se toma un respiro</p>
+            <p style={styles.configSubLabel}>
+              El reloj está parado en {formatearTiempo(muerteTiempoRestante || 0)}. Vas por la
+              pregunta {muerteIndice + 1} de {muertePreguntas.length}.
+            </p>
+            <button onClick={() => setEnPausa(false)} style={{ ...styles.ctaButton, marginTop: 16 }}>
+              Seguir jugando
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={styles.muerteJugandoContainer}>
 <div style={styles.simHeaderBar}>
@@ -437,9 +467,13 @@ if (vista === "detalle") {
             <span style={styles.simTimer}>❤️ {vidasRestantes}</span>
           )}
           {muerteCronometroActivo && (
-            <span style={styles.simTimer}>
-              ⏱ {formatearTiempo(muerteTiempoRestante || 0)}
-            </span>
+            <button
+              onClick={() => setEnPausa(true)}
+              title="Pausar"
+              style={{ background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", ...styles.simTimer }}
+            >
+              ⏱ {formatearTiempo(muerteTiempoRestante || 0)} ⏸
+            </button>
           )}
         </div>
 
