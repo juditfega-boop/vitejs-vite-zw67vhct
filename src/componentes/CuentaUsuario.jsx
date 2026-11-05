@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { registrarse, iniciarSesion, cerrarSesion, observarSesion, mensajeErrorAuth } from "../servicios/auth";
+import { registrarse, iniciarSesion, cerrarSesion, observarSesion, mensajeErrorAuth, recuperarContrasena } from "../servicios/auth";
 import { styles } from "../estilos";
 
 export default function CuentaUsuario() {
@@ -28,6 +28,25 @@ export default function CuentaUsuario() {
         await iniciarSesion(email.trim(), password);
       }
       setPassword("");
+    } catch (e) {
+      setError(mensajeErrorAuth(e.code));
+    }
+    setCargando(false);
+  }
+
+  async function olvideContrasena() {
+    setError("");
+    setMensajeOk("");
+    if (!email.trim()) {
+      setError("Escribe tu correo arriba y vuelve a pulsar aquí.");
+      return;
+    }
+    setCargando(true);
+    try {
+      await recuperarContrasena(email.trim());
+      setMensajeOk(
+        "Si hay una cuenta con ese correo, te hemos enviado un enlace para crear una contraseña nueva. Mira también en spam."
+      );
     } catch (e) {
       setError(mensajeErrorAuth(e.code));
     }
@@ -107,6 +126,16 @@ export default function CuentaUsuario() {
       >
         {cargando ? "Un momento..." : modo === "registro" ? "Crear cuenta" : "Iniciar sesión"}
       </button>
+
+      {modo === "login" && (
+        <button onClick={olvideContrasena} disabled={cargando} style={styles.linkVolver}>
+          ¿Has olvidado tu contraseña?
+        </button>
+      )}
+
+      {mensajeOk && (
+        <p style={{ ...styles.configSubLabel, marginTop: 6 }}>{mensajeOk}</p>
+      )}
     </div>
   );
 }
