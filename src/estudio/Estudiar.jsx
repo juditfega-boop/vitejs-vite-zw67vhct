@@ -7,7 +7,10 @@ import {
   obtenerTiempos,
   registrarTiempoPregunta,
   obtenerFavoritos,
-  guardarFavoritos
+  guardarFavoritos,
+  obtenerPartida,
+  guardarPartida,
+  borrarPartida
 } from "../servicios/progreso";
 import { styles } from "../estilos";
 import iconoTazaPlantita from "../assets/kit/icono-taza-plantita-evolucion.png";
@@ -90,15 +93,42 @@ const estudiarEstilosLocales = `
   .switch input:checked + .slider:before {
     transform: translateX(20px);
   }
+  @keyframes favLatido {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.45) rotate(-8deg); }
+    65% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+  }
+  .fav-latido { animation: favLatido 0.5s ease-out; }
+  @keyframes avisoEntra {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+  .aviso-favorito { animation: avisoEntra 0.25s ease-out; }
 `;
 
+// Barajado justo (Fisher-Yates): todas las posiciones tienen la misma probabilidad
 function mezclar(array) {
-  return [...array].sort(() => Math.random() - 0.5);
+  const copia = [...array];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+// Elige primero las preguntas que menos te han salido (a igualdad de veces, al azar)
+function elegirEquilibradas(lista, cantidad) {
+  const stats = obtenerStats();
+  const vecesDe = (p) => stats[String(p.id)]?.veces || 0;
+  return mezclar(lista)
+    .sort((a, b) => vecesDe(a) - vecesDe(b))
+    .slice(0, cantidad);
 }
 
 function prepararPregunta(p) {
   const respuestas = p.respuestas.map((r, i) => ({ texto: r, indexOriginal: i }));
-  const mezcladas = respuestas.sort(() => Math.random() - 0.5);
+  const mezcladas = mezclar(respuestas);
   const nuevaCorrecta = mezcladas.findIndex((r) => r.indexOriginal === p.correcta);
   return { ...p, respuestas: mezcladas.map((r) => r.texto), correcta: nuevaCorrecta };
 }
@@ -170,7 +200,11 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [expedientesResueltos, setExpedientesResueltos] = useState(0);
   const [tabErroresVacio, setTabErroresVacio] = useState("prioritarios");
   const [buscarBloque, setBuscarBloque] = useState("");
-
+  const [pausado, setPausado] = useState(false);
+  const [pausaDesde, setPausaDesde] = useState(null);
+  const [avisoFavorito, setAvisoFavorito] = useState("");
+  const [latidoFav, setLatidoFav] = useState(0);
+  const [partidaGuardada, setPartidaGuardada] = useState(() => obtenerPartida());
   const pregunta = preguntas[indice];
 
   useEffect(() => {
@@ -180,13 +214,93 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   }, [vista]);
 
   function toggleFavorito(id) {
-    setFavoritos((prev) => {
-      const idStr = String(id);
-      const nuevo = prev.includes(idStr) ? prev.filter((f) => f !== idStr) : [...prev, idStr];
-      guardarFavoritos(nuevo);
-      return nuevo;
-    });
+    const idStr = String(id);
+    const yaEra = favoritos.includes(idStr);
+    const nuevo = yaEra ? favoritos.filter((f) => f !== idStr) : [...favoritos, idStr];
+    setFavoritos(nuevo);
+    guardarFavoritos(nuevo);
+    setLatidoFav((n) => n + 1);
+    setAvisoFavorito(yaEra ? "Quitada de favoritas" : "Guardada en favoritas");
     sincronizarConNube();
+  }
+
+  // el aviso de favoritas desaparece solo
+  useEffect(() => {
+    if (!avisoFavorito) return;
+    const id = setTimeout(() => setAvisoFavorito(""), 1800);
+    return () => clearTimeout(id);
+  }, [avisoFavorito, latidoFav]);
+
+  // al cambiar de pregunta, la pantalla sube para que veas el enunciado
+  useEffect(() => {
+    if (vista === "quiz") window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [indice, vista]);
+
+  // ⏸ pausa (solo en Estudiar; el Simulacro no se pausa)
+  function pausar() {
+    setPausado(true);
+    setPausaDesde(Date.now());
+  }
+
+  function reanudar() {
+    if (pausaDesde && inicioPregunta) {
+      setInicioPregunta((t) => t + (Date.now() - pausaDesde));
+    }
+    setPausaDesde(null);
+    setPausado(false);
+  }
+
+  // 💾 guardado de la partida en curso
+  function datosPartida() {
+    return {
+      preguntas,
+      indice: mostrar ? indice + 1 : indice,
+      aciertos,
+      expedientesResueltos,
+      tiempoRestante,
+      conExplicacion
+    };
+  }
+
+  useEffect(() => {
+    if (vista !== "quiz" || preguntas.length === 0) return;
+    const datos = datosPartida();
+    if (datos.indice >= preguntas.length) {
+      borrarPartida();
+      return;
+    }
+    guardarPartida(datos);
+  }, [vista, preguntas, indice, mostrar, aciertos, expedientesResueltos, conExplicacion]);
+
+  function salirGuardando() {
+    const datos = datosPartida();
+    if (datos.indice < preguntas.length) guardarPartida(datos);
+    setPausado(false);
+    volverMenu();
+  }
+
+  function continuarPartida() {
+    const p = partidaGuardada;
+    if (!p || !p.preguntas || p.indice >= p.preguntas.length) {
+      descartarPartida();
+      return;
+    }
+    setPreguntas(p.preguntas);
+    setIndice(p.indice);
+    setAciertos(p.aciertos || 0);
+    setExpedientesResueltos(p.expedientesResueltos || 0);
+    setTiempoRestante(p.tiempoRestante ?? null);
+    setConExplicacion(p.conExplicacion ?? true);
+    setMensaje("");
+    setMostrar(false);
+    setPausado(false);
+    actualizarRacha();
+    setVista("quiz");
+  }
+
+  function descartarPartida() {
+    borrarPartida();
+    setPartidaGuardada(null);
   }
 
   function volverAProgreso() {
@@ -208,10 +322,12 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   }, [pregunta]);
 
   useEffect(() => {
-    if (vista !== "quiz" || tiempoRestante === null) return;
+    if (vista !== "quiz" || tiempoRestante === null || pausado) return;
 
     if (tiempoRestante <= 0) {
       setTiempoRestante(null);
+      borrarPartida();
+      setPartidaGuardada(null);
       setVista("resultado");
       return;
     }
@@ -221,7 +337,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     }, 1000);
 
     return () => clearTimeout(id);
-  }, [vista, tiempoRestante]);
+  }, [vista, tiempoRestante, pausado]);
 
   function comenzarEstudioPersonalizado() {
     let listaFuente = preguntasBase;
@@ -232,7 +348,10 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
       );
     }
 
-    const base = mezclar(listaFuente).slice(0, cantidad).map(prepararPregunta);
+    const base = mezclar(lista).slice(0, cantidad).map(prepararPregunta);
+    borrarPartida();
+    setPartidaGuardada(null);
+    setPausado(false);
 
     setPreguntas(base);
     setIndice(0);
@@ -327,15 +446,10 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     if (indice + 1 < preguntas.length) {
       setIndice((i) => i + 1);
     } else {
+      borrarPartida();
+      setPartidaGuardada(null);
       setVista("resultado");
     }
-  }
-
-  function anterior() {
-    if (indice === 0) return;
-    setMensaje("");
-    setMostrar(false);
-    setIndice((i) => i - 1);
   }
 
   function anterior() {
@@ -364,6 +478,26 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
           </div>
           <div style={styles.menuUnderline} />
         </div>
+
+        {partidaGuardada && partidaGuardada.preguntas && (
+          <div style={{ ...styles.configCard, background: "#f3eefa" }}>
+            <div style={styles.configCardTitleRow}>
+              <img src={iconoLibroEstudiar} alt="" className="icono-mini-config" style={styles.configCardIcono} />
+              <p style={{ ...styles.configCardTitle, marginBottom: 0 }}>Tienes un estudio a medias</p>
+            </div>
+            <p style={styles.configSubLabel}>
+              Ibas por la pregunta {partidaGuardada.indice + 1} de {partidaGuardada.preguntas.length}
+              {partidaGuardada.tiempoRestante != null &&
+                ` · te quedan ${formatearTiempo(partidaGuardada.tiempoRestante)}`}
+            </p>
+            <button onClick={continuarPartida} style={{ ...styles.ctaButton, marginTop: 12 }}>
+              Continuar donde lo dejé
+            </button>
+            <button onClick={descartarPartida} style={styles.linkVolver}>
+              Descartar y empezar uno nuevo
+            </button>
+          </div>
+        )}
 
         <div style={styles.configCard}>
         <div style={styles.configCardTitleRow}>
@@ -1006,27 +1140,65 @@ if (vista === "estadisticas") {
 
 // 🟣 QUIZ
 if (vista === "quiz" && pregunta) {
+  const esFavorita = favoritos.includes(String(pregunta.id));
+
+  if (pausado) {
+    return (
+      <div style={styles.menuContainer}>
+        <style>{estudiarEstilosLocales}</style>
+        <div style={{ ...styles.configCard, textAlign: "center", marginTop: 40 }}>
+          <img
+            src={iconoTazaPlantita}
+            alt=""
+            style={{ width: 120, height: 120, objectFit: "contain", display: "block", margin: "0 auto 12px" }}
+          />
+          <p style={styles.configCardTitle}>Estudio en pausa</p>
+          <p style={styles.configSubLabel}>
+            El cronómetro está parado en {formatearTiempo(tiempoRestante ?? 0)}. Tómate tu tiempo.
+          </p>
+          <button onClick={reanudar} style={{ ...styles.ctaButton, marginTop: 16 }}>
+            Seguir estudiando
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.menuContainer}>
+      <style>{estudiarEstilosLocales}</style>
       <div style={styles.quizHeaderRow}>
-        <button onClick={volverMenu} style={styles.quizVolverBtn}>
-          ⬅ Menú
+        <button onClick={salirGuardando} style={styles.quizVolverBtn}>
+          ⬅ Guardar y salir
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {tiempoRestante !== null && (
-            <span style={styles.simTimer}>⏱ {formatearTiempo(tiempoRestante)}</span>
-          )}
-<button
-              onClick={() => toggleFavorito(pregunta.id)}
-              title="Marcar como favorita"
-              style={styles.quizFavoritoBtn}
+            <button
+              onClick={pausar}
+              title="Pausar"
+              style={{ background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", ...styles.simTimer }}
             >
-              <img
-                src={favoritos.includes(String(pregunta.id)) ? iconoFavoritoLleno : iconoFavoritoVacio}
-                alt=""
-                style={styles.quizFavoritoIcono}
-              />
+              ⏱ {formatearTiempo(tiempoRestante)} ⏸
             </button>
+          )}
+          <button
+            onClick={() => toggleFavorito(pregunta.id)}
+            title={esFavorita ? "Quitar de favoritas" : "Marcar como favorita"}
+            style={{
+              ...styles.quizFavoritoBtn,
+              borderRadius: "50%",
+              transition: "background 0.25s, box-shadow 0.25s",
+              ...(esFavorita ? { background: "#f7e3c8", boxShadow: "0 0 0 3px #f1d3a8" } : {})
+            }}
+          >
+            <img
+              key={latidoFav}
+              className={latidoFav ? "fav-latido" : ""}
+              src={esFavorita ? iconoFavoritoLleno : iconoFavoritoVacio}
+              alt=""
+              style={styles.quizFavoritoIcono}
+            />
+          </button>
         </div>
       </div>
 
@@ -1108,6 +1280,32 @@ if (vista === "quiz" && pregunta) {
             Siguiente →
           </button>
         </>
+      )}
+
+      {avisoFavorito && (
+        <div
+          className="aviso-favorito"
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: 28,
+            transform: "translateX(-50%)",
+            background: "#fffaf2",
+            border: "1px solid #eadfcd",
+            borderRadius: 999,
+            padding: "10px 18px",
+            boxShadow: "0 4px 14px rgba(120,100,70,0.10)",
+            color: "#5b4a3a",
+            fontSize: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            zIndex: 50
+          }}
+        >
+          <img src={iconoFavoritoLleno} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />
+          {avisoFavorito}
+        </div>
       )}
     </div>
   );

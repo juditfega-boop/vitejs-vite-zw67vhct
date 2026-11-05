@@ -88,3 +88,21 @@ export function obtenerFavoritos() {
 export function guardarFavoritos(lista) {
   localStorage.setItem(CLAVE_FAVORITOS, JSON.stringify(lista));
 }
+// 💾 partida de estudio a medias (para continuar más tarde)
+export const CLAVE_PARTIDA = "opo_partida_estudio_v1";
+
+export function obtenerPartida() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_PARTIDA));
+  } catch {
+    return null;
+  }
+}
+
+export function guardarPartida(datos) {
+  localStorage.setItem(CLAVE_PARTIDA, JSON.stringify({ ...datos, fecha: Date.now() }));
+}
+
+export function borrarPartida() {
+  localStorage.removeItem(CLAVE_PARTIDA);
+}
