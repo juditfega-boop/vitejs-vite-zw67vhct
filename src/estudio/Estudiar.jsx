@@ -1256,8 +1256,8 @@ if (vista === "quiz" && pregunta) {
 
         return (
           <button
-            key={i}
-            onClick={() => comprobar(i)}
+          key={`${indice}-${i}`}
+          onClick={() => comprobar(i)}
             disabled={mostrar}
             style={{ ...styles.quizRespuestaBtn, ...estadoEstilo }}
           >

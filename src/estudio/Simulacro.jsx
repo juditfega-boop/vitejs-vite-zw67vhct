@@ -10,6 +10,7 @@ import iconoExplicacion from "../assets/kit/icono-explicacion-libreta.png";
 import heroSimulacroCompletado from "../assets/kit/hero-simulacro-completado.png";
 import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
 import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
+import { renderizarTextoConNegrita } from "../utils/renderizarTexto";
 import iconoCronometro from "../assets/kit/icono-cronometro-reloj.png";
 import iconoPlantita from "../assets/kit/icono-plantita-evolucion.png";
 import iconoPausaBano from "../assets/bookbrand/icono-brand-pausa-bano.png";
@@ -425,8 +426,8 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
         {pregunta.respuestas.map((r, i) => (
           <button
-            key={i}
-            onClick={() => seleccionarRespuestaSimulacro(i)}
+          key={`${indice}-${i}`}
+          onClick={() => seleccionarRespuestaSimulacro(i)}
             style={{
               ...styles.simRespuestaBtn,
               ...(respuestasSimulacro[indice] === i ? styles.simRespuestaSeleccionada : {})
@@ -653,8 +654,8 @@ if (vista === "resultado" && resultadoSimulacro) {
 
           return (
             <button
-              key={i}
-              onClick={() => comprobarRepaso(i)}
+            key={`${repasoIndice}-${i}`}
+            onClick={() => comprobarRepaso(i)}
               disabled={repasoMostrar}
               style={{ ...styles.quizRespuestaBtn, ...estadoEstilo }}
             >
@@ -668,9 +669,10 @@ if (vista === "resultado" && resultadoSimulacro) {
           <>
             <div style={styles.explicacionCaja}>
               <div style={styles.explicacionTituloRow}>
+                <img src={iconoExplicacion} alt="" style={styles.explicacionIcono} />
                 <b>Explicación:</b>
               </div>
-              <p style={{ margin: 0 }}>{preguntaRepaso.explicacion}</p>
+              {renderizarTextoConNegrita(preguntaRepaso.explicacion)}
             </div>
 
             <button onClick={siguienteRepaso} style={styles.ctaButton}>
