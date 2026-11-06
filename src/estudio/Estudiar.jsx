@@ -844,31 +844,66 @@ if (vista === "estadisticas") {
   // ❤️ FAVORITAS
   if (vista === "favoritos") {
     const listaFavoritas = preguntasBase.filter((p) => favoritos.includes(String(p.id)));
+    const n = listaFavoritas.length;
+
+    // 🗂️ sin favoritas todavía
+    if (n === 0) {
+      return (
+        <div style={styles.menuContainer}>
+          <div style={styles.quizHeaderRow}>
+            <button onClick={volverAProgreso} style={styles.quizVolverBtn}>
+              ⬅ Mi evolución
+            </button>
+          </div>
+
+          <img src={iconoFolderVacio} alt="" style={styles.erroresVacioIlustracion} />
+
+          <h2 style={styles.erroresVacioTitulo}>Tu carpeta está vacía</h2>
+          <p style={styles.erroresVacioSubtitulo}>
+            Cuando una pregunta te parezca importante, márcala con la estrella
+            <img
+              src={iconoFavoritoLleno}
+              alt=""
+              style={{ ...styles.iconoInlinePequeno, margin: "0 4px" }}
+            />
+            mientras estudias y aparecerá aquí.
+          </p>
+
+          <button onClick={() => setVista("config")} style={styles.ctaButton}>
+            Ir a estudiar
+          </button>
+        </div>
+      );
+    }
 
     return (
       <div style={styles.menuContainer}>
+        <img src={iconoCarpetaFavoritas} alt="" style={styles.repasarHeroImg} />
+
         <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>❤️ Favoritas</h1>
+          <h1 style={styles.menuTitle}>Favoritas</h1>
           <div style={styles.menuUnderline} />
         </div>
 
-        {listaFavoritas.length === 0 ? (
-          <p style={styles.configSubLabel}>
-            Aún no has marcado ninguna pregunta con ⭐. Puedes hacerlo desde cualquier
-            pregunta durante el estudio.
-          </p>
-        ) : (
-          <>
-            <p style={styles.configSubLabel}>
-              Tienes {listaFavoritas.length} pregunta{listaFavoritas.length === 1 ? "" : "s"}{" "}
-              guardada{listaFavoritas.length === 1 ? "" : "s"}.
-            </p>
-
-            <button onClick={() => iniciarBloque(listaFavoritas)} style={styles.ctaButton}>
-              Repasar favoritas
-            </button>
-          </>
-        )}
+        <div style={{ ...styles.repasarFilaCard, background: "#f9e3e3" }}>
+          <div style={{ display: "flex", gap: 12 }}>
+            <img src={iconoFavoritoLleno} alt="" style={styles.repasarFilaIcono} />
+            <div style={{ flex: 1 }}>
+              <p style={styles.repasarFilaTitulo}>
+                {n} pregunta{n === 1 ? "" : "s"} guardada{n === 1 ? "" : "s"}
+              </p>
+              <p style={styles.repasarFilaTexto}>
+                Las que tú has elegido porque merecen un repaso más. Vuelve a ellas cuando quieras.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => iniciarBloque(listaFavoritas)}
+            style={{ ...styles.repasarBoton, background: "#f0c3c3" }}
+          >
+            🍃 Repasar favoritas
+          </button>
+        </div>
 
         <button onClick={volverAProgreso} style={styles.linkVolver}>
           ⬅ Volver
