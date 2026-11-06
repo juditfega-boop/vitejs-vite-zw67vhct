@@ -25,6 +25,7 @@ import iconoReloj from "./assets/kit/icono-reloj-simulacro.png";
 import iconoDados from "./assets/kit/icono-dados-minijuegos.png";
 import iconoGrafico from "./assets/kit/icono-grafico-evolucion.png";
 import iconoCarpeta from "./assets/kit/icono-carpeta-favoritos.png";
+import iconoCalendario from "./assets/kit/icono-calendario-inicio.png";
 import iconoTaza from "./assets/kit/icono-taza-perfil.png";
 import iconoPlantita from "./assets/kit/icono-plantita-evolucion.png";
 import iconoRachaLlama from "./assets/bookbrand/icono-brand-racha-llama.png";
@@ -290,7 +291,7 @@ if (pantalla === "inicio") {
           onClick={() => setPantalla("calendario")}
           style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaMuted }}
         >
-          <img src={iconoCarpeta} alt="" style={styles.inicioTarjetaIcono} />
+          <img src={iconoCalendario} alt="" style={styles.inicioTarjetaIcono} />
           <p style={styles.inicioTarjetaTitulo}>Mi calendario</p>
           <p style={styles.inicioTarjetaSubtitulo}>Planifica tus días de estudio</p>
           <div style={{ ...styles.inicioTarjetaLinea, background: "#c3bcae" }} />

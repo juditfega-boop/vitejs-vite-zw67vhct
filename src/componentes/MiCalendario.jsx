@@ -10,11 +10,19 @@ export const TIPOS_DIA = {
   R: { nombre: "Repaso", descripcion: "Repaso corto, tests o tarjetas", fondo: "#e6dcf3", texto: "#6b5a8c" },
   M: { nombre: "Repaso mensual", descripcion: "Repaso de todo lo del mes", fondo: "#f6dade", texto: "#8c5560" },
   F: { nombre: "Repaso final", descripcion: "Repaso antes del examen", fondo: "#b7cfae", texto: "#3f5a3a" },
-  O: { nombre: "Ocupado", descripcion: "Día con otros compromisos", fondo: "#f3e1bd", texto: "#8a6a2e" },
   V: { nombre: "Vacaciones", descripcion: "Vacaciones o festivo", fondo: "#dde5ec", texto: "#56677a" },
   L: { nombre: "Libre", descripcion: "Día de descanso", fondo: "#fbf8f2", texto: "#8a8578" }
 };
-const ORDEN_TIPOS = ["E", "R", "M", "F", "O", "V", "L"];
+const ORDEN_TIPOS = ["E", "R", "M", "F", "V", "L"];
+
+const HOY_TE_TOCA = {
+  E: { texto: "estudio", frase: "Un tema más hacia la plaza." },
+  R: { texto: "repaso", frase: "Tests o tarjetas, sin agobios." },
+  M: { texto: "repaso mensual", frase: "Hoy toca mirar todo lo del mes." },
+  F: { texto: "repaso final", frase: "Ya queda muy poco. Confía en lo que sabes." },
+  V: { texto: "vacaciones", frase: "Disfrutar también es parte del plan." },
+  L: { texto: "día libre", frase: "Hoy toca descansar y coger fuerzas." }
+};
 
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -138,6 +146,15 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
     ...Array.from({ length: diasDelMes }, (_, i) => i + 1)
   ];
 
+  const letraHoy = dias[claveHoy];
+  const tipoHoy = letraHoy ? TIPOS_DIA[letraHoy] : null;
+
+  function planificarHoy() {
+    setMes(hoy.getMonth());
+    setAnio(hoy.getFullYear());
+    setDiaSeleccionado(claveHoy);
+  }
+
   const contadorMes = {};
   for (let d = 1; d <= diasDelMes; d++) {
     const letra = dias[claveFecha(anio, mes, d)];
@@ -160,8 +177,35 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
     <div style={styles.menuContainer}>
       {cabecera}
 
-      <div style={styles.configCard}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+{!cargando && (
+  <div
+    style={{
+      ...styles.configCard,
+      background: tipoHoy ? tipoHoy.fondo : "#fffaf2",
+      textAlign: "center"
+    }}
+  >
+    {tipoHoy ? (
+      <>
+        <p style={{ ...styles.configSubLabel, margin: 0 }}>Hoy te toca</p>
+        <p style={{ fontSize: 24, fontWeight: 700, color: tipoHoy.texto, margin: "4px 0" }}>
+          {HOY_TE_TOCA[letraHoy].texto.charAt(0).toUpperCase() + HOY_TE_TOCA[letraHoy].texto.slice(1)}
+        </p>
+        <p style={{ ...styles.configSubLabel, margin: 0 }}>{HOY_TE_TOCA[letraHoy].frase}</p>
+      </>
+    ) : (
+      <>
+        <p style={{ ...styles.configSubLabel, margin: 0 }}>Hoy todavía no tienes nada marcado.</p>
+        <button onClick={planificarHoy} style={{ ...styles.linkVolver, marginTop: 6 }}>
+          Planificar hoy
+        </button>
+      </>
+    )}
+  </div>
+)}
+
+<div style={styles.configCard}>
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <button onClick={mesAnterior} style={flechaBtn} aria-label="Mes anterior">‹</button>
           <p style={{ ...styles.configCardTitle, margin: 0 }}>
             {MESES[mes]} {anio}
