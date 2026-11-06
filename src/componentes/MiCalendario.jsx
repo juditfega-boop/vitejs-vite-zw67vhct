@@ -473,7 +473,7 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
               >
                 {letra}
               </span>
-              <div style={{ flex: 1, textAlign: "right" }}>
+              <div style={{ flex: 1, textAlign: "left" }}>
                 <p style={{ margin: 0, fontWeight: 700, color: "#4a463f", fontSize: 14 }}>{tipo.nombre}</p>
                 <p style={{ ...styles.configSubLabel, margin: 0 }}>{tipo.descripcion}</p>
               </div>
