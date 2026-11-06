@@ -89,57 +89,8 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
   const pregunta = preguntas[indice];
 
   useEffect(() => {
-    if (vista !== "examen" || tiempoRestanteSimulacro === null) return;
-    useEffect(() => {
-      if (vista !== "examen" || tiempoRestanteSimulacro === null || enPausa) return;
-  
-      if (tiempoRestanteSimulacro <= 0) {
-        finalizarSimulacro();
-        return;
-      }
-  
-      const id = setTimeout(() => {
-        setTiempoRestanteSimulacro((t) => (t !== null ? t - 1 : null));
-      }, 1000);
-  
-      return () => clearTimeout(id);
-    }, [vista, tiempoRestanteSimulacro, enPausa]);
-  
-    // 🚻 cuenta atrás de la pausa (5 min, una sola vez por examen)
-    useEffect(() => {
-      if (!enPausa) return;
-      if (pausaRestante <= 0) {
-        setEnPausa(false);
-        return;
-      }
-      const id = setTimeout(() => setPausaRestante((t) => t - 1), 1000);
-      return () => clearTimeout(id);
-    }, [enPausa, pausaRestante]);
-  
-    // al cambiar de pregunta, la pantalla sube al enunciado
-    useEffect(() => {
-      if (vista === "examen") window.scrollTo({ top: 0, behavior: "smooth" });
-    }, [indice, vista]);
-  
-    function empezarPausa() {
-      if (pausaUsada) return;
-      setPausaUsada(true);
-      setPausaRestante(DURACION_PAUSA_SEGUNDOS);
-      setEnPausa(true);
-    }
-  
-    function terminarPausa() {
-      setEnPausa(false);
-    }
-  
-    function confirmarFinalizar() {
-      const sinResponder = respuestasSimulacro.filter((r) => r === null || r === undefined).length;
-      const texto =
-        sinResponder > 0
-          ? `Te quedan ${sinResponder} preguntas sin responder. ¿Seguro que quieres entregar el examen?`
-          : "¿Entregar el examen?";
-      if (window.confirm(texto)) finalizarSimulacro();
-    }
+    if (vista !== "examen" || tiempoRestanteSimulacro === null || enPausa) return;
+
     if (tiempoRestanteSimulacro <= 0) {
       finalizarSimulacro();
       return;
@@ -150,7 +101,43 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     }, 1000);
 
     return () => clearTimeout(id);
-  }, [vista, tiempoRestanteSimulacro]);
+  }, [vista, tiempoRestanteSimulacro, enPausa]);
+
+  // 🚻 cuenta atrás de la pausa (5 min, una sola vez por examen)
+  useEffect(() => {
+    if (!enPausa) return;
+    if (pausaRestante <= 0) {
+      setEnPausa(false);
+      return;
+    }
+    const id = setTimeout(() => setPausaRestante((t) => t - 1), 1000);
+    return () => clearTimeout(id);
+  }, [enPausa, pausaRestante]);
+
+  // al cambiar de pregunta, la pantalla sube al enunciado
+  useEffect(() => {
+    if (vista === "examen") window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [indice, vista]);
+
+  function empezarPausa() {
+    if (pausaUsada) return;
+    setPausaUsada(true);
+    setPausaRestante(DURACION_PAUSA_SEGUNDOS);
+    setEnPausa(true);
+  }
+
+  function terminarPausa() {
+    setEnPausa(false);
+  }
+
+  function confirmarFinalizar() {
+    const sinResponder = respuestasSimulacro.filter((r) => r === null || r === undefined).length;
+    const texto =
+      sinResponder > 0
+        ? `Te quedan ${sinResponder} preguntas sin responder. ¿Seguro que quieres entregar el examen?`
+        : "¿Entregar el examen?";
+    if (window.confirm(texto)) finalizarSimulacro();
+  }
 
   function iniciarSimulacro() {
     const grupo1 = preguntasBase.filter((p) => Number(p.grupo) === 1);
