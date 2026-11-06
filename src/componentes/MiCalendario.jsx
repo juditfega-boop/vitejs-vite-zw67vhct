@@ -11,7 +11,7 @@ export const TIPOS_DIA = {
   M: { nombre: "Repaso mensual", descripcion: "Repaso de todo lo del mes", fondo: "#f6dade", texto: "#8c5560" },
   F: { nombre: "Repaso final", descripcion: "Repaso antes del examen", fondo: "#b7cfae", texto: "#3f5a3a" },
   V: { nombre: "Vacaciones", descripcion: "Vacaciones o festivo", fondo: "#dde5ec", texto: "#56677a" },
-  L: { nombre: "Libre", descripcion: "Día de descanso", fondo: "#fbf8f2", texto: "#8a8578" }
+  L: { nombre: "Libre", descripcion: "Día de descanso", fondo: "#f3e1bd", texto: "#8a6a2e" }
 };
 const ORDEN_TIPOS = ["E", "R", "M", "F", "V", "L"];
 
@@ -45,6 +45,22 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
   const [mes, setMes] = useState(hoy.getMonth());
   const [anio, setAnio] = useState(hoy.getFullYear());
   const [diaSeleccionado, setDiaSeleccionado] = useState(null);
+  const [leyendaAbierta, setLeyendaAbierta] = useState(() => {
+    try {
+      return localStorage.getItem("opo_calendario_leyenda") !== "cerrada";
+    } catch {
+      return true;
+    }
+  });
+
+  function alternarLeyenda() {
+    setLeyendaAbierta((abierta) => {
+      try {
+        localStorage.setItem("opo_calendario_leyenda", abierta ? "cerrada" : "abierta");
+      } catch {}
+      return !abierta;
+    });
+  }
 
   useEffect(() => {
     const dejarDeEscuchar = observarSesion((u) => setUsuario(u));
@@ -323,9 +339,25 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
         </div>
       )}
 
-      <div style={styles.configCard}>
-        <p style={styles.configCardTitle}>Leyenda</p>
-        {ORDEN_TIPOS.map((letra) => {
+<div style={styles.configCard}>
+        <button
+          onClick={alternarLeyenda}
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            fontFamily: "inherit"
+          }}
+        >
+          <span style={{ ...styles.configCardTitle, margin: 0 }}>Leyenda</span>
+          <span style={{ color: "#8a8578" }}>{leyendaAbierta ? "▲" : "▼"}</span>
+        </button>
+        {leyendaAbierta && ORDEN_TIPOS.map((letra) => {
           const tipo = TIPOS_DIA[letra];
           return (
             <div key={letra} style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}>
