@@ -11,6 +11,14 @@ import iconoAciertoCheck from "../assets/kit/icono-fin-aciertos.png";
 import iconoErrorX from "../assets/kit/icono-sim-errores.png";
 import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
 import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
+import iconoMedalla1 from "../assets/bookbrand/icono-brand-medalla-1.png";
+import iconoMedalla2 from "../assets/bookbrand/icono-brand-medalla-2.png";
+import iconoMedalla3 from "../assets/bookbrand/icono-brand-medalla-3.png";
+import iconoMedalla4 from "../assets/bookbrand/icono-brand-medalla-4.png";
+import iconoPasarMovil from "../assets/bookbrand/icono-brand-pasar-movil.png";
+import iconoCronometro from "../assets/kit/icono-cronometro-reloj.png";
+
+const MEDALLAS = [iconoMedalla1, iconoMedalla2, iconoMedalla3, iconoMedalla4];
 
 const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
 
@@ -556,7 +564,11 @@ if (vista === "detalle") {
     return (
       <div style={styles.placeholderContainer}>
         <div style={styles.placeholderCard}>
-          <div style={styles.placeholderEmoji}>📱</div>
+        <img
+            src={iconoPasarMovil}
+            alt=""
+            style={{ width: 130, height: 130, objectFit: "contain", display: "block", margin: "0 auto 8px" }}
+          />
           <h2>Ahora juega {nombreActual}</h2>
           <p style={styles.configSubLabel}>
             Pasa el dispositivo a {nombreActual} y pulsa comenzar cuando esté listo/a.
@@ -607,7 +619,7 @@ if (vista === "detalle") {
               title="Pausar"
               style={{ background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", ...styles.simTimer }}
             >
-              ⏱ {formatearTiempo(tiempoRestanteJuego || 0)} ⏸
+<img src={iconoCronometro} alt="" style={styles.iconoInlinePequeno} /> {formatearTiempo(tiempoRestanteJuego || 0)} ⏸
             </button>
           )}
         </div>
@@ -721,9 +733,14 @@ if (vista === "detalle") {
         </div>
 
         <p style={{ textAlign: "center", fontWeight: 700, color: "#4a463f" }}>
-          {hayEmpate
-            ? `¡Empate entre ${ganadoras.map((g) => g.nombre).join(" y ")}!`
-            : `🥇 Gana ${ganadoras[0]?.nombre}`}
+        {hayEmpate ? (
+            `¡Empate entre ${ganadoras.map((g) => g.nombre).join(" y ")}!`
+          ) : (
+            <span style={styles.botonIconoTextoRow}>
+              <img src={iconoMedalla1} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
+              Gana {ganadoras[0]?.nombre}
+            </span>
+          )}
         </p>
 
         <div style={styles.resultCard}>
@@ -734,7 +751,10 @@ if (vista === "detalle") {
                 style={styles.filaJugadoraBtn}
               >
 <span>
-                  {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} {j.nombre}
+<span style={styles.botonIconoTextoRow}>
+                    <img src={MEDALLAS[i]} alt={`Puesto ${i + 1}`} style={{ width: 22, height: 22, objectFit: "contain" }} />
+                    {j.nombre}
+                  </span>
                 </span>
                 <b style={styles.inlineStatRow}>
                   <img src={iconoAciertoCheck} alt="" style={styles.iconoInlinePequeno} /> {j.aciertos} /{" "}

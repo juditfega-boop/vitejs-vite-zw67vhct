@@ -1181,7 +1181,7 @@ if (vista === "quiz" && pregunta) {
               title="Pausar"
               style={{ background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", ...styles.simTimer }}
             >
-              ⏱ {formatearTiempo(tiempoRestante)} ⏸
+<img src={iconoCronometro} alt="" style={styles.iconoInlinePequeno} /> {formatearTiempo(tiempoRestante)} ⏸
             </button>
           )}
           <button

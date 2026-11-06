@@ -11,6 +11,7 @@ import iconoAciertoCheck from "../assets/kit/icono-fin-aciertos.png";
 import iconoPregunta from "../assets/bookbrand/icono-brand-pregunta.png";
 import iconoErrorX from "../assets/kit/icono-sim-errores.png";
 import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
+import iconoCronometro from "../assets/kit/icono-cronometro-reloj.png";
 import PersonajeFlotante from "../personajes/PersonajeFlotante";
 import registroPersonajes from "../personajes/registroPersonajes";
 import { obtenerPersonajeActivo } from "../personajes/personajeActivo";
@@ -472,7 +473,7 @@ if (vista === "detalle") {
               title="Pausar"
               style={{ background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", ...styles.simTimer }}
             >
-              ⏱ {formatearTiempo(muerteTiempoRestante || 0)} ⏸
+<img src={iconoCronometro} alt="" style={styles.iconoInlinePequeno} /> {formatearTiempo(muerteTiempoRestante || 0)} ⏸
             </button>
           )}
         </div>

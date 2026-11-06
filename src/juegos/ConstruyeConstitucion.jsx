@@ -7,6 +7,7 @@ import PersonajeFlotante from "../personajes/PersonajeFlotante";
 import { styles, globalStyles } from "../estilos";
 import iconoLadrillo from "../assets/bookbrand/icono-brand-ladrillo.png";
 import iconoGrua from "../assets/bookbrand/icono-brand-grua.png";
+import iconoNumeros from "../assets/bookbrand/icono-brand-numeros.png";
 import heroConstruyeConstitucion from "../assets/kit/hero-construye-constitucion.png";
 import iconoLupaExplorar from "../assets/kit/icono-lupa-explorar.png";
 import LawExplorer from "../explorador/LawExplorer";
@@ -215,7 +216,7 @@ if (vista === "detalle") {
             </p>
           </div>
           <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
-            <span style={styles.juegoDetalleEmoji}>🔢</span>
+          <img src={iconoNumeros} alt="" style={styles.juegoDetalleIcono} />
             <p style={styles.juegoDetalleTexto}>
               Completa el artículo inicial y final de cada título, capítulo y sección
             </p>

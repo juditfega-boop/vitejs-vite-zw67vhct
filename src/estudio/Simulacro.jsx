@@ -10,6 +10,13 @@ import iconoExplicacion from "../assets/kit/icono-explicacion-libreta.png";
 import heroSimulacroCompletado from "../assets/kit/hero-simulacro-completado.png";
 import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
 import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
+import iconoCronometro from "../assets/kit/icono-cronometro-reloj.png";
+import iconoPlantita from "../assets/kit/icono-plantita-evolucion.png";
+import iconoPausaBano from "../assets/bookbrand/icono-brand-pausa-bano.png";
+import iconoLapizHoja from "../assets/bookbrand/icono-brand-lapiz-hoja.png";
+
+const filaAviso = { ...{}, display: "flex", alignItems: "flex-start", gap: 10, marginTop: 10 };
+const iconoAviso = { width: 26, height: 26, objectFit: "contain", flexShrink: 0 };
 
 
 const DURACION_SIMULACRO_MINUTOS = 100;
@@ -302,19 +309,31 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
         <div style={{ ...styles.configCard, background: "#f3eefa" }}>
           <p style={styles.configCardTitle}>Antes de empezar</p>
-          <p style={styles.configSubLabel}>
-            🌿 Asegúrate de estar en un espacio tranquilo y sin interrupciones.
-          </p>
-          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
-            ⏱ El cronómetro no se para, igual que en el examen real.
-          </p>
-          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
-            🚻 Tienes una única pausa de 5 minutos (por ejemplo, para ir al baño). Durante la pausa
-            el reloj se congela y la pregunta se oculta.
-          </p>
-          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
-            📝 Puedes dejar preguntas en blanco y volver a ellas más adelante, mientras te quede tiempo.
-          </p>
+          <div style={filaAviso}>
+            <img src={iconoPlantita} alt="" style={iconoAviso} />
+            <p style={{ ...styles.configSubLabel, margin: 0 }}>
+              Asegúrate de estar en un espacio tranquilo y sin interrupciones.
+            </p>
+          </div>
+          <div style={filaAviso}>
+            <img src={iconoCronometro} alt="" style={iconoAviso} />
+            <p style={{ ...styles.configSubLabel, margin: 0 }}>
+              El cronómetro no se para, igual que en el examen real.
+            </p>
+          </div>
+          <div style={filaAviso}>
+            <img src={iconoPausaBano} alt="" style={iconoAviso} />
+            <p style={{ ...styles.configSubLabel, margin: 0 }}>
+              Tienes una única pausa de 5 minutos (por ejemplo, para ir al baño). Durante la pausa
+              el reloj se congela y la pregunta se oculta.
+            </p>
+          </div>
+          <div style={filaAviso}>
+            <img src={iconoLapizHoja} alt="" style={iconoAviso} />
+            <p style={{ ...styles.configSubLabel, margin: 0 }}>
+              Puedes dejar preguntas en blanco y volver a ellas más adelante, mientras te quede tiempo.
+            </p>
+          </div>
         </div>
 
         <button onClick={iniciarSimulacro} style={styles.ctaButton}>
@@ -336,10 +355,10 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
       return (
         <div style={styles.menuContainer}>
           <div style={{ ...styles.configCard, textAlign: "center", marginTop: 40 }}>
-            <img
-              src={iconoSimTiempo}
+          <img
+              src={iconoPausaBano}
               alt=""
-              style={{ width: 90, height: 90, objectFit: "contain", display: "block", margin: "0 auto 10px" }}
+              style={{ width: 120, height: 120, objectFit: "contain", display: "block", margin: "0 auto 10px" }}
             />
             <p style={styles.configCardTitle}>Pausa</p>
             <p style={{ fontSize: 40, fontWeight: 700, color: "#5b4a3a", margin: "6px 0 10px" }}>
@@ -360,7 +379,9 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     return (
       <div style={styles.menuContainer}>
         <div style={styles.simHeaderBar}>
-          <span style={styles.simTimer}>⏱ {formatearTiempo(tiempoRestanteSimulacro || 0)}</span>
+        <span style={styles.simTimer}>
+            <img src={iconoCronometro} alt="" style={styles.iconoInlinePequeno} /> {formatearTiempo(tiempoRestanteSimulacro || 0)}
+          </span>
           <span style={styles.configSubLabel}>
             {respondidas} / {preguntas.length} respondidas
           </span>
@@ -371,7 +392,10 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
         {!pausaUsada && (
           <button onClick={empezarPausa} style={styles.linkVolver}>
-            🚻 Usar mi pausa de 5 minutos
+            <span style={styles.botonIconoTextoRow}>
+              <img src={iconoPausaBano} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
+              Usar mi pausa de 5 minutos
+            </span>
           </button>
         )}
 
@@ -711,7 +735,9 @@ if (vista === "historial") {
                     <img src={iconoSimErrores} alt="" style={styles.iconoInlinePequeno} /> {s.errores}
                     <img src={iconoSimBlancos} alt="" style={styles.iconoInlinePequeno} /> {s.blancos}
                   </span>
-                  <span>⏱ {s.tiempo}</span>
+                  <span style={styles.inlineStatRow}>
+                    <img src={iconoCronometro} alt="" style={styles.iconoInlinePequeno} /> {s.tiempo}
+                  </span>
                 </div>
             </div>
           ))}
