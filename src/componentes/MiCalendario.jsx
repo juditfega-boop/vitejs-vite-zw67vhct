@@ -15,6 +15,8 @@ export const TIPOS_DIA = {
 };
 const ORDEN_TIPOS = ["E", "R", "M", "F", "V", "L"];
 
+const TIPOS_CON_PROGRESO = ["E", "R", "M", "F"];
+
 const HOY_TE_TOCA = {
   E: { texto: "estudio", frase: "Un tema más hacia la plaza." },
   R: { texto: "repaso", frase: "Tests o tarjetas, sin agobios." },
@@ -40,6 +42,7 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
 
   const [usuario, setUsuario] = useState(undefined); // undefined = cargando
   const [dias, setDias] = useState({});
+  const [hechos, setHechos] = useState({});
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [mes, setMes] = useState(hoy.getMonth());
@@ -75,7 +78,15 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
     setCargando(true);
     setError("");
     getDoc(doc(db, "calendarios", usuario.uid))
-      .then((snap) => setDias(snap.exists() ? snap.data().dias || {} : {}))
+    .then((snap) => {
+        const guardados = snap.exists() ? snap.data().dias || {} : {};
+        const limpios = {};
+        Object.entries(guardados).forEach(([k, v]) => {
+          limpios[k] = v === "O" ? "L" : v;
+        });
+        setDias(limpios);
+        setHechos(snap.exists() ? snap.data().hechos || {} : {});
+      })
       .catch(() => setError("No se ha podido cargar tu calendario. Revisa tu conexión."))
       .finally(() => setCargando(false));
   }, [usuario]);
@@ -92,15 +103,54 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
     setError("");
 
     try {
-      await setDoc(
-        doc(db, "calendarios", usuario.uid),
-        { dias: { [clave]: letra ? letra : deleteField() }, actualizado: new Date().toISOString() },
-        { merge: true }
-      );
+        const quitaHecho = !TIPOS_CON_PROGRESO.includes(letra);
+        if (quitaHecho) {
+          setHechos((prev) => {
+            const copia = { ...prev };
+            delete copia[clave];
+            return copia;
+          });
+        }
+        await setDoc(
+          doc(db, "calendarios", usuario.uid),
+          {
+            dias: { [clave]: letra ? letra : deleteField() },
+            ...(quitaHecho ? { hechos: { [clave]: deleteField() } } : {}),
+            actualizado: new Date().toISOString()
+          },
+          { merge: true }
+        );
     } catch (e) {
       setDias((prev) => {
         const copia = { ...prev };
         if (anterior) copia[clave] = anterior;
+        else delete copia[clave];
+        return copia;
+      });
+      setError("No se ha podido guardar el cambio. Inténtalo de nuevo.");
+    }
+  }
+
+  async function alternarHecho(clave) {
+    const estaba = !!hechos[clave];
+    setHechos((prev) => {
+      const copia = { ...prev };
+      if (estaba) delete copia[clave];
+      else copia[clave] = true;
+      return copia;
+    });
+    setError("");
+
+    try {
+      await setDoc(
+        doc(db, "calendarios", usuario.uid),
+        { hechos: { [clave]: estaba ? deleteField() : true }, actualizado: new Date().toISOString() },
+        { merge: true }
+      );
+    } catch (e) {
+      setHechos((prev) => {
+        const copia = { ...prev };
+        if (estaba) copia[clave] = true;
         else delete copia[clave];
         return copia;
       });
@@ -171,11 +221,18 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
     setDiaSeleccionado(claveHoy);
   }
 
-  const contadorMes = {};
+  const progresoMes = {};
   for (let d = 1; d <= diasDelMes; d++) {
-    const letra = dias[claveFecha(anio, mes, d)];
-    if (letra) contadorMes[letra] = (contadorMes[letra] || 0) + 1;
+    const clave = claveFecha(anio, mes, d);
+    const letra = dias[clave];
+    if (!TIPOS_CON_PROGRESO.includes(letra)) continue;
+    if (!progresoMes[letra]) progresoMes[letra] = { planificados: 0, hechos: 0 };
+    progresoMes[letra].planificados += 1;
+    if (hechos[clave]) progresoMes[letra].hechos += 1;
   }
+  const totalPlanificados = Object.values(progresoMes).reduce((a, p) => a + p.planificados, 0);
+  const totalHechos = Object.values(progresoMes).reduce((a, p) => a + p.hechos, 0);
+  const porcentajeMes = totalPlanificados ? Math.round((totalHechos / totalPlanificados) * 100) : 0;
 
   const flechaBtn = {
     width: 38,
@@ -208,6 +265,11 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
           {HOY_TE_TOCA[letraHoy].texto.charAt(0).toUpperCase() + HOY_TE_TOCA[letraHoy].texto.slice(1)}
         </p>
         <p style={{ ...styles.configSubLabel, margin: 0 }}>{HOY_TE_TOCA[letraHoy].frase}</p>
+        {TIPOS_CON_PROGRESO.includes(letraHoy) && (
+                <button onClick={() => alternarHecho(claveHoy)} style={{ ...styles.linkVolver, marginTop: 8 }}>
+                  {hechos[claveHoy] ? "✓ Hecho. Pulsa para desmarcar" : "Ya lo he hecho ✓"}
+                </button>
+              )}
       </>
     ) : (
       <>
@@ -266,7 +328,12 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
                 }}
               >
                 <span style={{ fontSize: 12 }}>{dia}</span>
-                {letra && <span style={{ fontSize: 14, fontWeight: 700 }}>{letra}</span>}
+                {letra && (
+                  <span style={{ fontSize: 14, fontWeight: 700 }}>
+                    {letra}
+                    {hechos[clave] ? " ✓" : ""}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -309,6 +376,17 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
               );
             })}
           </div>
+          {TIPOS_CON_PROGRESO.includes(dias[diaSeleccionado]) && diaSeleccionado <= claveHoy && (
+            <button
+              onClick={() => {
+                alternarHecho(diaSeleccionado);
+                setDiaSeleccionado(null);
+              }}
+              style={{ ...styles.ctaButton, marginTop: 12 }}
+            >
+              {hechos[diaSeleccionado] ? "Desmarcar como hecho" : "✓ Marcar como hecho"}
+            </button>
+          )}
           {dias[diaSeleccionado] && (
             <button onClick={() => marcarDia(diaSeleccionado, null)} style={styles.linkVolver}>
               Quitar la marca de este día
@@ -317,25 +395,42 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
         </div>
       )}
 
-      {Object.keys(contadorMes).length > 0 && (
+{totalPlanificados > 0 && (
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Este mes</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {ORDEN_TIPOS.filter((l) => contadorMes[l]).map((l) => (
-              <span
-                key={l}
-                style={{
-                  background: TIPOS_DIA[l].fondo,
-                  color: TIPOS_DIA[l].texto,
-                  borderRadius: 999,
-                  padding: "6px 12px",
-                  fontSize: 13
-                }}
-              >
-                {contadorMes[l]} {TIPOS_DIA[l].nombre.toLowerCase()}
-              </span>
-            ))}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <p style={{ ...styles.configCardTitle, margin: 0 }}>Progreso de {MESES[mes].toLowerCase()}</p>
+            <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#4f6b4a" }}>{porcentajeMes}%</p>
           </div>
+          <p style={{ ...styles.configSubLabel, marginTop: 4 }}>
+            {totalHechos} de {totalPlanificados} días planificados hechos
+          </p>
+
+          {TIPOS_CON_PROGRESO.filter((l) => progresoMes[l]).map((l) => {
+            const p = progresoMes[l];
+            const porcentaje = Math.round((p.hechos / p.planificados) * 100);
+            return (
+              <div key={l} style={{ marginTop: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#4a463f" }}>
+                  <span>{TIPOS_DIA[l].nombre}</span>
+                  <span>
+                    {p.hechos} de {p.planificados}
+                  </span>
+                </div>
+                <div style={{ height: 8, borderRadius: 999, background: "#f0ece0", marginTop: 4, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      width: `${porcentaje}%`,
+                      height: "100%",
+                      borderRadius: 999,
+                      background: TIPOS_DIA[l].texto,
+                      opacity: 0.6,
+                      transition: "width 0.4s ease"
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
