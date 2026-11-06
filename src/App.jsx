@@ -11,6 +11,7 @@ import { globalStyles, styles } from "./estilos";
 import PersonajeFlotante from "./personajes/PersonajeFlotante";
 import CuentaUsuario from "./componentes/CuentaUsuario";
 import MisImpugnaciones from "./componentes/MisImpugnaciones";
+import MiCalendario from "./componentes/MiCalendario";
 import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
 import CarreraPlaza from "./juegos/CarreraPlaza";
@@ -286,12 +287,12 @@ if (pantalla === "inicio") {
         </button>
 
         <button
-          onClick={() => setPantalla("desarrollo")}
+          onClick={() => setPantalla("calendario")}
           style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaMuted }}
         >
           <img src={iconoCarpeta} alt="" style={styles.inicioTarjetaIcono} />
-          <p style={styles.inicioTarjetaTitulo}>Desarrollo</p>
-          <p style={styles.inicioTarjetaSubtitulo}>Próximamente</p>
+          <p style={styles.inicioTarjetaTitulo}>Mi calendario</p>
+          <p style={styles.inicioTarjetaSubtitulo}>Planifica tus días de estudio</p>
           <div style={{ ...styles.inicioTarjetaLinea, background: "#c3bcae" }} />
         </button>
 
@@ -411,18 +412,10 @@ if (pantalla === "minijuegos") {
   );
 }
 
-// DESARROLLO (próximamente)
-if (pantalla === "desarrollo") {
+// 🗓️ MI CALENDARIO
+if (pantalla === "calendario") {
   return conPersonaje(
-    <div style={styles.placeholderContainer}>
-<div style={styles.placeholderCard}>
-        <h2>Desarrollo</h2>
-        <p style={styles.configSubLabel}>Próximamente</p>
-        <button onClick={volverMenu} style={styles.linkVolver}>
-          ⬅ Volver al menú
-        </button>
-      </div>
-    </div>
+    <MiCalendario volverMenu={volverMenu} irAPerfil={() => setPantalla("ajustes")} />
   );
 }
 
