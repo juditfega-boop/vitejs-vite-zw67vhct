@@ -76,77 +76,57 @@ export default function App() {
   // 🔐 cuenta y estado de acceso ("cargando" | "sin-cuenta" | "pendiente" | "aprobada")
   const { usuario, estado: estadoAcceso } = useAcceso();
   const aprobada = estadoAcceso === "aprobada";
-
-  // ☁️ código personal para sincronizar el progreso entre dispositivos
-  const [codigo, setCodigo] = useState(
-    () => localStorage.getItem(CLAVE_CODIGO) || ""
-  );
-  const [codigoInput, setCodigoInput] = useState("");
+  // ☁️ el progreso se guarda en la nube, vinculado a la cuenta
   const [sincronizando, setSincronizando] = useState(false);
   const [mensajeSync, setMensajeSync] = useState("");
 
-  async function cargarDesdeNube(cod) {
-    setSincronizando(true);
-    setMensajeSync("");
-
-    try {
-      const snap = await getDoc(doc(db, "perfiles", cod));
-
-      if (snap.exists()) {
-        const datos = snap.data();
-
-        if (datos.stats) guardarStats(datos.stats);
-        if (datos.racha) localStorage.setItem(CLAVE_RACHA, JSON.stringify(datos.racha));
-        if (datos.tiempos) localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos.tiempos));
-        if (datos.favoritos) {
-          guardarFavoritos(datos.favoritos);
-        }
-
-        setMensajeSync("✅ Progreso cargado desde tu código.");
-      } else {
-        await sincronizarConNube(cod);
-        setMensajeSync("🆕 Código nuevo: se ha guardado tu progreso actual con este código.");
-      }
-    } catch (e) {
-      setMensajeSync("⚠️ No se pudo conectar. Comprueba tu conexión a internet.");
-    }
-
-    setSincronizando(false);
-  }
-
-  async function sincronizarConNube(codigoForzado) {
-    const cod = codigoForzado || codigo;
-    if (!cod) return;
-
-    const datos = {
+  function datosLocales() {
+    return {
       stats: obtenerStats(),
       racha: obtenerRacha(),
       tiempos: obtenerTiempos(),
       favoritos: obtenerFavoritos(),
       actualizado: new Date().toISOString()
     };
+  }
 
+  function aplicarDatos(datos) {
+    if (datos.stats) guardarStats(datos.stats);
+    if (datos.racha) localStorage.setItem(CLAVE_RACHA, JSON.stringify(datos.racha));
+    if (datos.tiempos) localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos.tiempos));
+    if (datos.favoritos) guardarFavoritos(datos.favoritos);
+  }
+
+  async function sincronizarConNube() {
+    if (!usuario) return;
     try {
-      await setDoc(doc(db, "perfiles", cod), datos);
+      await setDoc(doc(db, "progreso", usuario.uid), datosLocales());
     } catch (e) {
-      // fallo silencioso: los datos siguen a salvo en localStorage
+      // fallo silencioso: los datos siguen a salvo en este dispositivo
     }
   }
 
-  function guardarCodigo() {
-    const cod = codigoInput.trim().toLowerCase();
-    if (!cod) return;
-
-    setCodigo(cod);
-    localStorage.setItem(CLAVE_CODIGO, cod);
-    setCodigoInput("");
-    cargarDesdeNube(cod);
-  }
-
-  function borrarCodigo() {
-    setCodigo("");
-    localStorage.removeItem(CLAVE_CODIGO);
-    setMensajeSync("");
+  // al iniciar sesión: carga el progreso de la cuenta, o lo crea
+  // (si había un código antiguo en este dispositivo, trae sus datos)
+  async function cargarProgresoCuenta(u) {
+    setSincronizando(true);
+    try {
+      const snap = await getDoc(doc(db, "progreso", u.uid));
+      if (snap.exists()) {
+        aplicarDatos(snap.data());
+      } else {
+        const codigoAntiguo = localStorage.getItem(CLAVE_CODIGO);
+        if (codigoAntiguo) {
+          const viejo = await getDoc(doc(db, "perfiles", codigoAntiguo));
+          if (viejo.exists()) aplicarDatos(viejo.data());
+        }
+        await setDoc(doc(db, "progreso", u.uid), datosLocales());
+      }
+      localStorage.removeItem(CLAVE_CODIGO);
+    } catch (e) {
+      setMensajeSync("⚠️ No se pudo conectar. Comprueba tu conexión a internet.");
+    }
+    setSincronizando(false);
   }
 
   useEffect(() => {
@@ -157,13 +137,13 @@ export default function App() {
     init();
   }, []);
 
-  // ☁️ si ya hay un código guardado en este dispositivo, carga el progreso al abrir la app
+  // ☁️ cuando hay sesión iniciada, carga el progreso de esa cuenta
   useEffect(() => {
-    if (codigo) {
-      cargarDesdeNube(codigo);
+    if (usuario) {
+      cargarProgresoCuenta(usuario);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [usuario?.uid]);
 
   function volverMenu() {
     setPantalla("inicio");
@@ -530,69 +510,39 @@ if (pantalla === "muerte") {
 <MisImpugnaciones />
 
 <div style={styles.configCard}>
-<p style={styles.configCardTitle}>
-    <img src={iconoNube} alt="" style={styles.perfilNubeIcono} />
-    Tu código de progreso
-  </p>
+          <p style={styles.configCardTitle}>
+            <img src={iconoNube} alt="" style={styles.perfilNubeIcono} />
+            Tu progreso en la nube
+          </p>
 
-          {codigo ? (
+          {usuario ? (
             <>
               <p style={styles.configSubLabel}>
-                Progreso vinculado al código: <b>{codigo}</b>
+                Tu progreso se guarda en tu cuenta. Entra con el mismo correo en
+                otro dispositivo y lo tendrás ahí también.
               </p>
-              <p style={styles.configSubLabel}>
-                Usa este mismo código en otro dispositivo para recuperar tu
-                progreso ahí también.
-              </p>
-
               <button
-                onClick={() => sincronizarConNube()}
+                onClick={async () => {
+                  setSincronizando(true);
+                  await sincronizarConNube();
+                  setSincronizando(false);
+                  setMensajeSync("✅ Progreso guardado en tu cuenta.");
+                }}
                 disabled={sincronizando}
                 style={styles.ctaButton}
               >
-                {sincronizando ? "Sincronizando..." : "🔄 Sincronizar ahora"}
-              </button>
-
-              <button onClick={borrarCodigo} style={styles.linkVolver}>
-                Dejar de usar este código en este dispositivo
+                {sincronizando ? "Guardando..." : "🔄 Guardar ahora"}
               </button>
             </>
           ) : (
-            <>
-              <p style={styles.configSubLabel}>
-                Ponte un código (el que quieras) para guardar tu progreso y
-                poder recuperarlo desde cualquier otro dispositivo. Si no
-                pones ninguno, tu progreso se queda solo en este dispositivo,
-                como hasta ahora.
-              </p>
-
-              <input
-                type="text"
-                value={codigoInput}
-                onChange={(e) => setCodigoInput(e.target.value)}
-                placeholder="Ej: judit1234"
-                style={styles.nombreInput}
-              />
-
-              <button
-                onClick={guardarCodigo}
-                disabled={sincronizando || !codigoInput.trim()}
-                style={{
-                  ...styles.ctaButton,
-                  ...(sincronizando || !codigoInput.trim()
-                    ? styles.ctaButtonDisabled
-                    : {})
-                }}
-              >
-                {sincronizando ? "Conectando..." : "Guardar código"}
-              </button>
-            </>
+            <p style={styles.configSubLabel}>
+              Inicia sesión arriba para guardar tu progreso y recuperarlo desde
+              cualquier dispositivo. Sin cuenta, se queda solo en este dispositivo.
+            </p>
           )}
 
-{mensajeSync && (
-            <p style={{ ...styles.configSubLabel, marginTop: 10 }}>
-              {mensajeSync}
-            </p>
+          {mensajeSync && (
+            <p style={{ ...styles.configSubLabel, marginTop: 10 }}>{mensajeSync}</p>
           )}
         </div>
 
