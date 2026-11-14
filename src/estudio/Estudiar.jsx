@@ -348,7 +348,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
       );
     }
 
-    const base = mezclar(lista).slice(0, cantidad).map(prepararPregunta);
+    const base = elegirEquilibradas(listaFuente, cantidad).map(prepararPregunta);
     borrarPartida();
     setPartidaGuardada(null);
     setPausado(false);

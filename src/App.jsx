@@ -177,7 +177,7 @@ useEffect(() => {
     <img
       src={iconoCandado}
       alt="Bloqueado"
-      style={{ position: "absolute", top: 10, right: 10, width: 26 }}
+      style={{ position: "absolute", top: 10, right: 10, width: 30 }}
     />
   );
   if (PANTALLAS_BLOQUEADAS.includes(pantalla) && !aprobada) {
