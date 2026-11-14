@@ -10,14 +10,6 @@ import iconoExplicacion from "../assets/kit/icono-explicacion-libreta.png";
 import heroSimulacroCompletado from "../assets/kit/hero-simulacro-completado.png";
 import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
 import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
-import { renderizarTextoConNegrita } from "../utils/renderizarTexto";
-import iconoCronometro from "../assets/kit/icono-cronometro-reloj.png";
-import iconoPlantita from "../assets/kit/icono-plantita-evolucion.png";
-import iconoPausaBano from "../assets/bookbrand/icono-brand-pausa-bano.png";
-import iconoLapizHoja from "../assets/bookbrand/icono-brand-lapiz-hoja.png";
-
-const filaAviso = { ...{}, display: "flex", alignItems: "flex-start", gap: 10, marginTop: 10 };
-const iconoAviso = { width: 26, height: 26, objectFit: "contain", flexShrink: 0 };
 
 
 const DURACION_SIMULACRO_MINUTOS = 100;
@@ -32,7 +24,6 @@ function guardarSimulacroHistorial(resultado) {
   const historial = obtenerHistorialSimulacro();
   const nuevo = [
     {
-      id: resultado.id,
       fecha: new Date().toLocaleString(),
       nota: resultado.nota,
       aciertos: resultado.aciertos,
@@ -47,42 +38,12 @@ function guardarSimulacroHistorial(resultado) {
 
 function eliminarSimulacroHistorial(index) {
   const historial = obtenerHistorialSimulacro();
-  const [borrado] = historial.splice(index, 1);
+  historial.splice(index, 1);
   localStorage.setItem(CLAVE_HISTORIAL_SIMULACRO, JSON.stringify(historial));
-  if (borrado && borrado.id) {
-    guardarRevisiones(obtenerRevisiones().filter((r) => r.id !== borrado.id));
-  }
 }
 
 function vaciarHistorialSimulacro() {
   localStorage.setItem(CLAVE_HISTORIAL_SIMULACRO, JSON.stringify([]));
-  localStorage.removeItem(CLAVE_REVISIONES_SIMULACRO);
-}
-
-// 🔍 revisión completa de los últimos simulacros (para repasarlos más tarde)
-const CLAVE_REVISIONES_SIMULACRO = "opo_simulacro_revisiones_v1";
-const MAX_REVISIONES = 5;
-
-function obtenerRevisiones() {
-  try {
-    return JSON.parse(localStorage.getItem(CLAVE_REVISIONES_SIMULACRO)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function guardarRevisiones(lista) {
-  try {
-    localStorage.setItem(CLAVE_REVISIONES_SIMULACRO, JSON.stringify(lista.slice(0, MAX_REVISIONES)));
-  } catch {}
-}
-
-function guardarRevisionNueva(revision) {
-  guardarRevisiones([revision, ...obtenerRevisiones()]);
-}
-
-function actualizarProgresoRepaso(id, indice) {
-  guardarRevisiones(obtenerRevisiones().map((r) => (r.id === id ? { ...r, repasoIndice: indice } : r)));
 }
 
 // Barajado justo (Fisher-Yates)
@@ -125,14 +86,60 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
   const [enPausa, setEnPausa] = useState(false);
   const [pausaUsada, setPausaUsada] = useState(false);
   const [pausaRestante, setPausaRestante] = useState(DURACION_PAUSA_SEGUNDOS);
-  const [revisionActiva, setRevisionActiva] = useState(null);
-  const [revisionIndice, setRevisionIndice] = useState(0);
-  const [volverDesdeRevision, setVolverDesdeRevision] = useState("resultado");
   const pregunta = preguntas[indice];
 
   useEffect(() => {
-    if (vista !== "examen" || tiempoRestanteSimulacro === null || enPausa) return;
-
+    if (vista !== "examen" || tiempoRestanteSimulacro === null) return;
+    useEffect(() => {
+      if (vista !== "examen" || tiempoRestanteSimulacro === null || enPausa) return;
+  
+      if (tiempoRestanteSimulacro <= 0) {
+        finalizarSimulacro();
+        return;
+      }
+  
+      const id = setTimeout(() => {
+        setTiempoRestanteSimulacro((t) => (t !== null ? t - 1 : null));
+      }, 1000);
+  
+      return () => clearTimeout(id);
+    }, [vista, tiempoRestanteSimulacro, enPausa]);
+  
+    // 🚻 cuenta atrás de la pausa (5 min, una sola vez por examen)
+    useEffect(() => {
+      if (!enPausa) return;
+      if (pausaRestante <= 0) {
+        setEnPausa(false);
+        return;
+      }
+      const id = setTimeout(() => setPausaRestante((t) => t - 1), 1000);
+      return () => clearTimeout(id);
+    }, [enPausa, pausaRestante]);
+  
+    // al cambiar de pregunta, la pantalla sube al enunciado
+    useEffect(() => {
+      if (vista === "examen") window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [indice, vista]);
+  
+    function empezarPausa() {
+      if (pausaUsada) return;
+      setPausaUsada(true);
+      setPausaRestante(DURACION_PAUSA_SEGUNDOS);
+      setEnPausa(true);
+    }
+  
+    function terminarPausa() {
+      setEnPausa(false);
+    }
+  
+    function confirmarFinalizar() {
+      const sinResponder = respuestasSimulacro.filter((r) => r === null || r === undefined).length;
+      const texto =
+        sinResponder > 0
+          ? `Te quedan ${sinResponder} preguntas sin responder. ¿Seguro que quieres entregar el examen?`
+          : "¿Entregar el examen?";
+      if (window.confirm(texto)) finalizarSimulacro();
+    }
     if (tiempoRestanteSimulacro <= 0) {
       finalizarSimulacro();
       return;
@@ -143,43 +150,7 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     }, 1000);
 
     return () => clearTimeout(id);
-  }, [vista, tiempoRestanteSimulacro, enPausa]);
-
-  // 🚻 cuenta atrás de la pausa (5 min, una sola vez por examen)
-  useEffect(() => {
-    if (!enPausa) return;
-    if (pausaRestante <= 0) {
-      setEnPausa(false);
-      return;
-    }
-    const id = setTimeout(() => setPausaRestante((t) => t - 1), 1000);
-    return () => clearTimeout(id);
-  }, [enPausa, pausaRestante]);
-
-  // al cambiar de pregunta, la pantalla sube al enunciado
-  useEffect(() => {
-    if (vista === "examen") window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [indice, vista]);
-
-  function empezarPausa() {
-    if (pausaUsada) return;
-    setPausaUsada(true);
-    setPausaRestante(DURACION_PAUSA_SEGUNDOS);
-    setEnPausa(true);
-  }
-
-  function terminarPausa() {
-    setEnPausa(false);
-  }
-
-  function confirmarFinalizar() {
-    const sinResponder = respuestasSimulacro.filter((r) => r === null || r === undefined).length;
-    const texto =
-      sinResponder > 0
-        ? `Te quedan ${sinResponder} preguntas sin responder. ¿Seguro que quieres entregar el examen?`
-        : "¿Entregar el examen?";
-    if (window.confirm(texto)) finalizarSimulacro();
-  }
+  }, [vista, tiempoRestanteSimulacro]);
 
   function iniciarSimulacro() {
     const grupo1 = preguntasBase.filter((p) => Number(p.grupo) === 1);
@@ -200,7 +171,6 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     setEnPausa(false);
     setPausaUsada(false);
     setPausaRestante(DURACION_PAUSA_SEGUNDOS);
-    setRevisionActiva(null);
     setVista("examen");
   }
 
@@ -284,25 +254,7 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
       fallidas
     };
 
-    const idRevision = Date.now();
-    const revision = {
-      id: idRevision,
-      fecha: new Date().toLocaleString(),
-      nota: nota.toFixed(2),
-      repasoIndice: 0,
-      preguntas: preguntas.map((p, i) => ({
-        pregunta: p.pregunta,
-        respuestas: p.respuestas,
-        correcta: p.correcta,
-        explicacion: p.explicacion,
-        marcada: respuestasSimulacro[i] ?? null
-      }))
-    };
-    resultado.id = idRevision;
-
     guardarSimulacroHistorial(resultado);
-    guardarRevisionNueva(revision);
-    setRevisionActiva(revision);
 
     setResultadoSimulacro(resultado);
     setTiempoRestanteSimulacro(null);
@@ -312,30 +264,6 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     setRepasoRespuestaSeleccionada(null);
     setRepasoMostrar(false);
     setVista("resultado");
-  }
-
-  function abrirRevision(rev, desde) {
-    setRevisionActiva(rev);
-    setRevisionIndice(0);
-    setVolverDesdeRevision(desde);
-    setVista("revision");
-  }
-
-  function abrirRepaso(rev, desde) {
-    setRevisionActiva(rev);
-    setRepasoIndice(rev.repasoIndice || 0);
-    setRepasoRespuestaSeleccionada(null);
-    setRepasoMostrar(false);
-    setVolverDesdeRevision(desde);
-    setVista("repaso");
-  }
-
-  function reiniciarRepaso() {
-    setRepasoIndice(0);
-    setRepasoRespuestaSeleccionada(null);
-    setRepasoMostrar(false);
-    actualizarProgresoRepaso(revisionActiva.id, 0);
-    setRevisionActiva((r) => ({ ...r, repasoIndice: 0 }));
   }
 
   // 📝 INTRO
@@ -387,31 +315,19 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
         <div style={{ ...styles.configCard, background: "#f3eefa" }}>
           <p style={styles.configCardTitle}>Antes de empezar</p>
-          <div style={filaAviso}>
-            <img src={iconoPlantita} alt="" style={iconoAviso} />
-            <p style={{ ...styles.configSubLabel, margin: 0 }}>
-              Asegúrate de estar en un espacio tranquilo y sin interrupciones.
-            </p>
-          </div>
-          <div style={filaAviso}>
-            <img src={iconoCronometro} alt="" style={iconoAviso} />
-            <p style={{ ...styles.configSubLabel, margin: 0 }}>
-              El cronómetro no se para, igual que en el examen real.
-            </p>
-          </div>
-          <div style={filaAviso}>
-            <img src={iconoPausaBano} alt="" style={iconoAviso} />
-            <p style={{ ...styles.configSubLabel, margin: 0 }}>
-              Tienes una única pausa de 5 minutos (por ejemplo, para ir al baño). Durante la pausa
-              el reloj se congela y la pregunta se oculta.
-            </p>
-          </div>
-          <div style={filaAviso}>
-            <img src={iconoLapizHoja} alt="" style={iconoAviso} />
-            <p style={{ ...styles.configSubLabel, margin: 0 }}>
-              Puedes dejar preguntas en blanco y volver a ellas más adelante, mientras te quede tiempo.
-            </p>
-          </div>
+          <p style={styles.configSubLabel}>
+            🌿 Asegúrate de estar en un espacio tranquilo y sin interrupciones.
+          </p>
+          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
+            ⏱ El cronómetro no se para, igual que en el examen real.
+          </p>
+          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
+            🚻 Tienes una única pausa de 5 minutos (por ejemplo, para ir al baño). Durante la pausa
+            el reloj se congela y la pregunta se oculta.
+          </p>
+          <p style={{ ...styles.configSubLabel, marginTop: 8 }}>
+            📝 Puedes dejar preguntas en blanco y volver a ellas más adelante, mientras te quede tiempo.
+          </p>
         </div>
 
         <button onClick={iniciarSimulacro} style={styles.ctaButton}>
@@ -433,10 +349,10 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
       return (
         <div style={styles.menuContainer}>
           <div style={{ ...styles.configCard, textAlign: "center", marginTop: 40 }}>
-          <img
-              src={iconoPausaBano}
+            <img
+              src={iconoSimTiempo}
               alt=""
-              style={{ width: 120, height: 120, objectFit: "contain", display: "block", margin: "0 auto 10px" }}
+              style={{ width: 90, height: 90, objectFit: "contain", display: "block", margin: "0 auto 10px" }}
             />
             <p style={styles.configCardTitle}>Pausa</p>
             <p style={{ fontSize: 40, fontWeight: 700, color: "#5b4a3a", margin: "6px 0 10px" }}>
@@ -457,9 +373,7 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
     return (
       <div style={styles.menuContainer}>
         <div style={styles.simHeaderBar}>
-        <span style={styles.simTimer}>
-            <img src={iconoCronometro} alt="" style={styles.iconoInlinePequeno} /> {formatearTiempo(tiempoRestanteSimulacro || 0)}
-          </span>
+          <span style={styles.simTimer}>⏱ {formatearTiempo(tiempoRestanteSimulacro || 0)}</span>
           <span style={styles.configSubLabel}>
             {respondidas} / {preguntas.length} respondidas
           </span>
@@ -470,10 +384,7 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
         {!pausaUsada && (
           <button onClick={empezarPausa} style={styles.linkVolver}>
-            <span style={styles.botonIconoTextoRow}>
-              <img src={iconoPausaBano} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
-              Usar mi pausa de 5 minutos
-            </span>
+            🚻 Usar mi pausa de 5 minutos
           </button>
         )}
 
@@ -503,8 +414,8 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
 
         {pregunta.respuestas.map((r, i) => (
           <button
-          key={`${indice}-${i}`}
-          onClick={() => seleccionarRespuestaSimulacro(i)}
+            key={i}
+            onClick={() => seleccionarRespuestaSimulacro(i)}
             style={{
               ...styles.simRespuestaBtn,
               ...(respuestasSimulacro[indice] === i ? styles.simRespuestaSeleccionada : {})
@@ -645,20 +556,19 @@ if (vista === "resultado" && resultadoSimulacro) {
         )}
       </div>
 
-      {revisionActiva && (
-        <button onClick={() => abrirRevision(revisionActiva, "resultado")} style={styles.simRepasoBoton}>
-          Revisar examen
-        </button>
-      )}
-
-      {revisionActiva && (errores > 0 || blancos > 0) && (
-        <button
-          onClick={() => abrirRepaso(revisionActiva, "resultado")}
-          style={{ ...styles.simRepasoBoton, marginTop: 10 }}
-        >
-          📖 Repasar falladas una a una
-        </button>
-      )}
+      {(errores > 0 || blancos > 0) && (
+          <button
+            onClick={() => {
+              setRepasoIndice(0);
+              setRepasoRespuestaSeleccionada(null);
+              setRepasoMostrar(false);
+              setVista("repaso");
+            }}
+            style={styles.simRepasoBoton}
+          >
+            📖 Repasar preguntas falladas
+          </button>
+        )}
 
 <button onClick={() => setVista("historial")} style={styles.linkVolver}>
           <span style={styles.botonIconoTextoRow}>
@@ -674,12 +584,10 @@ if (vista === "resultado" && resultadoSimulacro) {
     );
   }
 
-  // 📖 REPASO DE FALLADAS (una a una, con progreso guardado)
-  if (vista === "repaso" && revisionActiva) {
-    const fallidas = revisionActiva.preguntas.filter((p) => p.marcada !== p.correcta);
+  // 📖 REPASO DE PREGUNTAS FALLADAS
+  if (vista === "repaso") {
+    const fallidas = resultadoSimulacro?.fallidas || [];
     const preguntaRepaso = fallidas[repasoIndice];
-    const volverA = () =>
-      setVista(volverDesdeRevision === "resultado" && resultadoSimulacro ? "resultado" : "historial");
 
     if (!preguntaRepaso) {
       return (
@@ -688,14 +596,11 @@ if (vista === "resultado" && resultadoSimulacro) {
             <h1 style={styles.menuTitle}>Repaso completado</h1>
             <div style={styles.menuUnderline} />
           </div>
-          <p style={{ ...styles.configSubLabel, textAlign: "center" }}>
-            Has repasado las {fallidas.length} preguntas falladas o en blanco de este simulacro.
+          <p style={styles.configSubLabel}>
+            Has repasado todas las preguntas falladas de este simulacro.
           </p>
-          <button onClick={reiniciarRepaso} style={styles.ctaButton}>
-            Empezar el repaso de nuevo
-          </button>
-          <button onClick={volverA} style={styles.linkVolver}>
-            ⬅ Volver
+          <button onClick={() => setVista("resultado")} style={styles.ctaButton}>
+            Volver al resultado
           </button>
         </div>
       );
@@ -707,20 +612,16 @@ if (vista === "resultado" && resultadoSimulacro) {
     }
 
     function siguienteRepaso() {
-      const nuevo = repasoIndice + 1;
       setRepasoRespuestaSeleccionada(null);
       setRepasoMostrar(false);
-      setRepasoIndice(nuevo);
-      actualizarProgresoRepaso(revisionActiva.id, nuevo);
-      setRevisionActiva((r) => ({ ...r, repasoIndice: nuevo }));
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setRepasoIndice((idx) => idx + 1);
     }
 
     return (
       <div style={styles.menuContainer}>
         <div style={styles.quizHeaderRow}>
-          <button onClick={volverA} style={styles.quizVolverBtn}>
-            ⬅ Guardar y salir
+          <button onClick={() => setVista("resultado")} style={styles.quizVolverBtn}>
+            ⬅ Resultado
           </button>
         </div>
 
@@ -741,7 +642,7 @@ if (vista === "resultado" && resultadoSimulacro) {
 
           return (
             <button
-              key={`${repasoIndice}-${i}`}
+              key={i}
               onClick={() => comprobarRepaso(i)}
               disabled={repasoMostrar}
               style={{ ...styles.quizRespuestaBtn, ...estadoEstilo }}
@@ -756,10 +657,9 @@ if (vista === "resultado" && resultadoSimulacro) {
           <>
             <div style={styles.explicacionCaja}>
               <div style={styles.explicacionTituloRow}>
-                <img src={iconoExplicacion} alt="" style={styles.explicacionIcono} />
                 <b>Explicación:</b>
               </div>
-              {renderizarTextoConNegrita(preguntaRepaso.explicacion)}
+              <p style={{ margin: 0 }}>{preguntaRepaso.explicacion}</p>
             </div>
 
             <button onClick={siguienteRepaso} style={styles.ctaButton}>
@@ -771,172 +671,9 @@ if (vista === "resultado" && resultadoSimulacro) {
     );
   }
 
-  // 🔍 REVISIÓN DEL EXAMEN (redondeles por colores)
-  if (vista === "revision" && revisionActiva) {
-    const lista = revisionActiva.preguntas;
-    const actual = lista[revisionIndice];
-    const volverA = () =>
-      setVista(volverDesdeRevision === "resultado" && resultadoSimulacro ? "resultado" : "historial");
-
-    function estadoDe(p) {
-      if (p.marcada === null || p.marcada === undefined) return "blanco";
-      return p.marcada === p.correcta ? "acierto" : "error";
-    }
-
-    const COLORES = {
-      acierto: { fondo: "#dbe7d3", texto: "#4f6b4a", etiqueta: "La acertaste", plural: "acertadas" },
-      error: { fondo: "#f6d3d3", texto: "#9a4f4f", etiqueta: "La fallaste", plural: "falladas" },
-      blanco: { fondo: "#fffdf9", texto: "#8a8578", etiqueta: "La dejaste en blanco", plural: "en blanco" }
-    };
-
-    const cuenta = { acierto: 0, error: 0, blanco: 0 };
-    lista.forEach((p) => {
-      cuenta[estadoDe(p)] += 1;
-    });
-    const estadoActual = estadoDe(actual);
-
-    function irA(i) {
-      setRevisionIndice(i);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    return (
-      <div style={styles.menuContainer}>
-        <div style={styles.quizHeaderRow}>
-          <button onClick={volverA} style={styles.quizVolverBtn}>
-            ⬅ Volver
-          </button>
-        </div>
-
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>Revisión del examen</h1>
-          <div style={styles.menuUnderline} />
-        </div>
-        <p style={{ ...styles.configSubLabel, textAlign: "center" }}>
-          {revisionActiva.fecha} · Nota {revisionActiva.nota}
-        </p>
-
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", margin: "8px 0 12px" }}>
-          {["acierto", "error", "blanco"].map((e) => (
-            <span
-              key={e}
-              style={{
-                background: COLORES[e].fondo,
-                color: COLORES[e].texto,
-                border: "1px solid #efe7da",
-                borderRadius: 999,
-                padding: "5px 12px",
-                fontSize: 13
-              }}
-            >
-              {cuenta[e]} {COLORES[e].plural}
-            </span>
-          ))}
-        </div>
-
-        <div style={styles.simDotsWrap}>
-          {lista.map((p, i) => {
-            const e = estadoDe(p);
-            return (
-              <button
-                key={i}
-                onClick={() => setRevisionIndice(i)}
-                style={{
-                  ...styles.simDot,
-                  background: COLORES[e].fondo,
-                  color: COLORES[e].texto,
-                  border: i === revisionIndice ? "2px solid #b9a8de" : "1px solid #efe7da"
-                }}
-              >
-                {i + 1}
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-          <span style={styles.quizPreguntaTag}>
-            Pregunta {revisionIndice + 1} de {lista.length}
-          </span>
-          <span
-            style={{
-              background: COLORES[estadoActual].fondo,
-              color: COLORES[estadoActual].texto,
-              border: "1px solid #efe7da",
-              borderRadius: 999,
-              padding: "5px 12px",
-              fontSize: 13
-            }}
-          >
-            {COLORES[estadoActual].etiqueta}
-          </span>
-        </div>
-
-        <div style={styles.quizPreguntaCard}>
-          <p style={styles.quizPreguntaTexto}>{actual.pregunta}</p>
-        </div>
-
-        {actual.respuestas.map((r, i) => {
-          let estilo = {};
-          if (i === actual.correcta) estilo = styles.quizRespuestaCorrecta;
-          else if (i === actual.marcada) estilo = styles.quizRespuestaIncorrecta;
-
-          return (
-            <div
-              key={`${revisionIndice}-${i}`}
-              style={{ ...styles.quizRespuestaBtn, ...estilo, cursor: "default" }}
-            >
-              <span style={styles.quizRespuestaLetra}>{String.fromCharCode(65 + i)}</span>
-              <span style={{ flex: 1 }}>{r}</span>
-              {i === actual.marcada && (
-                <span style={{ fontSize: 12, color: "#8a8578", marginLeft: 8, whiteSpace: "nowrap" }}>
-                  Tu respuesta
-                </span>
-              )}
-            </div>
-          );
-        })}
-
-        <div style={styles.explicacionCaja}>
-          <div style={styles.explicacionTituloRow}>
-            <img src={iconoExplicacion} alt="" style={styles.explicacionIcono} />
-            <b>Explicación:</b>
-          </div>
-          {renderizarTextoConNegrita(actual.explicacion)}
-        </div>
-
-        <div style={styles.simNavRow}>
-          <button
-            disabled={revisionIndice === 0}
-            onClick={() => irA(revisionIndice - 1)}
-            style={{
-              ...styles.simNavBtn,
-              background: "#fff",
-              color: "#4a463f",
-              opacity: revisionIndice === 0 ? 0.4 : 1
-            }}
-          >
-            ← Anterior
-          </button>
-          <button
-            disabled={revisionIndice + 1 >= lista.length}
-            onClick={() => irA(revisionIndice + 1)}
-            style={{
-              ...styles.simNavBtn,
-              ...styles.btnPeach,
-              opacity: revisionIndice + 1 >= lista.length ? 0.4 : 1
-            }}
-          >
-            Siguiente →
-          </button>
-        </div>
-      </div>
-    );
-  }
   // 🕓 HISTORIAL DE SIMULACROS
 if (vista === "historial") {
   const historial = obtenerHistorialSimulacro();
-  const revisiones = obtenerRevisiones();
   void refrescoHistorialSimulacro;
 
   function confirmarVaciar() {
@@ -969,59 +706,28 @@ if (vista === "historial") {
               </span>
             </button>
 
-            {historial.map((s, i) => {
-            const rev = s.id ? revisiones.find((r) => r.id === s.id) : null;
-            const totalFalladas = rev ? rev.preguntas.filter((p) => p.marcada !== p.correcta).length : 0;
-            const avance = rev ? rev.repasoIndice || 0 : 0;
-
-            return (
-              <div key={i} style={styles.configCard}>
-                <div style={styles.configRow}>
+          {historial.map((s, i) => (
+            <div key={i} style={styles.configCard}>
+<div style={styles.configRow}>
                   <p style={styles.configCardTitle}>{s.fecha}</p>
                   <button onClick={() => eliminarUno(i)} title="Eliminar este simulacro" style={styles.borrarPartidaBtn}>
                     <img src={iconoPapelera} alt="" style={styles.iconoInlinePequeno} />
                   </button>
                 </div>
-                <div style={{ ...styles.resultRow, fontSize: 13 }}>
-                  <span>Nota</span>
-                  <b>{s.nota} / 10</b>
-                </div>
-                <div style={{ ...styles.resultRow, fontSize: 13, borderBottom: "none" }}>
+              <div style={{ ...styles.resultRow, fontSize: 13 }}>
+                <span>Nota</span>
+                <b>{s.nota} / 10</b>
+              </div>
+              <div style={{ ...styles.resultRow, fontSize: 13, borderBottom: "none" }}>
                   <span style={styles.inlineStatRow}>
                     <img src={iconoSimAciertos} alt="" style={styles.iconoInlinePequeno} /> {s.aciertos}
                     <img src={iconoSimErrores} alt="" style={styles.iconoInlinePequeno} /> {s.errores}
                     <img src={iconoSimBlancos} alt="" style={styles.iconoInlinePequeno} /> {s.blancos}
                   </span>
-                  <span style={styles.inlineStatRow}>
-                    <img src={iconoCronometro} alt="" style={styles.iconoInlinePequeno} /> {s.tiempo}
-                  </span>
+                  <span>⏱ {s.tiempo}</span>
                 </div>
-
-                {rev && (
-                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                    <button
-                      onClick={() => abrirRevision(rev, "historial")}
-                      style={{ ...styles.repasarBoton, flex: 1, background: "#e6dcf3" }}
-                    >
-                      Revisar
-                    </button>
-                    {totalFalladas > 0 && (
-                      <button
-                        onClick={() => abrirRepaso(rev, "historial")}
-                        style={{ ...styles.repasarBoton, flex: 1, background: "#f6dade" }}
-                      >
-                        {avance >= totalFalladas
-                          ? "Repaso hecho ✓"
-                          : avance > 0
-                          ? `Seguir repaso (${avance}/${totalFalladas})`
-                          : "Repasar falladas"}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+            </div>
+          ))}
         </>
       )}
 
