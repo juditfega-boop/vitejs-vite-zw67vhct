@@ -34,6 +34,7 @@ import iconoRachaLlama from "./assets/bookbrand/icono-brand-racha-llama.png";
 import iconoPerfilSilueta from "./assets/kit/icono-perfil-silueta.png";
 import iconoPerfilHero from "./assets/kit/icono-perfil-hero.png";
 import iconoNube from "./assets/bookbrand/icono-brand-nube.png";
+import iconoCandado from "./assets/kit/icono-candado.png";
 import {
   obtenerStats,
   guardarStats,
@@ -168,6 +169,17 @@ useEffect(() => {
 
   // 🔐 pantallas que solo pueden usar las cuentas aprobadas
   const PANTALLAS_BLOQUEADAS = ["simulacro", "carrera", "muerte", "archivos", "calendario"];
+
+  // 🔒 aspecto de las tarjetas bloqueadas (no se aplica mientras se comprueba la cuenta)
+  const mostrarBloqueo = !aprobada && estadoAcceso !== "cargando";
+  const estiloBloqueado = { opacity: 0.5, filter: "grayscale(35%)", position: "relative" };
+  const candado = (
+    <img
+      src={iconoCandado}
+      alt="Bloqueado"
+      style={{ position: "absolute", top: 10, right: 10, width: 26 }}
+    />
+  );
   if (PANTALLAS_BLOQUEADAS.includes(pantalla) && !aprobada) {
     return conPersonaje(
       <PantallaBloqueada
@@ -266,8 +278,9 @@ if (pantalla === "inicio") {
 
         <button
           onClick={() => setPantalla("simulacro")}
-          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaRosa }}
+          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaRosa, ...(mostrarBloqueo ? estiloBloqueado : {}) }}
         >
+          {mostrarBloqueo && candado}
           <img src={iconoReloj} alt="" style={styles.inicioTarjetaIcono} />
           <p style={styles.inicioTarjetaTitulo}>Simulacro oficial</p>
           <p style={styles.inicioTarjetaSubtitulo}>Examen completo, 100 preguntas</p>
@@ -294,8 +307,9 @@ if (pantalla === "inicio") {
 
         <button
           onClick={() => setPantalla("calendario")}
-          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaMuted }}
+          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaMuted, ...(mostrarBloqueo ? estiloBloqueado : {}) }}
         >
+          {mostrarBloqueo && candado}
           <img src={iconoCalendario} alt="" style={styles.inicioTarjetaIcono} />
           <p style={styles.inicioTarjetaTitulo}>Mi calendario</p>
           <p style={styles.inicioTarjetaSubtitulo}>Planifica tus días de estudio</p>
@@ -400,17 +414,16 @@ if (pantalla === "minijuegos") {
         <button
           key={j.id}
           onClick={() => setPantalla(j.destino)}
-          style={styles.minijuegoFilaCard}
+          style={{
+            ...styles.minijuegoFilaCard,
+            ...(mostrarBloqueo && j.id !== "construye" ? estiloBloqueado : {})
+          }}
         >
+          {mostrarBloqueo && j.id !== "construye" && candado}
           <img src={j.miniatura} alt={j.nombre} style={styles.minijuegoFilaImg} />
           <div style={styles.minijuegoFilaTexto}>
             <p style={styles.minijuegoFilaTitulo}>{j.nombre}</p>
             <p style={styles.minijuegoFilaDescripcion}>{j.descripcion}</p>
-            {!aprobada && j.id !== "construye" && (
-              <p style={{ ...styles.minijuegoFilaDescripcion, marginTop: 4, fontStyle: "italic" }}>
-                Solo con cuenta aprobada
-              </p>
-            )}
           </div>
           <span style={{ ...styles.minijuegoFilaFlecha, background: j.colorFlecha }}>→</span>
         </button>
@@ -508,43 +521,6 @@ if (pantalla === "muerte") {
         <CuentaUsuario usuario={usuario} estadoAcceso={estadoAcceso} />
 
 <MisImpugnaciones />
-
-<div style={styles.configCard}>
-          <p style={styles.configCardTitle}>
-            <img src={iconoNube} alt="" style={styles.perfilNubeIcono} />
-            Tu progreso en la nube
-          </p>
-
-          {usuario ? (
-            <>
-              <p style={styles.configSubLabel}>
-                Tu progreso se guarda en tu cuenta. Entra con el mismo correo en
-                otro dispositivo y lo tendrás ahí también.
-              </p>
-              <button
-                onClick={async () => {
-                  setSincronizando(true);
-                  await sincronizarConNube();
-                  setSincronizando(false);
-                  setMensajeSync("✅ Progreso guardado en tu cuenta.");
-                }}
-                disabled={sincronizando}
-                style={styles.ctaButton}
-              >
-                {sincronizando ? "Guardando..." : "🔄 Guardar ahora"}
-              </button>
-            </>
-          ) : (
-            <p style={styles.configSubLabel}>
-              Inicia sesión arriba para guardar tu progreso y recuperarlo desde
-              cualquier dispositivo. Sin cuenta, se queda solo en este dispositivo.
-            </p>
-          )}
-
-          {mensajeSync && (
-            <p style={{ ...styles.configSubLabel, marginTop: 10 }}>{mensajeSync}</p>
-          )}
-        </div>
 
         <div style={styles.perfilNotaCard}>
           <span style={{ fontSize: 22 }}>🌸</span>
