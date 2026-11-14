@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cargarPreguntas } from "./cargarPreguntas";
 import portada from "./assets/portada.jpeg";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -12,6 +12,8 @@ import PersonajeFlotante from "./personajes/PersonajeFlotante";
 import CuentaUsuario from "./componentes/CuentaUsuario";
 import MisImpugnaciones from "./componentes/MisImpugnaciones";
 import MiCalendario from "./componentes/MiCalendario";
+import PantallaBloqueada from "./componentes/PantallaBloqueada";
+import { useAcceso } from "./servicios/useAcceso";
 import ConstruyeConstitucion from "./juegos/ConstruyeConstitucion";
 import ConectaConstitucion from "./juegos/ConectaConstitucion";
 import CarreraPlaza from "./juegos/CarreraPlaza";
@@ -70,6 +72,10 @@ export default function App() {
   const [frase] = useState(
     () => FRASES_BIENVENIDA[Math.floor(Math.random() * FRASES_BIENVENIDA.length)]
   );
+
+  // 🔐 cuenta y estado de acceso ("cargando" | "sin-cuenta" | "pendiente" | "aprobada")
+  const { usuario, estado: estadoAcceso } = useAcceso();
+  const aprobada = estadoAcceso === "aprobada";
 
   // ☁️ código personal para sincronizar el progreso entre dispositivos
   const [codigo, setCodigo] = useState(
@@ -173,6 +179,25 @@ useEffect(() => {
   }
 }, [pantalla]);
 
+  // 🔐 sin aprobación solo se ven las preguntas marcadas como demo en el Sheet
+  const preguntasVisibles = useMemo(() => {
+    if (aprobada) return preguntasBase;
+    const grupoDemo = preguntasBase.filter((p) => p.demo);
+    return [...grupoDemo].sort(() => Math.random() - 0.5).slice(0, 10);
+  }, [preguntasBase, aprobada]);
+
+  // 🔐 pantallas que solo pueden usar las cuentas aprobadas
+  const PANTALLAS_BLOQUEADAS = ["simulacro", "carrera", "muerte", "archivos", "calendario"];
+  if (PANTALLAS_BLOQUEADAS.includes(pantalla) && !aprobada) {
+    return conPersonaje(
+      <PantallaBloqueada
+        estado={estadoAcceso}
+        irAPerfil={() => setPantalla("ajustes")}
+        volverMenu={volverMenu}
+      />
+    );
+  }
+
   // 🌸 PANTALLA DE BIENVENIDA (LANDING)
   if (pantalla === "landing") {
     return (
@@ -203,7 +228,7 @@ if (pantalla === "inicio") {
   const statsInicio = obtenerStats();
 
   const totalRespondidas = Object.values(statsInicio).reduce((a, b) => a + (b.veces || 0), 0);
-  const pendientesEstudio = Math.max(0, preguntasBase.length - Object.keys(statsInicio).length);
+  const pendientesEstudio = Math.max(0, preguntasVisibles.length - Object.keys(statsInicio).length);
 
   const bloquesResumen = {};
   preguntasBase.forEach((p) => {
@@ -401,6 +426,11 @@ if (pantalla === "minijuegos") {
           <div style={styles.minijuegoFilaTexto}>
             <p style={styles.minijuegoFilaTitulo}>{j.nombre}</p>
             <p style={styles.minijuegoFilaDescripcion}>{j.descripcion}</p>
+            {!aprobada && j.id !== "construye" && (
+              <p style={{ ...styles.minijuegoFilaDescripcion, marginTop: 4, fontStyle: "italic" }}>
+                Solo con cuenta aprobada
+              </p>
+            )}
           </div>
           <span style={{ ...styles.minijuegoFilaFlecha, background: j.colorFlecha }}>→</span>
         </button>
@@ -435,7 +465,7 @@ if (pantalla === "muerte") {
   if (pantalla === "estudiar-estudio") {
     return conPersonaje(
       <Estudiar
-        preguntasBase={preguntasBase}
+        preguntasBase={preguntasVisibles}
         volverMenu={volverMenu}
         sincronizarConNube={sincronizarConNube}
         vistaInicial="config"
@@ -447,7 +477,7 @@ if (pantalla === "muerte") {
   if (pantalla === "estudiar-progreso") {
     return conPersonaje(
       <Estudiar
-        preguntasBase={preguntasBase}
+        preguntasBase={preguntasVisibles}
         volverMenu={volverMenu}
         sincronizarConNube={sincronizarConNube}
         vistaInicial="progreso"
@@ -495,7 +525,7 @@ if (pantalla === "muerte") {
 
         <img src={iconoPerfilHero} alt="" style={styles.perfilHeroImg} />
 
-        <CuentaUsuario />
+        <CuentaUsuario usuario={usuario} estadoAcceso={estadoAcceso} />
 
 <MisImpugnaciones />
 

@@ -94,7 +94,8 @@ export async function cargarPreguntas() {
           respuestas: respuestasLista,
           correcta: parseInt(fila.correcta) || 0,
           explicacion: fila.explicacion || "",
-          grupo: fila.grupo || ""
+          grupo: fila.grupo || "",
+          demo: (fila.demo || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() === "si"
         };
       })
       .filter(Boolean);

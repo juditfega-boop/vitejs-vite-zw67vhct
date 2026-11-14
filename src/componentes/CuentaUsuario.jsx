@@ -1,20 +1,16 @@
-import { useState, useEffect } from "react";
-import { registrarse, iniciarSesion, cerrarSesion, observarSesion, mensajeErrorAuth, recuperarContrasena } from "../servicios/auth";
+import { useState } from "react";
+import { registrarse, iniciarSesion, cerrarSesion, mensajeErrorAuth, recuperarContrasena } from "../servicios/auth";
+import { ADMIN_UID } from "../servicios/accesos";
+import PanelAdmin from "./PanelAdmin";
 import { styles } from "../estilos";
 
-export default function CuentaUsuario() {
-  const [usuario, setUsuario] = useState(undefined); // undefined = aún cargando
+export default function CuentaUsuario({ usuario, estadoAcceso }) {
   const [modo, setModo] = useState("login"); // "login" | "registro"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [mensajeOk, setMensajeOk] = useState("");
-
-  useEffect(() => {
-    const unsubscribe = observarSesion((u) => setUsuario(u));
-    return unsubscribe;
-  }, []);
 
   async function enviar() {
     setError("");
@@ -64,14 +60,25 @@ export default function CuentaUsuario() {
 
   if (usuario) {
     return (
-      <div style={styles.configCard}>
-        <p style={styles.configCardTitle}>Tu cuenta</p>
-        <p style={styles.configSubLabel}>Sesión iniciada como <b>{usuario.email}</b></p>
-        <button onClick={salir} style={styles.linkVolver}>
-          Cerrar sesión
-        </button>
-        {mensajeOk && <p style={{ ...styles.configSubLabel, marginTop: 6 }}>{mensajeOk}</p>}
-      </div>
+      <>
+        <div style={styles.configCard}>
+          <p style={styles.configCardTitle}>Tu cuenta</p>
+          <p style={styles.configSubLabel}>Sesión iniciada como <b>{usuario.email}</b></p>
+          {estadoAcceso === "pendiente" && (
+            <p style={styles.configSubLabel}>
+              🌱 Tu solicitud de acceso está pendiente. Cuando la aceptemos, se desbloqueará todo la próxima vez que abras la app.
+            </p>
+          )}
+          {estadoAcceso === "aprobada" && (
+            <p style={styles.configSubLabel}>🌿 Tienes acceso completo.</p>
+          )}
+          <button onClick={salir} style={styles.linkVolver}>
+            Cerrar sesión
+          </button>
+          {mensajeOk && <p style={{ ...styles.configSubLabel, marginTop: 6 }}>{mensajeOk}</p>}
+        </div>
+        {usuario.uid === ADMIN_UID && <PanelAdmin />}
+      </>
     );
   }
 
@@ -79,7 +86,7 @@ export default function CuentaUsuario() {
     <div style={styles.configCard}>
       <p style={styles.configCardTitle}>Crear cuenta / Iniciar sesión</p>
       <p style={styles.configSubLabel}>
-        Con una cuenta podrás ver si hemos respondido a tus impugnaciones, y más adelante acceder a funciones adicionales.
+      Crea tu cuenta para solicitar el acceso completo a la app. En cuanto la revisemos, se desbloqueará todo.
       </p>
 
       <div style={styles.pillGroup}>
