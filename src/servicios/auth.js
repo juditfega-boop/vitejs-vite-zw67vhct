@@ -6,13 +6,21 @@ import {
     sendPasswordResetEmail
   } from "firebase/auth";
   import { auth } from "../firebase";
-  
-  export function registrarse(email, password) {
-    return createUserWithEmailAndPassword(auth, email, password);
+  import { marcarSesionPendiente, reclamarSesion } from "./sesion";
+  import { ADMIN_UID } from "./accesos";
+
+  export async function registrarse(email, password) {
+    marcarSesionPendiente();
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    if (cred.user.uid !== ADMIN_UID) await reclamarSesion(cred.user.uid);
+    return cred;
   }
-  
-  export function iniciarSesion(email, password) {
-    return signInWithEmailAndPassword(auth, email, password);
+
+  export async function iniciarSesion(email, password) {
+    marcarSesionPendiente();
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    if (cred.user.uid !== ADMIN_UID) await reclamarSesion(cred.user.uid);
+    return cred;
   }
   
   export function cerrarSesion() {

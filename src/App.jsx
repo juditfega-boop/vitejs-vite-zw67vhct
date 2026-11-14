@@ -42,7 +42,6 @@ import {
   obtenerTiempos,
   obtenerFavoritos,
   guardarFavoritos,
-  CLAVE_CODIGO,
   CLAVE_RACHA,
   CLAVE_TIEMPOS
 } from "./servicios/progreso";
@@ -75,7 +74,11 @@ export default function App() {
   );
 
   // 🔐 cuenta y estado de acceso ("cargando" | "sin-cuenta" | "pendiente" | "aprobada")
-  const { usuario, estado: estadoAcceso } = useAcceso();
+  const [avisoExpulsion, setAvisoExpulsion] = useState(false);
+  const { usuario, estado: estadoAcceso } = useAcceso(() => {
+    setAvisoExpulsion(true);
+    setPantalla("ajustes");
+  });
   const aprobada = estadoAcceso === "aprobada";
   // ☁️ el progreso se guarda en la nube, vinculado a la cuenta
   const [sincronizando, setSincronizando] = useState(false);
@@ -116,14 +119,8 @@ export default function App() {
       if (snap.exists()) {
         aplicarDatos(snap.data());
       } else {
-        const codigoAntiguo = localStorage.getItem(CLAVE_CODIGO);
-        if (codigoAntiguo) {
-          const viejo = await getDoc(doc(db, "perfiles", codigoAntiguo));
-          if (viejo.exists()) aplicarDatos(viejo.data());
-        }
         await setDoc(doc(db, "progreso", u.uid), datosLocales());
       }
-      localStorage.removeItem(CLAVE_CODIGO);
     } catch (e) {
       setMensajeSync("⚠️ No se pudo conectar. Comprueba tu conexión a internet.");
     }
@@ -517,6 +514,19 @@ if (pantalla === "muerte") {
         </div>
 
         <img src={iconoPerfilHero} alt="" style={styles.perfilHeroImg} />
+
+        {avisoExpulsion && (
+          <div style={{ ...styles.configCard, background: "#f9e3e3" }}>
+            <p style={styles.configCardTitle}>Se ha cerrado tu sesión</p>
+            <p style={styles.configSubLabel}>
+              Has iniciado sesión en otro dispositivo. Cada cuenta solo puede estar
+              abierta en un dispositivo a la vez. Si quieres seguir aquí, vuelve a entrar.
+            </p>
+            <button onClick={() => setAvisoExpulsion(false)} style={styles.linkVolver}>
+              Entendido
+            </button>
+          </div>
+        )}
 
         <CuentaUsuario usuario={usuario} estadoAcceso={estadoAcceso} />
 
