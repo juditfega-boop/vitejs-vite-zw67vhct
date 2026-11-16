@@ -34,5 +34,11 @@
   </button>
 
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // 📴 copia sin conexión: solo en la versión publicada, nunca en StackBlitz
+      if ("serviceWorker" in navigator && location.hostname.endsWith("vercel.app")) {
+        window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+      }
+    </script>
   </body>
 </html>
