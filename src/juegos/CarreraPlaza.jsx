@@ -696,7 +696,7 @@ if (vista === "detalle") {
               if (v.currentTime >= 5 && !mostrarNombresVideo) {
                 setMostrarNombresVideo(true);
               }
-              if (v.duration && v.currentTime >= v.duration - 2) {
+              if (v.duration && v.currentTime >= v.duration - 0.15) {
                 v.pause();
               }
             }}
