@@ -1,4 +1,4 @@
-import { doc, writeBatch } from "firebase/firestore";
+import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 
 // 📦 las preguntas se guardan en paquetes para gastar pocas lecturas
@@ -27,4 +27,20 @@ export async function subirBanco(preguntasOriginales) {
   await lote.commit();
 
   return { total: preguntas.length, paquetes: paquetes.length, demo: demo.length };
+}
+// 📖 lee las preguntas: el banco completo (cuentas aprobadas) o solo las de demo
+export async function leerBanco(completo) {
+  if (!completo) {
+    const snap = await getDoc(doc(db, "demo", "paquete"));
+    return snap.exists() ? snap.data().preguntas : [];
+  }
+
+  const indice = await getDoc(doc(db, "banco", "indice"));
+  if (!indice.exists()) return [];
+
+  const total = indice.data().paquetes;
+  const paquetes = await Promise.all(
+    Array.from({ length: total }, (_, i) => getDoc(doc(db, "banco", `paquete-${i}`)))
+  );
+  return paquetes.flatMap((s) => (s.exists() ? s.data().preguntas : []));
 }
