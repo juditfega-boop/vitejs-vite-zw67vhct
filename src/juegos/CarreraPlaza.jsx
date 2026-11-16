@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { styles, globalStyles } from "../estilos";
 import video2Jugadoras from "../assets/carrera-video-2.mp4";
 import video3Jugadoras from "../assets/carrera-video-3.mp4";
@@ -120,6 +120,28 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
   const [inicioTurno, setInicioTurno] = useState(null);
   const [jugadoraExpandida, setJugadoraExpandida] = useState(null);
   const [mostrarNombresVideo, setMostrarNombresVideo] = useState(false);
+  const [videoTerminado, setVideoTerminado] = useState(false);
+  const videoRef = useRef(null);
+  const lienzoRef = useRef(null);
+
+  // 🎬 al acabar, "foto" del último fotograma: se queda a la vista aunque el navegador
+  // deje el vídeo en blanco al pararlo
+  function congelarUltimoFotograma() {
+    const video = videoRef.current;
+    const lienzo = lienzoRef.current;
+    if (!video || !lienzo || videoTerminado) return;
+    try {
+      lienzo.width = video.videoWidth;
+      lienzo.height = video.videoHeight;
+      lienzo.getContext("2d").drawImage(video, 0, 0, lienzo.width, lienzo.height);
+    } catch (e) {
+      // si no se pudiera capturar, se queda el vídeo tal cual
+      return;
+    }
+    video.pause();
+    setMostrarNombresVideo(true);
+    setVideoTerminado(true);
+  }
   const [refrescoHistorial, setRefrescoHistorial] = useState(0);
   const [enPausa, setEnPausa] = useState(false);
   const [pausaDesde, setPausaDesde] = useState(null);
@@ -283,6 +305,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
     setFraseJuego(FRASES_MINIJUEGO[Math.floor(Math.random() * FRASES_MINIJUEGO.length)]);
     guardarPartidaHistorial(puntuacionesJuego);
     setMostrarNombresVideo(false);
+    setVideoTerminado(false);
     setVista("resultado");
   }
 
@@ -686,21 +709,32 @@ if (vista === "detalle") {
         </div>
 
         <div style={styles.videoResultadoWrap}>
-          <video
+        <video
+            ref={videoRef}
             src={videoSrc}
             autoPlay
             muted
             playsInline
+            onLoadedMetadata={(e) => {
+              // ⏩ salta la espera en blanco del principio: la carrera empieza en el segundo 2,5
+              if (e.target.currentTime < 2.5) e.target.currentTime = 2.5;
+            }}
             onTimeUpdate={(e) => {
               const v = e.target;
               if (v.currentTime >= 5 && !mostrarNombresVideo) {
                 setMostrarNombresVideo(true);
               }
-              if (v.duration && v.currentTime >= v.duration - 0.15) {
-                v.pause();
+              if (v.duration && v.currentTime >= v.duration - 0.2) {
+                congelarUltimoFotograma();
               }
             }}
-            style={styles.videoElementInline}
+            onEnded={congelarUltimoFotograma}
+            style={{ ...styles.videoElementInline, ...(videoTerminado ? { display: "none" } : {}) }}
+          />
+          <canvas
+            ref={lienzoRef}
+            aria-label="Clasificación final de la carrera"
+            style={{ ...styles.videoElementInline, ...(videoTerminado ? {} : { display: "none" }) }}
           />
 
           {mostrarNombresVideo &&
