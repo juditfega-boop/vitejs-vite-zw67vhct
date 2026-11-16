@@ -38,25 +38,25 @@
           {
             "id": "articulo-1", "label": "Artículo 1",
             "resumen": "España se constituye en Estado social y democrático de Derecho",
-            "contenido": "España se constituye en un Estado social y democrático de Derecho, que propugna como valores superiores de su ordenamiento jurídico la libertad, la justicia, la igualdad y el pluralismo político.",
+            "contenido": "1. España se constituye en un Estado social y democrático de Derecho, que propugna como valores superiores de su ordenamiento jurídico la libertad, la justicia, la igualdad y el pluralismo político. 2. La soberanía nacional reside en el pueblo español, del que emanan los poderes del Estado. 3. La forma política del Estado español es la Monarquía parlamentaria.",
             "destacado": true, "children": []
           },
-          { "id": "articulo-2", "label": "Artículo 2", "resumen": "Unidad de la Nación y autonomía de nacionalidades y regiones", "contenido": "La Constitución se fundamenta en la unidad indisoluble de la Nación española, patria común e indivisible de todos los españoles.", "children": [] },
-          { "id": "articulo-3", "label": "Artículo 3", "resumen": "El castellano y las demás lenguas oficiales", "contenido": "El castellano es la lengua española oficial del Estado. Las demás lenguas españolas serán también oficiales en las respectivas Comunidades Autónomas de acuerdo con sus Estatutos.", "children": [] },
-          { "id": "articulo-4", "label": "Artículo 4", "resumen": "La bandera de España", "contenido": "La bandera de España está formada por tres bandas horizontales, roja, amarilla y roja, siendo la amarilla de doble anchura que cada una de las rojas.", "children": [] },
-          { "id": "articulo-5", "label": "Artículo 5", "resumen": "La capital del Estado", "contenido": "La capital del Estado es la villa de Madrid. El Estado podrá trasladar su sede a otra localidad dentro del territorio español.", "children": [] },
-          { "id": "articulo-6", "label": "Artículo 6", "resumen": "Los partidos políticos", "contenido": "Los partidos políticos expresan el pluralismo político, concurren a la formación y manifestación de la voluntad popular y son instrumento fundamental para la participación política.", "children": [] },
+          { "id": "articulo-2", "label": "Artículo 2", "resumen": "Unidad de la Nación y autonomía de nacionalidades y regiones", "contenido": "La Constitución se fundamenta en la indisoluble unidad de la Nación española, patria común e indivisible de todos los españoles, y reconoce y garantiza el derecho a la autonomía de las nacionalidades y regiones que la integran y la solidaridad entre todas ellas.", "children": [] },
+          { "id": "articulo-3", "label": "Artículo 3", "resumen": "El castellano y las demás lenguas oficiales", "contenido": "1. El castellano es la lengua española oficial del Estado. Todos los españoles tienen el deber de conocerla y el derecho a usarla. 2. Las demás lenguas españolas serán también oficiales en las respectivas Comunidades Autónomas de acuerdo con sus Estatutos. 3. La riqueza de las distintas modalidades lingüísticas de España es un patrimonio cultural que será objeto de especial respeto y protección.", "children": [] },
+          { "id": "articulo-4", "label": "Artículo 4", "resumen": "La bandera de España", "contenido": "1. La bandera de España está formada por tres franjas horizontales, roja, amarilla y roja, siendo la amarilla de doble anchura que cada una de las rojas. 2. Los Estatutos podrán reconocer banderas y enseñas propias de las Comunidades Autónomas. Estas se utilizarán junto a la bandera de España en sus edificios públicos y en sus actos oficiales.", "children": [] },
+          { "id": "articulo-5", "label": "Artículo 5", "resumen": "La capital del Estado", "contenido": "La capital del Estado es la villa de Madrid.", "children": [] },
+          { "id": "articulo-6", "label": "Artículo 6", "resumen": "Los partidos políticos", "contenido": "Los partidos políticos expresan el pluralismo político, concurren a la formación y manifestación de la voluntad popular y son instrumento fundamental para la participación política. Su creación y el ejercicio de su actividad son libres dentro del respeto a la Constitución y a la ley. Su estructura interna y funcionamiento deberán ser democráticos.", "children": [] },
           {
             "id": "articulo-7", "label": "Artículo 7",
             "resumen": "Sindicatos y organizaciones empresariales",
             "contenido": "Los sindicatos de trabajadores y las asociaciones empresariales contribuyen a la defensa y promoción de los intereses económicos y sociales que les son propios. Su creación y el ejercicio de su actividad son libres dentro del respeto a la Constitución y a la ley. Su estructura interna y funcionamiento deberán ser democráticos.",
             "children": []
           },
-          { "id": "articulo-8", "label": "Artículo 8", "resumen": "Las Fuerzas Armadas", "contenido": "Las Fuerzas Armadas garantizan la soberanía e independencia de España, defienden su integridad territorial y el ordenamiento constitucional.", "children": [] },
+          { "id": "articulo-8", "label": "Artículo 8", "resumen": "Las Fuerzas Armadas", "contenido": "1. Las Fuerzas Armadas, constituidas por el Ejército de Tierra, la Armada y el Ejército del Aire, tienen como misión garantizar la soberanía e independencia de España, defender su integridad territorial y el ordenamiento constitucional. 2. Una ley orgánica regulará las bases de la organización militar conforme a los principios de la presente Constitución.", "children": [] },
           {
             "id": "articulo-9", "label": "Artículo 9",
             "resumen": "Sujeción a la Constitución y promoción de la igualdad real",
-            "contenido": "Los ciudadanos y los poderes públicos están sujetos a la Constitución y al resto del ordenamiento jurídico. Promueven las condiciones para que la libertad y la igualdad del individuo y de los grupos en que se integra sean reales y efectivas.",
+            "contenido": "1. Los ciudadanos y los poderes públicos están sujetos a la Constitución y al resto del ordenamiento jurídico. 2. Corresponde a los poderes públicos promover las condiciones para que la libertad y la igualdad del individuo y de los grupos en que se integra sean reales y efectivas; remover los obstáculos que impidan o dificulten su plenitud y facilitar la participación de todos los ciudadanos en la vida política, económica, cultural y social. 3. La Constitución garantiza el principio de legalidad, la jerarquía normativa, la publicidad de las normas, la irretroactividad de las disposiciones sancionadoras no favorables o restrictivas de derechos individuales, la seguridad jurídica, la responsabilidad y la interdicción de la arbitrariedad de los poderes públicos.",
             "destacado": true, "children": []
           }
         ]
@@ -75,8 +75,15 @@
           "capitulo-5": { "top": "13.3%", "left": "42.7%", "width": "12.7%", "height": "12.5%" }
         },
         "children": [
-            {
-                "id": "capitulo-1", "label": "Capítulo I",
+          {
+              "id": "articulo-10", "label": "Artículo 10",
+              "resumen": "Dignidad de la persona e interpretación de los derechos",
+              "contenido": "1. La dignidad de la persona, los derechos inviolables que le son inherentes, el libre desarrollo de la personalidad, el respeto a la ley y a los derechos de los demás son fundamento del orden político y de la paz social. 2. Las normas relativas a los derechos fundamentales y a las libertades que la Constitución reconoce se interpretarán de conformidad con la Declaración Universal de Derechos Humanos y los tratados y acuerdos internacionales sobre las mismas materias ratificados por España.",
+              "destacado": true,
+              "children": []
+          },
+          {
+              "id": "capitulo-1", "label": "Capítulo I",
                 "subtitle": "De los españoles y extranjeros",
                 "vistaHijos": "articulos",
                 "imagenFondo": "capitulo1-articulos",
@@ -402,7 +409,7 @@
                   {
                     "id": "articulo-49", "label": "Artículo 49",
                     "resumen": "Personas con discapacidad",
-                    "contenido": "Los poderes públicos realizarán una política de previsión, tratamiento, rehabilitación e integración de las personas con discapacidades físicas, sensoriales y psíquicas, a las que prestarán la atención especializada que requieran y las ampararán especialmente para el disfrute de los derechos que este Título otorga a todos los ciudadanos.",
+                    "contenido": "1. Las personas con discapacidad ejercen los derechos previstos en este Título en condiciones de libertad e igualdad reales y efectivas. Se regulará por ley la protección especial que sea necesaria para dicho ejercicio. 2. Los poderes públicos impulsarán las políticas que garanticen la plena autonomía personal y la inclusión social de las personas con discapacidad, en entornos universalmente accesibles. Asimismo, fomentarán la participación de sus organizaciones, en los términos que la ley establezca. Se atenderán particularmente las necesidades específicas de las mujeres y los menores con discapacidad.",
                     "children": []
                   },
                   {
@@ -439,13 +446,13 @@
               {
                 "id": "articulo-53", "label": "Artículo 53",
                 "resumen": "Garantías de los derechos fundamentales",
-                "contenido": "Los derechos y libertades reconocidos en el Capítulo II del presente Título vinculan a todos los poderes públicos...",
+                "contenido": "1. Los derechos y libertades reconocidos en el Capítulo segundo del presente Título vinculan a todos los poderes públicos. Sólo por ley, que en todo caso deberá respetar su contenido esencial, podrá regularse el ejercicio de tales derechos y libertades, que se tutelarán de acuerdo con lo previsto en el artículo 161, 1, a). 2. Cualquier ciudadano podrá recabar la tutela de las libertades y derechos reconocidos en el artículo 14 y la Sección primera del Capítulo segundo ante los Tribunales ordinarios por un procedimiento basado en los principios de preferencia y sumariedad y, en su caso, a través del recurso de amparo ante el Tribunal Constitucional. Este último recurso será aplicable a la objeción de conciencia reconocida en el artículo 30. 3. El reconocimiento, el respeto y la protección de los principios reconocidos en el Capítulo tercero informarán la legislación positiva, la práctica judicial y la actuación de los poderes públicos. Sólo podrán ser alegados ante la Jurisdicción ordinaria de acuerdo con lo que dispongan las leyes que los desarrollen.",
                 "destacado": true, "children": []
               },
               {
                 "id": "articulo-54", "label": "Artículo 54",
                 "resumen": "El Defensor del Pueblo",
-                "contenido": "Una ley orgánica regulará la institución del Defensor del Pueblo, como alto comisionado de las Cortes Generales...",
+                "contenido": "Una ley orgánica regulará la institución del Defensor del Pueblo, como alto comisionado de las Cortes Generales, designado por éstas para la defensa de los derechos comprendidos en este Título, a cuyo efecto podrá supervisar la actividad de la Administración, dando cuenta a las Cortes Generales.",
                 "destacado": true, "children": []
               }
             ]

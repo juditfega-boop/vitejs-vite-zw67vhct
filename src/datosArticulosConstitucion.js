@@ -42,7 +42,7 @@ export const ARTICULOS_CONSTITUCION = [
     { id: 22, capituloNumero: "III", capituloNombre: "Principios rectores de la política social y económica", articulo: 43, descripcion: "Reconoce el derecho a la protección de la salud." },
     { id: 23, capituloNumero: "III", capituloNombre: "Principios rectores de la política social y económica", articulo: 45, descripcion: "Derecho a disfrutar de un medio ambiente adecuado para el desarrollo de la persona." },
     { id: 24, capituloNumero: "III", capituloNombre: "Principios rectores de la política social y económica", articulo: 47, descripcion: "Derecho a disfrutar de una vivienda digna y adecuada." },
-    { id: 25, capituloNumero: "III", capituloNombre: "Principios rectores de la política social y económica", articulo: 49, descripcion: "Atención especializada, tratamiento y rehabilitación de las personas con discapacidad." },
+    { id: 25, capituloNumero: "III", capituloNombre: "Principios rectores de la política social y económica", articulo: 49, descripcion: "Las personas con discapacidad ejercen sus derechos en condiciones de libertad e igualdad reales y efectivas." },
     { id: 26, capituloNumero: "III", capituloNombre: "Principios rectores de la política social y económica", articulo: 50, descripcion: "Garantía de suficiencia económica a los ciudadanos durante la tercera edad." },
   
     { id: 27, capituloNumero: "IV", capituloNombre: "Garantías de las libertades y derechos fundamentales", articulo: 53, descripcion: "Vincula a todos los poderes públicos al respeto de los derechos fundamentales." },
