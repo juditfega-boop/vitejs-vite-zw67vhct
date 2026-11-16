@@ -1,5 +1,5 @@
-const DURACION_ZOOM = 600;
-const EASING = 'cubic-bezier(0.83, 0, 0.17, 1)';
+const DURACION_ZOOM = 750;
+const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'; // curva suave, sin acelerones
 import { calcularTransformDesdeHotspot } from './zoomMath';
 
 const ESCALA_ENTRADA = 5.5;
@@ -13,7 +13,7 @@ export default function ZoomTransition({ nivelActual, nivelSiguiente, hotspotSel
     position: 'fixed',
     inset: 0,
     zIndex: 500,
-    background: '#1a1410',
+    background: '#f7f1e8',
     display: 'flex',
     justifyContent: 'center',
     overflow: 'hidden', // recorta lo que se salga de pantalla durante el zoom, sin dar scroll

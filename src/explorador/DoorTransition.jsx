@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import imagenDespachoAbierta from '../assets/kit/explorador/puerta-despacho.png';
 import { calcularTransformDesdeHotspot } from './zoomMath';
 
+// 🖼️ la puerta del despacho se prepara al cargar la app, para que nunca aparezca a medias
+const precargaDespacho = new Image();
+precargaDespacho.src = imagenDespachoAbierta;
+
 const DURACION_FEEDBACK = 130;
-const DURACION_ZOOM = 600;
+const DURACION_ZOOM = 750;
 const DURACION_CROSSFADE = 450; // pasillo (puerta cerrada) -> despacho (puerta abierta)
 const DURACION_LUZ = 400;       // el velo blanco va invadiendo la imagen del despacho
 const DURACION_FUNDIDO = 150;   // fundido blanco total, antes de mostrar el artículo
-const EASING = 'cubic-bezier(0.83, 0, 0.17, 1)';
+const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'; // curva suave, sin acelerones
 
 /**
  * Transición especial para Pasillo -> Artículo (y su vuelta).
@@ -60,7 +64,7 @@ export default function DoorTransition({ nivelPasillo, hotspotPuerta, direccion,
   const opacidadFundido = fase === 'fundido' ? 1 : 0;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: '#1a1410', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: '#f7f1e8', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
       <div style={{ position: 'relative', width: '100%', maxWidth: 560 }}>
 
         {/* El pasillo, con zoom hacia la puerta pulsada */}

@@ -1,9 +1,33 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import ZoomTransition from './ZoomTransition';
 import DoorTransition from './DoorTransition';
+import imagenesExplorador from './imagenesRegistry';
 
 const DURACION_FEEDBACK = 130;
-const DURACION_ZOOM = 600;
+const DURACION_ZOOM = 750;
+
+// 🖼️ precarga: las imágenes se descargan y preparan antes de necesitarlas
+const imagenesPreparadas = {};
+function prepararImagen(clave) {
+  const src = clave ? imagenesExplorador[clave] : null;
+  if (!src) return Promise.resolve();
+  if (!imagenesPreparadas[src]) {
+    const img = new Image();
+    img.src = src;
+    imagenesPreparadas[src] = {
+      img,
+      lista: (img.decode ? img.decode() : Promise.resolve()).catch(() => {})
+    };
+  }
+  return imagenesPreparadas[src].lista;
+}
+
+// espera a que la imagen esté lista, pero nunca más de 1,5 s (por si la conexión va lenta)
+function esperarImagen(clave) {
+  return Promise.race([prepararImagen(clave), new Promise((r) => setTimeout(r, 1500))]);
+}
+
+const esHojaNodo = (n) => n && (!n.children || n.children.length === 0);
 
 function resolverRuta(raiz, ids) {
   let nodoActual = raiz;
@@ -44,6 +68,12 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
   );
   const nodoDestino = rutaDestinoResuelta ? rutaDestinoResuelta[rutaDestinoResuelta.length - 1] : null;
 
+  // 🖼️ al entrar en una sala, prepara ya las salas a las que llevan sus puertas (y la de vuelta)
+  useEffect(() => {
+    (nodoActual.children || []).forEach((hijo) => prepararImagen(hijo.imagenFondo));
+    if (ruta.length > 1) prepararImagen(ruta[ruta.length - 2].imagenFondo);
+  }, [nodoActual, ruta]);
+
   function rendererDe(nodo) {
     if (!nodo) return null;
     const esHoja = !nodo.children || nodo.children.length === 0;
@@ -51,19 +81,31 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
   }
 
   function animarHacia(idsDestino, hotspot) {
+    const destino = resolverRuta(data, idsDestino).slice(-1)[0];
+
     setHotspotActivo(hotspot);
     setRutaIdsDestino(idsDestino);
     setFase('feedback');
+
+    // 🚪 entrar o salir de un artículo: la puerta lleva su propio ritmo y avisa al terminar
+    if (esHojaNodo(destino) || esHojaNodo(nodoActual)) return;
+
+    // 🖼️ empezamos a preparar ya la imagen de la sala de destino
+    const imagenLista = esperarImagen(destino && destino.imagenFondo);
+
     setTimeout(() => {
       setFase('zoom-in');
       setTimeout(() => {
-        setFase('zoom-out');
-        setTimeout(() => {
-          setRutaIds(idsDestino);
-          setRutaIdsDestino(null);
-          setFase('reposo');
-          setHotspotActivo(null);
-        }, DURACION_ZOOM);
+        // la sala nueva no aparece hasta que su imagen está lista
+        imagenLista.then(() => {
+          setFase('zoom-out');
+          setTimeout(() => {
+            setRutaIds(idsDestino);
+            setRutaIdsDestino(null);
+            setFase('reposo');
+            setHotspotActivo(null);
+          }, DURACION_ZOOM);
+        });
       }, DURACION_ZOOM);
     }, DURACION_FEEDBACK);
   }
