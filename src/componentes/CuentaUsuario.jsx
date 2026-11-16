@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { registrarse, iniciarSesion, cerrarSesion, mensajeErrorAuth, recuperarContrasena } from "../servicios/auth";
 import { ADMIN_UID } from "../servicios/accesos";
-import PanelAdmin from "./PanelAdmin";
-import SubirPreguntas from "./SubirPreguntas";
+import PanelAdministracion from "./PanelAdministracion";
 import { styles } from "../estilos";
 
 export default function CuentaUsuario({ usuario, estadoAcceso }) {
@@ -78,12 +77,7 @@ export default function CuentaUsuario({ usuario, estadoAcceso }) {
           </button>
           {mensajeOk && <p style={{ ...styles.configSubLabel, marginTop: 6 }}>{mensajeOk}</p>}
         </div>
-        {usuario.uid === ADMIN_UID && (
-          <>
-            <PanelAdmin />
-            <SubirPreguntas />
-          </>
-        )}
+        {usuario.uid === ADMIN_UID && <PanelAdministracion />}
       </>
     );
   }

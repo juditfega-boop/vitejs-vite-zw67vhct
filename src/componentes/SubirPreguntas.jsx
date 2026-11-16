@@ -43,6 +43,8 @@ export default function SubirPreguntas() {
         style={{
           ...styles.ctaButton,
           display: "block",
+          width: "100%",
+          boxSizing: "border-box",
           textAlign: "center",
           cursor: subiendo ? "default" : "pointer",
           ...(subiendo ? styles.ctaButtonDisabled : {})
