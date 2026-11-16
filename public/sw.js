@@ -1,5 +1,5 @@
 // 📴 guarda una copia de la app en el móvil para poder abrirla sin conexión
-const CACHE = "insistentes-v2";
+const CACHE = "insistentes-v3";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
@@ -12,6 +12,24 @@ self.addEventListener("install", (e) => {
         const html = await (await fetch("/index.html", { cache: "no-store" })).text();
         const archivos = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((m) => m[1]);
         await cache.addAll(archivos);
+
+        // 🖼️ y todas las imágenes que usa el código (Explorador, iconos, ilustraciones…)
+        const imagenes = new Set();
+        for (const archivo of archivos.filter((a) => a.endsWith(".js"))) {
+          const respuesta = await cache.match(archivo);
+          if (!respuesta) continue;
+          const codigo = await respuesta.text();
+          for (const m of codigo.matchAll(/\/assets\/[^"'`\s)]+\.(?:png|jpe?g|webp|svg|gif)/g)) {
+            imagenes.add(m[0]);
+          }
+        }
+        for (const img of imagenes) {
+          try {
+            await cache.add(img);
+          } catch (err) {
+            // si alguna falla, se guardará al verla
+          }
+        }
       } catch (err) {
         // si falla, se irán guardando al usarlos
       }
