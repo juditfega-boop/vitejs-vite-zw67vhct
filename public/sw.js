@@ -1,12 +1,21 @@
 // 📴 guarda una copia de la app en el móvil para poder abrirla sin conexión
-const CACHE = "insistentes-v1";
+const CACHE = "insistentes-v2";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE).then((c) =>
-      c.addAll(["/", "/index.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"])
-    )
+    (async () => {
+      const cache = await caches.open(CACHE);
+      await cache.addAll(["/", "/index.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"]);
+      // 📦 también el código de la app: los archivos que enlaza index.html
+      try {
+        const html = await (await fetch("/index.html", { cache: "no-store" })).text();
+        const archivos = [...html.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((m) => m[1]);
+        await cache.addAll(archivos);
+      } catch (err) {
+        // si falla, se irán guardando al usarlos
+      }
+    })()
   );
 });
 
