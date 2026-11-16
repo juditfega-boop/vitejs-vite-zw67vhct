@@ -136,14 +136,12 @@ export default function App() {
   useEffect(() => {
     if (estadoAcceso === "cargando") return;
     let cancelado = false;
-    console.log("🔎 Cargando preguntas. Estado de la cuenta:", estadoAcceso);
     leerBanco(estadoAcceso === "aprobada")
       .then((datos) => {
-        console.log("🔎 Preguntas recibidas:", datos.length);
         if (!cancelado) setPreguntasBase(datos);
       })
       .catch((error) => {
-        console.error("🔎 Error al cargar las preguntas:", error);
+        console.error("Error al cargar las preguntas:", error);
         if (!cancelado) setPreguntasBase([]);
       });
     return () => {
