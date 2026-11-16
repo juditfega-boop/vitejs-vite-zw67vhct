@@ -106,3 +106,17 @@ export function guardarPartida(datos) {
 export function borrarPartida() {
   localStorage.removeItem(CLAVE_PARTIDA);
 }
+// 🔁 Erre que erre: nivel de cada ficha (1 con pistas, 2 huecos, 3 de memoria)
+export const CLAVE_ERRE = "opo_erre_niveles_v1";
+
+export function obtenerNivelesErre() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_ERRE)) || {};
+  } catch {
+    return {};
+  }
+}
+
+export function guardarNivelesErre(niveles) {
+  localStorage.setItem(CLAVE_ERRE, JSON.stringify(niveles));
+}

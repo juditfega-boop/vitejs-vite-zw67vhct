@@ -16,6 +16,7 @@ import SalaCapitulo from "../explorador/skins/edificio/SalaCapitulo";
 import PlaceholderNivel from "../explorador/skins/edificio/PlaceholderNivel";
 import DetalleArticulo from "../explorador/skins/edificio/DetalleArticulo";
 import dataConstitucion from "../explorador/data/constitucion.json";
+import ErreQueErre from "../erre/ErreQueErre";
 
 const edificioSkinPrueba = {
   titulos: SalaCapitulo,
@@ -49,14 +50,15 @@ const FRASES_COMPROBAR_INCORRECTO = [
 // 🏛️ "Construye la Constitución" — componente independiente y autocontenido.
 // Recibe por prop solo lo que necesita para volver al hub de minijuegos.
 export default function ConstruyeConstitucion({ setPantalla }) {
-  const [vista, setVista] = useState("detalle"); // "detalle" | "config" | "jugando"
+  const [vista, setVista] = useState("detalle"); // "detalle" | "config" | "jugando" | "explorar" | "erre"
+  const [articuloPractica, setArticuloPractica] = useState(null);
 
   // Oculta la casita de navegación global mientras se explora el edificio,
   // para no romper la inmersión — se restaura al salir de esta pantalla.
   useEffect(() => {
     const boton = document.getElementById('boton-panico');
     if (!boton) return;
-    boton.style.display = vista === 'explorar' ? 'none' : '';
+    boton.style.display = vista === 'explorar' || vista === 'erre' ? 'none' : '';
     return () => {
       boton.style.display = '';
     };
@@ -240,19 +242,38 @@ if (vista === "detalle") {
   );
 }
 
-if (vista === "explorar") {
+// 🔍 EXPLORAR (y practicar un artículo con Erre que erre)
+// El Explorador sigue montado, oculto, mientras practicas: al volver,
+// apareces en el mismo artículo en el que estabas.
+if (vista === "explorar" || vista === "erre") {
   return (
-    <div style={{ ...styles.menuContainer, padding: 0, maxWidth: "100%" }}>
-      <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
-        ⬅ Volver
-      </button>
-      <LawExplorer
+    <>
+      <div
+        style={{
+          ...styles.menuContainer,
+          padding: 0,
+          maxWidth: "100%",
+          display: vista === "erre" ? "none" : "block"
+        }}
+      >
+        <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
+          ⬅ Volver
+        </button>
+        <LawExplorer
           data={dataConstitucion}
           skin={edificioSkinPrueba}
-        getNodeState={() => null}
-        onLeafAction={(nodo) => console.log("practicar", nodo.id)}
-      />
-    </div>
+          getNodeState={() => null}
+          onLeafAction={(nodo) => {
+            setArticuloPractica(nodo);
+            setVista("erre");
+          }}
+        />
+      </div>
+
+      {vista === "erre" && articuloPractica && (
+        <ErreQueErre articulo={articuloPractica} onVolver={() => setVista("explorar")} />
+      )}
+    </>
   );
 }
 

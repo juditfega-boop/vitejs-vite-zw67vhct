@@ -43,7 +43,9 @@ import {
   obtenerFavoritos,
   guardarFavoritos,
   CLAVE_RACHA,
-  CLAVE_TIEMPOS
+  CLAVE_TIEMPOS,
+  obtenerNivelesErre,
+  guardarNivelesErre
 } from "./servicios/progreso";
 
 // 🧑‍🤝‍🧑 envuelve una pantalla con el personaje flotante global — se omite
@@ -90,6 +92,7 @@ export default function App() {
       racha: obtenerRacha(),
       tiempos: obtenerTiempos(),
       favoritos: obtenerFavoritos(),
+      erre: obtenerNivelesErre(),
       actualizado: new Date().toISOString()
     };
   }
@@ -99,6 +102,7 @@ export default function App() {
     if (datos.racha) localStorage.setItem(CLAVE_RACHA, JSON.stringify(datos.racha));
     if (datos.tiempos) localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos.tiempos));
     if (datos.favoritos) guardarFavoritos(datos.favoritos);
+    if (datos.erre) guardarNivelesErre(datos.erre);
   }
 
   async function sincronizarConNube() {

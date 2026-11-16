@@ -1,3 +1,5 @@
+import { separarApartados, trocear, tieneClaves } from "../../../erre/fichas";
+
 export default function DetalleArticulo({ node, ruta, onBack, onLeafAction }) {
     const tieneContenido = node.contenido && !node.resumen?.startsWith('PENDIENTE');
   
@@ -34,7 +36,14 @@ export default function DetalleArticulo({ node, ruta, onBack, onLeafAction }) {
           {tieneContenido ? (
             <>
               <p style={{ fontWeight: 600, fontSize: 18, marginTop: 0 }}>{node.resumen}</p>
-              <p style={{ lineHeight: 1.6, color: '#4a4038' }}>{node.contenido}</p>
+              {separarApartados(node.contenido).map((a) => (
+                <p key={a.numero || 1} style={{ lineHeight: 1.6, color: '#4a4038' }}>
+                  {a.numero && <b>{a.numero}. </b>}
+                  {trocear(a.texto).map((p, i) =>
+                    p.clave ? <b key={i}>{p.valor}</b> : <span key={i}>{p.valor}</span>
+                  )}
+                </p>
+              ))}
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '12px 0' }}>
@@ -69,7 +78,7 @@ export default function DetalleArticulo({ node, ruta, onBack, onLeafAction }) {
           </div>
         )}
   
-        {onLeafAction && (
+  {onLeafAction && tieneClaves(node.contenido) && (
           <button
             onClick={onLeafAction}
             style={{
