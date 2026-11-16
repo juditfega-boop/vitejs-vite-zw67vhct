@@ -34,6 +34,7 @@ import iconoPerfilSilueta from "./assets/kit/icono-perfil-silueta.png";
 import iconoPerfilHero from "./assets/kit/icono-perfil-hero.png";
 import iconoNube from "./assets/bookbrand/icono-brand-nube.png";
 import iconoCandado from "./assets/kit/icono-candado.png";
+import { leerBanco } from "./servicios/banco";
 import {
   obtenerStats,
   guardarStats,
@@ -130,6 +131,22 @@ export default function App() {
     setSincronizando(false);
   }
 
+
+  // 📦 preguntas desde Firestore: banco completo si la cuenta está aprobada, demo si no
+  useEffect(() => {
+    if (estadoAcceso === "cargando") return;
+    let cancelado = false;
+    leerBanco(estadoAcceso === "aprobada")
+      .then((datos) => {
+        if (!cancelado) setPreguntasBase(datos);
+      })
+      .catch(() => {
+        if (!cancelado) setPreguntasBase([]);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [estadoAcceso]);
 
   // ☁️ cuando hay sesión iniciada, carga el progreso de esa cuenta
   useEffect(() => {
