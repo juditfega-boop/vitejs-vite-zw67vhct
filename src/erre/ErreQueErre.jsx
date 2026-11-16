@@ -54,6 +54,7 @@ export default function ErreQueErre({ articulo, onVolver }) {
   const [indice, setIndice] = useState(0);
   const [niveles, setNiveles] = useState(() => obtenerNivelesErre());
   const [resultados, setResultados] = useState({}); // id → "perfecta" | "reintento" | "fallo"
+  const [subidas, setSubidas] = useState(0); // cuántas fichas han subido de nivel en esta ronda
 
   // ⏳ cuenta atrás para memorizar
   useEffect(() => {
@@ -78,6 +79,7 @@ export default function ErreQueErre({ articulo, onVolver }) {
     setNiveles(nuevos);
     guardarNivelesErre(nuevos);
     setResultados((r) => ({ ...r, [ficha.id]: resultado }));
+    if (resultado === "perfecta" && actual < 3) setSubidas((s) => s + 1);
 
     if (indice + 1 < fichas.length) setIndice(indice + 1);
     else setFase("fin");
@@ -85,6 +87,7 @@ export default function ErreQueErre({ articulo, onVolver }) {
 
   function repetir() {
     setResultados({});
+    setSubidas(0);
     setIndice(0);
     setSegundos(segundosMemorizar(apartados.length));
     setFase("memorizar");
@@ -194,7 +197,11 @@ export default function ErreQueErre({ articulo, onVolver }) {
         })}
       </div>
       <button onClick={repetir} style={styles.ctaButton}>
-        🔁 Erre que erre: otra vez
+        {perfectas === fichas.length
+          ? subidas > 0
+            ? "⬆️ Sube de nivel"
+            : "🌿 Repasar otra vez"
+          : "🔁 Erre que erre: otra vez"}
       </button>
       <button onClick={onVolver} style={styles.linkVolver}>⬅ Volver al artículo</button>
     </div>
