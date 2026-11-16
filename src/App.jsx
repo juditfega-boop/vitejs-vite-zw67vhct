@@ -35,6 +35,9 @@ import iconoPerfilHero from "./assets/kit/icono-perfil-hero.png";
 import iconoNube from "./assets/bookbrand/icono-brand-nube.png";
 import iconoCandado from "./assets/kit/icono-candado.png";
 import { leerBanco } from "./servicios/banco";
+import { ADMIN_UID } from "./servicios/accesos";
+import Tarjetero from "./componentes/Tarjetero";
+import iconoTarjetero from "./assets/kit/icono-hub-erre-que-erre.png";
 import {
   obtenerStats,
   guardarStats,
@@ -515,6 +518,11 @@ if (pantalla === "muerte") {
     return conPersonaje(<ConectaConstitucion setPantalla={setPantalla} volverMenu={volverMenu} />);
   }
 
+  // 🗂️ MI TARJETERO (de momento, solo para la administradora, desde Mi perfil)
+  if (pantalla === "tarjetero") {
+    return conPersonaje(<Tarjetero volver={() => setPantalla("ajustes")} />);
+  }
+
   // ⚙️ AJUSTES — perfil y código de sincronización
   if (pantalla === "ajustes") {
     return conPersonaje(
@@ -542,7 +550,21 @@ if (pantalla === "muerte") {
           </div>
         )}
 
-        <CuentaUsuario usuario={usuario} estadoAcceso={estadoAcceso} />
+<CuentaUsuario usuario={usuario} estadoAcceso={estadoAcceso} />
+
+{usuario && usuario.uid === ADMIN_UID && (
+  <button
+    onClick={() => setPantalla("tarjetero")}
+    style={{ ...styles.minijuegoFilaCard, width: "100%", boxSizing: "border-box" }}
+  >
+    <img src={iconoTarjetero} alt="" style={styles.minijuegoFilaImg} />
+    <div style={styles.minijuegoFilaTexto}>
+      <p style={styles.minijuegoFilaTitulo}>Mi tarjetero</p>
+      <p style={styles.minijuegoFilaDescripcion}>Tus resúmenes, ordenados en carpetas.</p>
+    </div>
+    <span style={{ ...styles.minijuegoFilaFlecha, background: "#d9cdf0" }}>→</span>
+  </button>
+)}
 
 <MisImpugnaciones />
 
