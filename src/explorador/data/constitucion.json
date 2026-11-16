@@ -120,6 +120,13 @@
             },
             "children": [
               {
+                "id": "articulo-14", "label": "Artículo 14",
+                "resumen": "Igualdad ante la ley",
+                "contenido": "Los españoles son iguales ante la ley, sin que pueda prevalecer discriminación alguna por razón de nacimiento, raza, sexo, religión, opinión o cualquier otra condición o circunstancia personal o social.",
+                "destacado": true,
+                "children": []
+              },
+              {
                 "id": "seccion-1", "label": "Sección 1ª",
                 "subtitle": "De los derechos fundamentales y de las libertades públicas",
                 "vistaHijos": "articulos",
@@ -230,13 +237,6 @@
                     "id": "articulo-29", "label": "Artículo 29",
                     "resumen": "Derecho de petición",
                     "contenido": "1. Todos los españoles tendrán el derecho de petición individual y colectiva, por escrito, en la forma y con los efectos que determine la ley. 2. Los miembros de las Fuerzas o Institutos armados o de los Cuerpos sometidos a disciplina militar podrán ejercer este derecho sólo individualmente y con arreglo a lo dispuesto en su legislación específica.",
-                    "children": []
-                  },
-                  {
-                    "id": "articulo-14", "label": "Artículo 14",
-                    "resumen": "Igualdad ante la ley",
-                    "contenido": "Los españoles son iguales ante la ley, sin que pueda prevalecer discriminación alguna por razón de nacimiento, raza, sexo, religión, opinión o cualquier otra condición o circunstancia personal o social.",
-                    "destacado": true,
                     "children": []
                   }
                 ]
