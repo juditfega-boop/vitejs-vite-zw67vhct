@@ -52,8 +52,7 @@ export async function cargarPreguntas(textoDado) {
     
   try {
     // si nos pasan el texto de un CSV descargado se usa ese; si no, se lee el Sheets
-    const textoCSV = textoDado ?? (await (await fetch(URL)).text());
-
+    const textoCSV = textoDado || "";
     const filas = parsearCSVCompleto(textoCSV);
     if (filas.length <= 1) return [];
 

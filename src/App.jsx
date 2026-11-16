@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { cargarPreguntas } from "./cargarPreguntas";
 import portada from "./assets/portada.jpeg";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
@@ -131,13 +130,6 @@ export default function App() {
     setSincronizando(false);
   }
 
-  useEffect(() => {
-    async function init() {
-      const datos = await cargarPreguntas();
-      setPreguntasBase(datos);
-    }
-    init();
-  }, []);
 
   // ☁️ cuando hay sesión iniciada, carga el progreso de esa cuenta
   useEffect(() => {
