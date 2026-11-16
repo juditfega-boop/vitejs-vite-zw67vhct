@@ -47,8 +47,9 @@ function parsearCSVCompleto(texto) {
 
 export async function cargarPreguntas(textoDado) {
   // Tu URL de Google Sheets en formato CSV
-  const URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRAtrLr3XWfiqWGAdwsy4m6LNAxXeeLRuT7uNz4lGTxvGM-sNDR7axnl3TI5TvxRkO6mhPvskaKwBDi/pub?output=csv";
-
+    // el texto llega de un CSV descargado (botón "Actualizar preguntas" del panel)
+    const textoCSV = textoDado || "";
+    
   try {
     // si nos pasan el texto de un CSV descargado se usa ese; si no, se lee el Sheets
     const textoCSV = textoDado ?? (await (await fetch(URL)).text());
