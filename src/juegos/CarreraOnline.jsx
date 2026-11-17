@@ -816,7 +816,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
               disabled={!puedeEmpezar}
               style={{ ...styles.ctaButton, ...(puedeEmpezar ? {} : styles.ctaButtonDisabled) }}
             >
-              🚩 Dar la salida
+              Dar la salida
             </button>
           </>
         ) : (
@@ -1139,7 +1139,7 @@ export function RevanchaOnline({ codigo, alEntrar }) {
         <p style={est.avisoTitulo}>{sala.revanchaDe} no se ha quedado conforme…</p>
         <p style={est.avisoTexto}>¿Quieres la revancha?</p>
         <button onClick={unirmeOtraVez} style={{ ...styles.ctaButton, marginTop: 14 }}>
-          🔁 ¡Venga, otra!
+          ¡Venga, otra!
         </button>
         <button onClick={() => setDescartada(true)} style={styles.linkVolver}>
           Por hoy ya está
@@ -1152,7 +1152,7 @@ export function RevanchaOnline({ codigo, alEntrar }) {
         <p style={est.avisoTitulo}>{quienPide.nombre} no se ha quedado conforme…</p>
         <p style={est.avisoTexto}>¿Quieres la revancha?</p>
         <button onClick={() => responderRevancha("acepta")} style={{ ...styles.ctaButton, marginTop: 14 }}>
-          🔁 ¡Venga, otra!
+          ¡Venga, otra!
         </button>
         <button onClick={() => responderRevancha("no")} style={styles.linkVolver}>
           Por hoy ya está

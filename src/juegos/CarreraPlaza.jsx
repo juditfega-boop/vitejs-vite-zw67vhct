@@ -426,7 +426,7 @@ if (vista === "detalle") {
         }}
         style={{ ...styles.ctaButton, marginTop: 10 }}
       >
-        🌐 Online, cada una en su móvil
+        🌐 Online
       </button>
 
       <button onClick={() => setVista("historial")} style={styles.linkVolver}>
