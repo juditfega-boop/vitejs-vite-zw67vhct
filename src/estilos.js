@@ -9,6 +9,7 @@
 // ninguna pantalla ni ningún minijuego.
 
 const globalStyles = `
+  :root { color-scheme: only light; }
   .menu-btn, .pill, .bloque-chip {
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
   }
@@ -597,6 +598,8 @@ quizFeedbackTexto: {
     borderRadius: 14,
     border: "1px solid #e4ddcf",
     background: "#fff",
+    color: "#4a463f",
+    fontFamily: "Arial",
     cursor: "pointer",
     fontSize: 14
   },
