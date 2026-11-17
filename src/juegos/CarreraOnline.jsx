@@ -536,7 +536,6 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
       errores: yo.errores + (esCorrecta ? 0 : 1),
       respondidas,
       tiempoTotal: (yo.tiempoTotal || 0) + (Date.now() - inicioRef.current),
-      terminada: respondidas >= total,
       fallos: esCorrecta
         ? yo.fallos || []
         : [
@@ -547,9 +546,14 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
   }
 
   function siguiente() {
+    const eraLaUltima = indiceRespondido + 1 >= total;
     setSeleccion(null);
     inicioRef.current = Date.now();
     ultimaAccionRef.current = Date.now();
+    // 🏁 se llega a la meta al pulsar "Llegar a la meta", no al responder la última
+    if (eraLaUltima && yo) {
+      guardarMiProgreso(codigo, uid, { ...yo, terminada: true }).catch((e) => setError(mensajeError(e)));
+    }
   }
 
   // ─────────── sin sesión ───────────
@@ -915,7 +919,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
   }
 
   // ─────────── he llegado: esperando al resto ───────────
-  if (yo && yo.terminada && seleccion === null) {
+  if (yo && (yo.terminada || yo.respondidas >= total) && seleccion === null) {
     const quedan = lista.filter((j) => !j.terminada);
     return (
       <div style={styles.menuContainer}>
