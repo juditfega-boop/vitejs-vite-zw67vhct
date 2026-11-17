@@ -11,6 +11,7 @@ import iconoAciertoCheck from "../assets/kit/icono-fin-aciertos.png";
 import iconoErrorX from "../assets/kit/icono-sim-errores.png";
 import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
 import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
+import CarreraOnline from "./CarreraOnline";
 
 const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
 
@@ -144,6 +145,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
   }
   const [refrescoHistorial, setRefrescoHistorial] = useState(0);
   const [enPausa, setEnPausa] = useState(false);
+  const [modoOnline, setModoOnline] = useState(false);
   const [pausaDesde, setPausaDesde] = useState(null);
 
   function pausarJuego() {
@@ -309,6 +311,20 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
     setVista("resultado");
   }
 
+  // 🌐 al acabar la carrera online: misma clasificación y vídeo que en un solo móvil
+  function terminarOnline(puntuaciones) {
+    cambiarNumJugadoresJuego(puntuaciones.length);
+    setPuntuacionesJuego(puntuaciones);
+    setJugadoraExpandida(null);
+    setTiempoRestanteJuego(null);
+    setPiezasConfeti(generarConfeti());
+    setFraseJuego(FRASES_MINIJUEGO[Math.floor(Math.random() * FRASES_MINIJUEGO.length)]);
+    guardarPartidaHistorial(puntuaciones);
+    setMostrarNombresVideo(false);
+    setVideoTerminado(false);
+    setVista("resultado");
+  }
+
   // ⏱️ cuenta atrás del minijuego (1 min por turno, si el cronómetro está activo)
   useEffect(() => {
     if (vista !== "jugando" || !juegoCronometroActivo || tiempoRestanteJuego === null || enPausa) return;
@@ -375,7 +391,7 @@ if (vista === "detalle") {
             <p style={styles.juegoDetalleTexto}>
               De 2 a 4 personas
               <br />
-              Un solo dispositivo
+              En un solo móvil u online
             </p>
           </div>
           <div style={styles.juegoDetalleFila}>
@@ -390,8 +406,24 @@ if (vista === "detalle") {
           </div>
         </div>
 
-      <button onClick={() => setVista("config")} style={styles.ctaButton}>
-        🚩 Empezar carrera
+        <button
+        onClick={() => {
+          setModoOnline(false);
+          setVista("config");
+        }}
+        style={styles.ctaButton}
+      >
+        📱 En este móvil
+      </button>
+
+      <button
+        onClick={() => {
+          setModoOnline(true);
+          setVista("online");
+        }}
+        style={{ ...styles.ctaButton, marginTop: 10 }}
+      >
+        🌐 Online, cada una en su móvil
       </button>
 
       <button onClick={() => setVista("historial")} style={styles.linkVolver}>
@@ -407,6 +439,17 @@ if (vista === "detalle") {
     </div>
   );
 }
+
+  // 🌐 ONLINE
+  if (vista === "online") {
+    return (
+      <CarreraOnline
+        preguntasBase={preguntasBase}
+        volver={() => setVista("detalle")}
+        alTerminar={terminarOnline}
+      />
+    );
+  }
 
   // ⚙️ CONFIGURACIÓN
   if (vista === "config") {
@@ -802,7 +845,10 @@ if (vista === "detalle") {
           </p>
         )}
 
-        <button onClick={comenzarPartida} style={styles.ctaButton}>
+<button
+          onClick={modoOnline ? () => setVista("online") : comenzarPartida}
+          style={styles.ctaButton}
+        >
           Jugar otra vez
         </button>
 
