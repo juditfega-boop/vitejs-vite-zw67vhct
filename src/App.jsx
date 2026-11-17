@@ -38,6 +38,9 @@ import { leerBanco } from "./servicios/banco";
 import { ADMIN_UID } from "./servicios/accesos";
 import Tarjetero from "./componentes/Tarjetero";
 import iconoTarjetero from "./assets/kit/icono-hub-erre-que-erre.png";
+import Buzon from "./componentes/Buzon";
+import MisCompis from "./componentes/MisCompis";
+import iconoSobre from "./assets/kit/icono-buzon-sobre.png";
 import {
   obtenerStats,
   guardarStats,
@@ -88,6 +91,13 @@ export default function App() {
   // ☁️ el progreso se guarda en la nube, vinculado a la cuenta
   const [sincronizando, setSincronizando] = useState(false);
   const [mensajeSync, setMensajeSync] = useState("");
+
+  // 🏁 abrir la carrera directamente en el modo online (desde el buzón o un reto)
+  const [carreraOnline, setCarreraOnline] = useState(false);
+  function abrirCarreraOnline() {
+    setCarreraOnline(true);
+    setPantalla("carrera");
+  }
 
   function datosLocales() {
     return {
@@ -174,6 +184,11 @@ useEffect(() => {
   }
 }, [pantalla]);
 
+// al salir de la carrera, la próxima vez vuelve a abrirse por su portada
+useEffect(() => {
+  if (pantalla !== "carrera") setCarreraOnline(false);
+}, [pantalla]);
+
   // 🔐 sin aprobación solo se ven las preguntas marcadas como demo en el Sheet
   const preguntasVisibles = useMemo(() => {
     if (aprobada) return preguntasBase;
@@ -182,7 +197,7 @@ useEffect(() => {
   }, [preguntasBase, aprobada]);
 
   // 🔐 pantallas que solo pueden usar las cuentas aprobadas
-  const PANTALLAS_BLOQUEADAS = ["simulacro", "carrera", "muerte", "archivos", "calendario"];
+  const PANTALLAS_BLOQUEADAS = ["simulacro", "carrera", "muerte", "archivos", "calendario", "compis"];
 
   // 🔒 aspecto de las tarjetas bloqueadas (no se aplica mientras se comprueba la cuenta)
   const mostrarBloqueo = !aprobada && estadoAcceso !== "cargando";
@@ -260,6 +275,8 @@ if (pantalla === "inicio") {
         <img src={casaIcono} alt="" style={styles.inicioCasaIcono} />
         <span style={styles.inicioHeaderTexto}>Inicio</span>
       </div>
+
+      {aprobada && usuario && <Buzon usuario={usuario} irACarrera={abrirCarreraOnline} />}
 
       <div style={styles.inicioHeroCard}>
         <img src={iconoPlantita} alt="" style={styles.inicioHeroIcono} />
@@ -380,7 +397,7 @@ if (pantalla === "minijuegos") {
     {
       id: "carrera",
       nombre: "Carrera por la Plaza",
-      descripcion: "Compite respondiendo preguntas y llega el primero a la meta.",
+      descripcion: "Compite respondiendo preguntas y llega antes a la meta.",
       miniatura: iconoHubCarreraPlaza,
       colorFlecha: "#f3cdd2",
       destino: "carrera"
@@ -504,6 +521,7 @@ if (pantalla === "muerte") {
         preguntasBase={preguntasBase}
         setPantalla={setPantalla}
         volverMenu={volverMenu}
+        vistaInicial={carreraOnline ? "online" : "detalle"}
       />
     );
   }
@@ -516,6 +534,13 @@ if (pantalla === "muerte") {
   // 📁 CONECTA LA CONSTITUCIÓN
   if (pantalla === "archivos") {
     return conPersonaje(<ConectaConstitucion setPantalla={setPantalla} volverMenu={volverMenu} />);
+  }
+
+  // 💌 MIS COMPIS
+  if (pantalla === "compis") {
+    return conPersonaje(
+      <MisCompis usuario={usuario} volver={() => setPantalla("ajustes")} irACarrera={abrirCarreraOnline} />
+    );
   }
 
   // 🗂️ MI TARJETERO (de momento, solo para la administradora, desde Mi perfil)
@@ -551,6 +576,20 @@ if (pantalla === "muerte") {
         )}
 
 <CuentaUsuario usuario={usuario} estadoAcceso={estadoAcceso} />
+
+{usuario && aprobada && (
+  <button
+    onClick={() => setPantalla("compis")}
+    style={{ ...styles.minijuegoFilaCard, width: "100%", boxSizing: "border-box" }}
+  >
+    <img src={iconoSobre} alt="" style={styles.minijuegoFilaImg} />
+    <div style={styles.minijuegoFilaTexto}>
+      <p style={styles.minijuegoFilaTitulo}>Mis compis</p>
+      <p style={styles.minijuegoFilaDescripcion}>Tu código, tus compis y sus hechizos.</p>
+    </div>
+    <span style={{ ...styles.minijuegoFilaFlecha, background: "#f3cdd2" }}>→</span>
+  </button>
+)}
 
 {usuario && usuario.uid === ADMIN_UID && (
   <button

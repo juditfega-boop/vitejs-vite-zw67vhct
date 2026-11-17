@@ -101,8 +101,8 @@ function guardarPartidaHistorial(puntuaciones) {
 
 // 🏁 "Carrera por la Plaza" — componente independiente y autocontenido.
 // Recibe por prop el banco de preguntas y la función para volver al menú principal.
-export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu }) {
-  const [vista, setVista] = useState("detalle"); // detalle|config|transicion|jugando|resultado|historial
+export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu, vistaInicial }) {
+  const [vista, setVista] = useState(vistaInicial || "detalle"); // detalle|config|transicion|jugando|resultado|historial|online
 
   const [juegoNumJugadores, setJuegoNumJugadores] = useState(2);
   const [juegoNombres, setJuegoNombres] = useState(["Persona 1", "Persona 2"]);
@@ -145,7 +145,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
   }
   const [refrescoHistorial, setRefrescoHistorial] = useState(0);
   const [enPausa, setEnPausa] = useState(false);
-  const [modoOnline, setModoOnline] = useState(false);
+  const [modoOnline, setModoOnline] = useState(vistaInicial === "online");
   const [codigoOnline, setCodigoOnline] = useState(null);
   const [pausaDesde, setPausaDesde] = useState(null);
 

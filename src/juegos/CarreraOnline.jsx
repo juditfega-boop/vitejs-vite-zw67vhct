@@ -14,6 +14,7 @@ import {
   terminarCarrera,
   reiniciarParaRevancha
 } from "../servicios/salas";
+import { anadirCompis } from "../servicios/compis";
 import corredoraRosa from "../assets/kit/corredora-rosa.png";
 import corredoraMorado from "../assets/kit/corredora-morado.png";
 import corredoraVerde from "../assets/kit/corredora-verde.png";
@@ -431,6 +432,8 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
     yaTerminadoRef.current = true;
     if (soyAnfitriona && sala.estado !== "terminada") terminarCarrera(codigo).catch(() => {});
     localStorage.removeItem(CLAVE_SALA);
+    // 🤝 quienes han corrido contigo pasan a ser tus compis
+    anadirCompis(uid, lista.filter((j) => j.uid !== uid)).catch(() => {});
     alTerminar(
       lista.map((j) => ({
         nombre: j.nombre,
