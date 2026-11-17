@@ -58,6 +58,14 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
   const [fase, setFase] = useState('reposo'); // reposo | feedback | zoom-in | zoom-out
   const [hotspotActivo, setHotspotActivo] = useState(null);
   const [rutaIdsDestino, setRutaIdsDestino] = useState(null);
+  const [aviso, setAviso] = useState('');
+
+  // el aviso de "sala en obras" desaparece solo
+  useEffect(() => {
+    if (!aviso) return;
+    const id = setTimeout(() => setAviso(''), 2200);
+    return () => clearTimeout(id);
+  }, [aviso]);
 
   const ruta = useMemo(() => resolverRuta(data, rutaIds), [data, rutaIds]);
   const nodoActual = ruta[ruta.length - 1];
@@ -116,6 +124,13 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
     const atajo = (nodoActual.atajos || {})[childId];
     const idsDestino = atajo ? encontrarRutaCompleta(data, childId) : [...rutaIds, childId];
 
+    // 🚧 puerta dibujada pero sin sala detrás todavía (p. ej. Título V): no se navega
+    const existe = atajo ? !!idsDestino : (nodoActual.children || []).some((n) => n.id === childId);
+    if (!existe) {
+      setAviso('🚧 Esta sala todavía está en obras');
+      return;
+    }
+
     if (!hotspot && !atajo) {
       setRutaIds(idsDestino); // sin coordenadas conocidas: navega sin animar
       return;
@@ -163,7 +178,32 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
   }
 
   if (fase === 'reposo') {
-    return <div style={{ position: 'relative', width: '100%' }}>{renderNodo(nodoActual, true)}</div>;
+    return (
+      <div style={{ position: 'relative', width: '100%' }}>
+        {renderNodo(nodoActual, true)}
+        {aviso && (
+          <div
+            style={{
+              position: 'fixed',
+              left: '50%',
+              bottom: 28,
+              transform: 'translateX(-50%)',
+              background: '#fffaf2',
+              border: '1px solid #eadfcd',
+              borderRadius: 999,
+              padding: '10px 18px',
+              boxShadow: '0 4px 14px rgba(120,100,70,0.10)',
+              color: '#5b4a3a',
+              fontSize: 14,
+              whiteSpace: 'nowrap',
+              zIndex: 600
+            }}
+          >
+            {aviso}
+          </div>
+        )}
+      </div>
+    );
   }
 
   const esHoja = (nodo) => nodo && (!nodo.children || nodo.children.length === 0);

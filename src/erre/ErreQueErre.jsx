@@ -201,8 +201,14 @@ export default function ErreQueErre({ articulo, onVolver }) {
           ? subidas > 0
             ? "⬆️ Sube de nivel"
             : "🌿 Repasar otra vez"
-          : "🔁 Erre que erre: otra vez"}
-      </button>
+            : "🔁 Erre que erre: otra vez"}
+            </button>
+            {perfectas < fichas.length && (
+              <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 8 }}>
+                Cada ficha sube de nivel cuando la aciertas a la primera. Las demás se quedan en su nivel
+                (o bajan si no las aciertas ni al segundo intento). ¡Erre que erre hasta acertarlas todas!
+              </p>
+            )}
       <button onClick={onVolver} style={styles.linkVolver}>⬅ Volver al artículo</button>
     </div>
   );
