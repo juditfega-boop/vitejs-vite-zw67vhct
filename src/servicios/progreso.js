@@ -21,6 +21,20 @@ export function guardarStats(stats) {
   localStorage.setItem(CLAVE_STATS, JSON.stringify(stats));
 }
 
+// 🗂️ escalón de cada pregunta en "Repasar errores"
+// 0 = nunca fallada · 1 = 🔴 prioritaria · 2 = 🟡 en seguimiento · 3 = 🟢 resuelta
+export const ESCALON = { NINGUNO: 0, PRIORITARIO: 1, SEGUIMIENTO: 2, RESUELTO: 3 };
+
+export function escalonDe(s) {
+  if (!s) return ESCALON.NINGUNO;
+  if (s.escalon !== undefined) return s.escalon;
+  // preguntas anteriores a este sistema: se reparten con la regla antigua
+  if (!s.errores) return ESCALON.NINGUNO;
+  if (s.aciertos >= s.errores) return ESCALON.RESUELTO;
+  return ESCALON.PRIORITARIO;
+}
+
+// devuelve en qué escalón estaba y en cuál queda, por si la pantalla quiere celebrarlo
 export function registrarRespuesta(pregunta, correcta) {
   const stats = obtenerStats();
   const id = String(pregunta.id);
@@ -35,14 +49,41 @@ export function registrarRespuesta(pregunta, correcta) {
     };
   }
 
+  const antes = escalonDe(stats[id]);
+  let despues = antes;
+
   stats[id].veces += 1;
   if (correcta) {
     stats[id].aciertos += 1;
+    // un acierto sube un escalón: 🔴 → 🟡 → 🟢
+    if (antes === ESCALON.PRIORITARIO || antes === ESCALON.SEGUIMIENTO) despues = antes + 1;
   } else {
     stats[id].errores += 1;
+    // un fallo, esté donde esté, la devuelve a 🔴
+    despues = ESCALON.PRIORITARIO;
   }
+  stats[id].escalon = despues;
 
   guardarStats(stats);
+  return { antes, despues };
+}
+
+// reparte una lista de preguntas en las tres categorías de "Repasar errores"
+export function clasificarErrores(preguntas) {
+  const stats = obtenerStats();
+  const prioritarios = [];
+  const seguimiento = [];
+  const resueltos = [];
+  preguntas.forEach((p) => {
+    const e = escalonDe(stats[String(p.id)]);
+    if (e === ESCALON.PRIORITARIO) prioritarios.push(p);
+    else if (e === ESCALON.SEGUIMIENTO) seguimiento.push(p);
+    else if (e === ESCALON.RESUELTO) resueltos.push(p);
+  });
+  // las que más veces se han fallado, primero
+  const errores = (p) => stats[String(p.id)]?.errores || 0;
+  prioritarios.sort((a, b) => errores(b) - errores(a));
+  return { prioritarios, seguimiento, resueltos };
 }
 
 // 🔥 racha de estudio (días consecutivos)

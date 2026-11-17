@@ -10,7 +10,9 @@ import {
   guardarFavoritos,
   obtenerPartida,
   guardarPartida,
-  borrarPartida
+  borrarPartida,
+  clasificarErrores,
+  ESCALON
 } from "../servicios/progreso";
 import { styles } from "../estilos";
 import iconoTazaPlantita from "../assets/kit/icono-taza-plantita-evolucion.png";
@@ -205,12 +207,21 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [avisoFavorito, setAvisoFavorito] = useState("");
   const [latidoFav, setLatidoFav] = useState(0);
   const [partidaGuardada, setPartidaGuardada] = useState(() => obtenerPartida());
+  // 🔁 repaso de errores: sin número fijo, cada respuesta se guarda al momento
+  const [repasoCategoria, setRepasoCategoria] = useState(null); // prioritarios|seguimiento|mantenimiento
+  const [repasoLista, setRepasoLista] = useState([]);
+  const [repasoVistas, setRepasoVistas] = useState([]);
+  const [repasoPregunta, setRepasoPregunta] = useState(null);
+  const [repasoSeleccion, setRepasoSeleccion] = useState(null);
+  const [repasoCambio, setRepasoCambio] = useState(null);
+  const [repasoResumen, setRepasoResumen] = useState({ respondidas: 0, suben: 0, resueltas: 0, vuelven: 0 });
+  const [repasoDescanso, setRepasoDescanso] = useState(false);
   const pregunta = preguntas[indice];
 
   useEffect(() => {
     const boton = document.getElementById("boton-panico");
     if (!boton) return;
-    boton.style.display = vista === "quiz" ? "none" : "";
+    boton.style.display = vista === "quiz" || vista === "repaso" ? "none" : "";
   }, [vista]);
 
   function toggleFavorito(id) {
@@ -321,6 +332,13 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     if (pregunta) setInicioPregunta(Date.now());
   }, [pregunta]);
 
+  // en el repaso, cada pregunta nueva empieza su reloj y la pantalla sube al enunciado
+  useEffect(() => {
+    if (vista !== "repaso" || !repasoPregunta) return;
+    setInicioPregunta(Date.now());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [repasoPregunta, vista]);
+
   useEffect(() => {
     if (vista !== "quiz" || tiempoRestante === null || pausado) return;
 
@@ -392,36 +410,77 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     setVista("quiz");
   }
 
-  function obtenerPreguntasDebiles(lista) {
-    const stats = obtenerStats();
-    const muyOlvidadas = [];
-    const pendientes = [];
-    const recuperadas = [];
+  // 🗂️ Repasar errores: 🔴 prioritarios → 🟡 seguimiento → 🟢 resueltos
+  const clasificacion = clasificarErrores(preguntasBase);
+  const pendientesErrores = clasificacion.prioritarios.length + clasificacion.seguimiento.length;
 
-    lista.forEach((p) => {
-      const s = stats[String(p.id)];
-      if (!s) return;
+  function empezarRepaso(categoria) {
+    const { prioritarios, seguimiento, resueltos } = clasificarErrores(preguntasBase);
+    let lista = [];
+    if (categoria === "prioritarios") lista = prioritarios;
+    else if (categoria === "seguimiento") lista = mezclar(seguimiento);
+    else lista = mezclar(resueltos).slice(0, 10); // mantenimiento: unas pocas al azar
 
-      if (s.aciertos >= s.errores && s.errores > 0) {
-        recuperadas.push(p);
-      } else if (s.errores >= 3) {
-        muyOlvidadas.push(p);
-      } else if (s.errores > s.aciertos) {
-        pendientes.push(p);
-      }
-    });
+    if (lista.length === 0) {
+      mostrarVacio(categoria === "mantenimiento" ? "resueltos" : categoria);
+      return;
+    }
 
-    return [...muyOlvidadas, ...pendientes, ...recuperadas];
+    setRepasoCategoria(categoria);
+    setRepasoLista(lista);
+    setRepasoVistas([]);
+    setRepasoResumen({ respondidas: 0, suben: 0, resueltas: 0, vuelven: 0 });
+    setRepasoDescanso(false);
+    setRepasoPregunta(prepararPregunta(lista[0]));
+    setRepasoSeleccion(null);
+    setRepasoCambio(null);
+    actualizarRacha();
+    setVista("repaso");
   }
 
-  const pendientesErrores = obtenerPreguntasDebiles(preguntasBase).length;
+  function responderRepaso(i) {
+    if (repasoSeleccion !== null || !repasoPregunta) return;
+    const esCorrecta = i === repasoPregunta.correcta;
+    const cambio = registrarRespuesta(repasoPregunta, esCorrecta);
+    if (inicioPregunta) registrarTiempoPregunta(Math.round((Date.now() - inicioPregunta) / 1000));
+
+    setRepasoSeleccion(i);
+    setRepasoCambio(cambio);
+    setRepasoVistas((v) => [...v, String(repasoPregunta.id)]);
+    setRepasoResumen((r) => ({
+      respondidas: r.respondidas + 1,
+      suben: r.suben + (cambio.despues > cambio.antes ? 1 : 0),
+      resueltas:
+        r.resueltas + (cambio.despues === ESCALON.RESUELTO && cambio.antes !== ESCALON.RESUELTO ? 1 : 0),
+      vuelven: r.vuelven + (esCorrecta ? 0 : 1)
+    }));
+  }
+
+  function siguienteRepaso(saltarDescanso = false) {
+    const siguientePregunta = repasoLista.find((p) => !repasoVistas.includes(String(p.id)));
+    if (!siguientePregunta) {
+      terminarRepaso();
+      return;
+    }
+    // ☕ cada 20 seguidas, una parada para decidir si sigues
+    if (!saltarDescanso && repasoResumen.respondidas % 20 === 0) {
+      setRepasoDescanso(true);
+      return;
+    }
+    setRepasoDescanso(false);
+    setRepasoPregunta(prepararPregunta(siguientePregunta));
+    setRepasoSeleccion(null);
+    setRepasoCambio(null);
+  }
+
+  function terminarRepaso() {
+    sincronizarConNube();
+    setVista("repaso-fin");
+  }
 
   function comprobar(index) {
     const esCorrecta = index === pregunta.correcta;
-    const statsAntes = obtenerStats()[String(pregunta.id)];
-    const teniaFallosPrevios = statsAntes && statsAntes.errores > 0 && statsAntes.errores >= statsAntes.aciertos;
-
-    registrarRespuesta(pregunta, esCorrecta);
+    const cambio = registrarRespuesta(pregunta, esCorrecta);
 
     if (inicioPregunta) {
       const segundos = Math.round((Date.now() - inicioPregunta) / 1000);
@@ -431,7 +490,9 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     if (esCorrecta) {
       setMensaje("Correcto");
       setAciertos((a) => a + 1);
-      if (teniaFallosPrevios) setExpedientesResueltos((e) => e + 1);
+      if (cambio.despues === ESCALON.RESUELTO && cambio.antes !== ESCALON.RESUELTO) {
+        setExpedientesResueltos((e) => e + 1);
+      }
     } else {
       setMensaje("Incorrecto");
     }
@@ -876,23 +937,7 @@ if (vista === "estadisticas") {
 
 // ⭐ REPASAR ERRORES
 if (vista === "errores") {
-  const stats = obtenerStats();
-  const muyOlvidadas = [];
-  const pendientes = [];
-  const recuperadas = [];
-
-  preguntasBase.forEach((p) => {
-    const s = stats[String(p.id)];
-    if (!s) return;
-
-    if (s.aciertos >= s.errores && s.errores > 0) {
-      recuperadas.push(p);
-    } else if (s.errores >= 3) {
-      muyOlvidadas.push(p);
-    } else if (s.errores > s.aciertos) {
-      pendientes.push(p);
-    }
-  });
+  const { prioritarios: muyOlvidadas, seguimiento: pendientes, resueltos: recuperadas } = clasificacion;
 
   return (
     <div style={styles.menuContainer}>
@@ -932,7 +977,7 @@ if (vista === "errores") {
           </div>
         </div>
         <button
-          onClick={() => (muyOlvidadas.length > 0 ? iniciarBloque(muyOlvidadas) : mostrarVacio("prioritarios"))}
+          onClick={() => empezarRepaso("prioritarios")}
           style={{ ...styles.repasarBoton, background: "#f0c3c3" }}
         >
           🍃 Revisar expedientes
@@ -945,12 +990,12 @@ if (vista === "errores") {
           <div style={{ flex: 1 }}>
             <p style={styles.repasarFilaTitulo}>🟡 Casos en seguimiento ({pendientes.length})</p>
             <p style={styles.repasarFilaTexto}>
-              Ya has avanzado mucho con ellos. Cada repaso los hace más fuertes.
+            Ya las has acertado una vez. Un acierto más y quedan resueltas.
             </p>
           </div>
         </div>
         <button
-          onClick={() => (pendientes.length > 0 ? iniciarBloque(pendientes) : mostrarVacio("seguimiento"))}
+          onClick={() => empezarRepaso("seguimiento")}
           style={{ ...styles.repasarBoton, background: "#eed7a3" }}
         >
           🍃 Continuar repasando
@@ -968,15 +1013,170 @@ if (vista === "errores") {
           </div>
         </div>
         <button
-          onClick={() => (recuperadas.length > 0 ? iniciarBloque(recuperadas) : mostrarVacio("resueltos"))}
+          onClick={() => empezarRepaso("mantenimiento")}
           style={{ ...styles.repasarBoton, background: "#c9dcb5" }}
         >
-          🍃 Ver historial
+          🍃 Repaso de mantenimiento
         </button>
       </div>
 
       <button onClick={volverAProgreso} style={styles.linkVolver}>
         ⬅ Volver
+      </button>
+    </div>
+  );
+}
+
+// 🔁 REPASO DE ERRORES EN CURSO
+if (vista === "repaso" && repasoPregunta) {
+  const quedan = repasoLista.filter((p) => !repasoVistas.includes(String(p.id))).length;
+  const nombresCategoria = {
+    prioritarios: "🔴 Prioritarios",
+    seguimiento: "🟡 En seguimiento",
+    mantenimiento: "🟢 Mantenimiento"
+  };
+  const acerto = repasoSeleccion !== null && repasoSeleccion === repasoPregunta.correcta;
+
+  if (repasoDescanso) {
+    return (
+      <div style={styles.menuContainer}>
+        <div style={{ ...styles.configCard, textAlign: "center", marginTop: 40 }}>
+          <img
+            src={iconoTazaPlantita}
+            alt=""
+            style={{ width: 120, height: 120, objectFit: "contain", display: "block", margin: "0 auto 12px" }}
+          />
+          <p style={styles.configCardTitle}>Llevas {repasoResumen.respondidas} seguidas 🌿</p>
+          <p style={styles.configSubLabel}>
+            Te quedan {quedan}. Lo que llevas ya está guardado. ¿Paras aquí o sigues?
+          </p>
+          <button onClick={() => siguienteRepaso(true)} style={{ ...styles.ctaButton, marginTop: 16 }}>
+            Sigo
+          </button>
+          <button onClick={terminarRepaso} style={styles.linkVolver}>
+            Paro aquí
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  let mensajeCambio = "";
+  if (repasoCambio) {
+    if (!acerto) {
+      mensajeCambio =
+        repasoCambio.antes === ESCALON.PRIORITARIO
+          ? "Se queda en prioritarios. La próxima vez saldrá mejor."
+          : "Vuelve a prioritarios. Le daremos otra vuelta.";
+    } else if (repasoCambio.despues === ESCALON.SEGUIMIENTO) {
+      mensajeCambio = "🌱 Sube a seguimiento";
+    } else if (repasoCambio.antes === ESCALON.SEGUIMIENTO) {
+      mensajeCambio = "🌿 ¡Resuelta! Ya forma parte de tu jardín";
+    } else {
+      mensajeCambio = "🌿 Sigue en tu jardín";
+    }
+  }
+
+  return (
+    <div style={styles.menuContainer}>
+      <style>{estudiarEstilosLocales}</style>
+      <div style={styles.quizHeaderRow}>
+        <button onClick={terminarRepaso} style={styles.quizVolverBtn}>
+          ⬅ Salir
+        </button>
+        <span style={{ ...styles.configSubLabel, fontWeight: 600 }}>{nombresCategoria[repasoCategoria]}</span>
+      </div>
+
+      <span style={styles.quizPreguntaTag}>Te quedan {quedan}</span>
+
+      <div style={styles.quizPreguntaCard}>
+        <p style={styles.quizPreguntaTexto}>{repasoPregunta.pregunta}</p>
+      </div>
+
+      {repasoPregunta.respuestas.map((r, i) => {
+        let estadoEstilo = {};
+        if (repasoSeleccion !== null) {
+          if (i === repasoPregunta.correcta) estadoEstilo = styles.quizRespuestaCorrecta;
+          else if (i === repasoSeleccion) estadoEstilo = styles.quizRespuestaIncorrecta;
+        }
+        return (
+          <button
+            key={`${repasoPregunta.id}-${i}`}
+            onClick={() => responderRepaso(i)}
+            disabled={repasoSeleccion !== null}
+            style={{ ...styles.quizRespuestaBtn, ...estadoEstilo }}
+          >
+            <span style={styles.quizRespuestaLetra}>{String.fromCharCode(65 + i)}</span>
+            <span>{formatearTextoLargo(r)}</span>
+          </button>
+        );
+      })}
+
+      {repasoSeleccion !== null && (
+        <>
+          <div style={styles.quizFeedbackRow}>
+            <img src={acerto ? plantaFeliz : plantaTriste} alt="" style={styles.quizFeedbackIcono} />
+            <p style={styles.quizFeedbackTexto}>{mensajeCambio}</p>
+          </div>
+
+          <div style={styles.explicacionCaja}>
+            <div style={styles.explicacionTituloRow}>
+              <img src={iconoExplicacion} alt="" style={styles.explicacionIcono} />
+              <b>Explicación:</b>
+            </div>
+            {renderizarTextoConNegrita(repasoPregunta.explicacion)}
+          </div>
+
+          <ImpugnarPregunta pregunta={repasoPregunta} origen="estudiar" />
+
+          <button onClick={() => siguienteRepaso()} style={styles.ctaButton}>
+            {quedan > 0 ? "Siguiente →" : "Ver resumen"}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// 🌱 RESUMEN AL SALIR DEL REPASO
+if (vista === "repaso-fin") {
+  const r = repasoResumen;
+  return (
+    <div style={styles.menuContainer}>
+      <div style={styles.menuHeader}>
+        <h1 style={styles.menuTitle}>Repaso guardado</h1>
+        <div style={styles.menuUnderline} />
+      </div>
+
+      <img src={iconoRepasarHero} alt="" style={styles.repasarHeroImg} />
+
+      <div style={styles.resultCard}>
+        <div style={styles.resultRow}>
+          <span style={styles.resultRowLabel}>Preguntas repasadas</span>
+          <span style={styles.resultRowValor}>{r.respondidas}</span>
+        </div>
+        <div style={styles.resultRow}>
+          <span style={styles.resultRowLabel}>🌱 Han subido de escalón</span>
+          <span style={styles.resultRowValor}>{r.suben}</span>
+        </div>
+        <div style={styles.resultRow}>
+          <span style={styles.resultRowLabel}>🌿 Resueltas hoy</span>
+          <span style={styles.resultRowValor}>{r.resueltas}</span>
+        </div>
+        <div style={{ ...styles.resultRow, borderBottom: "none" }}>
+          <span style={styles.resultRowLabel}>🔴 En prioritarios</span>
+          <span style={styles.resultRowValor}>{r.vuelven}</span>
+        </div>
+      </div>
+
+      <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 14 }}>
+        {r.respondidas === 0
+          ? "Aquí siguen, para cuando te apetezca."
+          : "Todo queda guardado. La próxima vez sigues donde lo has dejado."}
+      </p>
+
+      <button onClick={volverAErrores} style={styles.ctaButton}>
+        Volver a Repasar errores
       </button>
     </div>
   );
