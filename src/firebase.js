@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import {
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager
+  persistentSingleTabManager
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
@@ -16,8 +16,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-// 📴 guarda en el móvil lo que se descarga de Firestore, para poder usarlo sin conexión
+// 📴 guarda en el móvil lo que se descarga de Firestore, para poder usarlo sin conexión.
+// Solo una pestaña usa la copia guardada; si abres otra, esa trabaja directamente
+// con la nube (así ninguna se queda bloqueada esperando a la otra).
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
 });
 export const auth = getAuth(app);

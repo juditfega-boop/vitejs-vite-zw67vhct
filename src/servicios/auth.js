@@ -12,14 +12,15 @@ import {
   export async function registrarse(email, password) {
     marcarSesionPendiente();
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    if (cred.user.uid !== ADMIN_UID) await reclamarSesion(cred.user.uid);
+    // no esperamos a la nube: si tarda, se entra igual y se guarda cuando pueda
+    if (cred.user.uid !== ADMIN_UID) reclamarSesion(cred.user.uid).catch(() => {});
     return cred;
   }
 
   export async function iniciarSesion(email, password) {
     marcarSesionPendiente();
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    if (cred.user.uid !== ADMIN_UID) await reclamarSesion(cred.user.uid);
+    if (cred.user.uid !== ADMIN_UID) reclamarSesion(cred.user.uid).catch(() => {});
     return cred;
   }
   
