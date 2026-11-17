@@ -983,7 +983,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
   if (!p) return null;
 
   function estiloRespuesta(i) {
-    const base = { ...styles.simRespuestaBtn, outline: "none" };
+    const base = { ...styles.simRespuestaBtn, outline: "none", color: "#4a463f" };
     if (seleccion === null) return base;
     if (i === p.correcta) return { ...base, background: "#e6eedb", borderColor: "#9db584" };
     if (i === seleccion) return { ...base, background: "#f6e0e0", borderColor: "#d9a0a0" };

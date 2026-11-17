@@ -174,7 +174,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
     setJuegoNumJugadores(n);
     setJuegoNombres((prev) => {
       const nuevo = [...prev];
-      while (nuevo.length < n) nuevo.push(`Jugadora ${nuevo.length + 1}`);
+      while (nuevo.length < n) nuevo.push(`Persona ${nuevo.length + 1}`);
       return nuevo.slice(0, n);
     });
   }
@@ -398,7 +398,7 @@ if (vista === "detalle") {
           </div>
           <div style={styles.juegoDetalleFila}>
             <img src={iconoTurno} alt="" style={styles.juegoDetalleIcono} />
-            <p style={styles.juegoDetalleTexto}>Cada jugadora responde por turnos</p>
+            <p style={styles.juegoDetalleTexto}>Se responde por turnos</p>
           </div>
           <div style={{ ...styles.juegoDetalleFila, borderBottom: "none" }}>
             <img src={iconoTrofeo} alt="" style={styles.juegoDetalleIcono} />
@@ -511,7 +511,7 @@ if (vista === "detalle") {
               type="text"
               value={nombre}
               onChange={(e) => actualizarNombreJugador(i, e.target.value)}
-              placeholder={`Jugadora ${i + 1}`}
+              placeholder={`Persona ${i + 1}`}
               style={styles.nombreInput}
             />
           ))}
@@ -930,7 +930,7 @@ if (vista === "detalle") {
                   </button>
                 </div>
                 <p style={styles.configSubLabel}>
-                  {partida.ganador === "Empate" ? "Resultado: empate" : `Ganadora: ${partida.ganador}`}
+                {partida.ganador === "Empate" ? "Resultado: empate" : `Gana ${partida.ganador}`}
                 </p>
                 {partida.jugadores.map((j, k) => (
                   <div key={k} style={{ ...styles.resultRow, fontSize: 13 }}>
