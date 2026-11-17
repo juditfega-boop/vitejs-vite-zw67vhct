@@ -11,7 +11,8 @@ import {
   cambiarConfig,
   empezarCarrera,
   guardarMiProgreso,
-  terminarCarrera
+  terminarCarrera,
+  reiniciarParaRevancha
 } from "../servicios/salas";
 import corredoraRosa from "../assets/kit/corredora-rosa.png";
 import corredoraMorado from "../assets/kit/corredora-morado.png";
@@ -27,11 +28,13 @@ const IMAGEN_CORREDORA = {
 };
 
 const CLAVE_NOMBRE = "opo_carrera_nombre_v1";
+const CLAVE_SALA = "opo_carrera_sala_v1"; // para volver a entrar si sales sin querer
 
 // ⏳ si alguien se queda parada: 2 min de margen + 1 min de cuenta atrás
 const ESPERA_INACTIVIDAD = 120;
 const CUENTA_ATRAS = 60;
 const MARGEN_SIN_CONEXION = 30; // por si su móvil se ha apagado
+
 function mezclar(array) {
   const copia = [...array];
   for (let i = copia.length - 1; i > 0; i--) {
@@ -59,6 +62,17 @@ function mensajeError(e) {
   return (e && e.message) || "Algo ha fallado. Inténtalo otra vez.";
 }
 
+// ✨ microanimaciones suaves (puntos que esperan, corredoras que trotan, números de salida)
+const cssOnline = `
+  .puntos-espera::after { content: ""; animation: puntosEspera 1.8s steps(4) infinite; }
+  @keyframes puntosEspera { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+  .trote { animation: trote 1.4s ease-in-out infinite; }
+  @keyframes trote { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  .numero-salida { animation: numeroSalida 0.85s ease-out both; }
+  @keyframes numeroSalida { from { transform: scale(1.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .respuesta-online:focus { outline: none; }
+`;
+
 const est = {
   franja: {
     background: "#f7f1e8",
@@ -78,13 +92,7 @@ const est = {
     transition: "left 0.9s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   nombreCarril: { position: "absolute", right: 6, top: 3, fontSize: 11, color: "#8a8173" },
-  meta: {
-    position: "absolute",
-    top: 8,
-    bottom: 8,
-    right: 10,
-    borderRight: "3px dotted #d9b98a"
-  },
+  meta: { position: "absolute", top: 8, bottom: 8, right: 10, borderRight: "3px dotted #d9b98a" },
   codigoGrande: {
     fontSize: 36,
     letterSpacing: 10,
@@ -93,18 +101,52 @@ const est = {
     textAlign: "center",
     margin: "4px 0 6px"
   },
-  fila: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    padding: "8px 0",
-    borderBottom: "1px solid #f0e7da"
-  },
+  fila: { display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid #f0e7da" },
   imgFila: { width: 40, height: 50, objectFit: "contain" },
   heroFila: { display: "flex", justifyContent: "center", gap: 6, margin: "6px 0 14px" },
   heroImg: { width: 56, height: 72, objectFit: "contain" },
-  separador: { textAlign: "center", color: "#a39a8c", fontSize: 13, margin: "18px 0 6px" },
   error: { color: "#c96a6a", textAlign: "center", fontSize: 14, margin: "10px 0" },
+  // elegir crear / unirme
+  opcion: {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    width: "100%",
+    boxSizing: "border-box",
+    textAlign: "left",
+    border: "1px solid #eadfcd",
+    borderRadius: 24,
+    padding: "16px 18px",
+    marginBottom: 14,
+    cursor: "pointer",
+    fontFamily: "inherit",
+    boxShadow: "0 2px 10px rgba(120, 100, 80, 0.06)"
+  },
+  opcionImg: { width: 52, height: 64, objectFit: "contain", flexShrink: 0 },
+  opcionTitulo: { fontSize: 17, fontWeight: 700, color: "#4a463f", margin: 0 },
+  opcionTexto: { fontSize: 13, color: "#8a8173", margin: "3px 0 0" },
+  // sala de espera
+  etiquetaSuave: { fontSize: 12, letterSpacing: 1, textTransform: "uppercase", color: "#a39a8c", margin: "0 0 6px" },
+  lineaSalida: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    gap: 12,
+    margin: "6px 20px 14px",
+    paddingBottom: 4,
+    borderBottom: "2px dashed #d9c7a8"
+  },
+  salidaImg: { width: 44, height: 56, objectFit: "contain" },
+  chips: { display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8, marginBottom: 12 },
+  chipLavanda: { background: "#efe7f6", color: "#6b5a7a", borderRadius: 999, padding: "6px 12px", fontSize: 13 },
+  chipSalvia: { background: "#e4ead8", color: "#5d6b4f", borderRadius: 999, padding: "6px 12px", fontSize: 13 },
+  esperando: { fontSize: 14, color: "#8a8173", margin: 0 },
+  // salida 3, 2, 1
+  salida: { textAlign: "center", marginTop: 50 },
+  salidaPregunta: { fontSize: 22, fontWeight: 700, color: "#5b4a3a", margin: "0 0 4px" },
+  salidaEmpecemos: { fontSize: 18, color: "#c98a7a", margin: 0 },
+  numero: { fontSize: 120, fontWeight: 800, color: "#d99a86", lineHeight: 1, margin: "30px 0" },
+  // avisos
   avisoParada: {
     background: "#f6e6e6",
     border: "1px solid #ecd0d0",
@@ -114,6 +156,30 @@ const est = {
     textAlign: "center",
     color: "#8a5a5a",
     fontSize: 14
+  },
+  pillParada: {
+    display: "inline-block",
+    background: "#f6e6e6",
+    color: "#8a5a5a",
+    borderRadius: 999,
+    padding: "4px 10px",
+    fontSize: 12,
+    marginTop: 6
+  },
+  // quién sigue corriendo
+  filaCarrera: { display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid #f0e7da" },
+  imgMini: { width: 34, height: 44, objectFit: "contain", flexShrink: 0 },
+  filaCabecera: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "#4a463f" },
+  barra: { height: 7, background: "#f0e7da", borderRadius: 999, marginTop: 6, overflow: "hidden" },
+  barraRelleno: { height: "100%", background: "linear-gradient(90deg, #d7dcc0, #b9c79e)", borderRadius: 999 },
+  // revancha
+  revancha: {
+    background: "linear-gradient(135deg, #f1eaf7, #f7ecef)",
+    border: "1px solid #e6daee",
+    borderRadius: 24,
+    padding: "16px 18px",
+    margin: "14px 0",
+    textAlign: "center"
   }
 };
 
@@ -141,36 +207,50 @@ function FranjaPlaza({ lista, total }) {
   );
 }
 
-export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
+export default function CarreraOnline({ preguntasBase, volver, alTerminar, codigoInicial }) {
   const uid = getAuth().currentUser?.uid;
 
+  const [paso, setPaso] = useState("elegir"); // elegir | crear | unirme
   const [nombre, setNombre] = useState(() => localStorage.getItem(CLAVE_NOMBRE) || "");
   const [codigoEscrito, setCodigoEscrito] = useState("");
-  const [codigo, setCodigo] = useState(null);
+  const [codigo, setCodigo] = useState(() => codigoInicial || localStorage.getItem(CLAVE_SALA) || null);
   const [sala, setSala] = useState(null);
   const [error, setError] = useState("");
   const [ocupada, setOcupada] = useState(false);
   const [seleccion, setSeleccion] = useState(null);
   const [indiceRespondido, setIndiceRespondido] = useState(0);
+  const [salida, setSalida] = useState(null); // null | "cordones" | 3 | 2 | 1
+  const [ahora, setAhora] = useState(Date.now());
   const inicioRef = useRef(Date.now());
-  const yaTerminadoRef = useRef(false);
   const ultimaAccionRef = useRef(Date.now());
+  const yaTerminadoRef = useRef(false);
   const vistoRef = useRef({});
   const cortadaRef = useRef(false);
-  const [ahora, setAhora] = useState(Date.now());
+  const vioEsperaRef = useRef(false);
+  const listaRef = useRef([]);
+
+  // 💾 recordar en qué partida estoy, para poder volver a entrar
+  useEffect(() => {
+    if (codigo) localStorage.setItem(CLAVE_SALA, codigo);
+    else localStorage.removeItem(CLAVE_SALA);
+  }, [codigo]);
+
   // 👀 escuchar la sala en directo
   useEffect(() => {
     if (!codigo) return;
     const dejar = vigilarSala(
       codigo,
-      (datos) => {
+      (datos, desdeCache) => {
+        // lo guardado en el móvil puede estar desactualizado: esperamos a lo del servidor
         if (!datos) {
-          setError("La partida se ha cerrado.");
+          if (desdeCache) return;
+          setError("Esa partida ya no existe.");
           setCodigo(null);
           setSala(null);
           return;
         }
         if (!datos.jugadoras || !datos.jugadoras[uid]) {
+          if (desdeCache) return;
           setCodigo(null);
           setSala(null);
           return;
@@ -188,20 +268,55 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
       .map(([id, j]) => ({ uid: id, ...j }))
       .sort((a, b) => COLORES_CORREDORA.indexOf(a.color) - COLORES_CORREDORA.indexOf(b.color));
   }, [sala]);
+  listaRef.current = lista;
 
   const soyAnfitriona = !!sala && sala.anfitriona === uid;
+  const anfitriona = sala && sala.jugadoras ? sala.jugadoras[sala.anfitriona] : null;
   const total = (sala && sala.preguntas && sala.preguntas.length) || 0;
   const yo = sala && sala.jugadoras ? sala.jugadoras[uid] : null;
   const todasTerminadas =
     !!sala && sala.estado === "jugando" && lista.length > 0 && lista.every((j) => j.terminada);
   const acabada = !!sala && (sala.estado === "terminada" || todasTerminadas);
 
+  function arrancarReloj() {
+    inicioRef.current = Date.now();
+    ultimaAccionRef.current = Date.now();
+    vistoRef.current = {};
+    listaRef.current.forEach((j) => {
+      vistoRef.current[j.uid] = { respondidas: j.respondidas, desde: Date.now() };
+    });
+  }
+
+  // 👟 ¿Te ataste los cordones? ¡Empecemos! 3, 2, 1…
   useEffect(() => {
-    if (sala && sala.estado === "jugando") {
-      inicioRef.current = Date.now();
-      ultimaAccionRef.current = Date.now();
-      vistoRef.current = {};
+    if (!sala) return;
+    if (sala.estado === "espera") {
+      vioEsperaRef.current = true;
+      return;
     }
+    if (sala.estado !== "jugando") return;
+    ultimaAccionRef.current = Date.now();
+    const recienEmpezada = vioEsperaRef.current;
+    vioEsperaRef.current = false;
+    if (!recienEmpezada) {
+      // he vuelto a entrar con la carrera ya en marcha: sin cuenta atrás
+      arrancarReloj();
+      return;
+    }
+    setSalida("cordones");
+    const pasos = [
+      [2200, 3],
+      [3100, 2],
+      [4000, 1],
+      [4900, null]
+    ];
+    const ids = pasos.map(([ms, valor]) =>
+      setTimeout(() => {
+        setSalida(valor);
+        if (valor === null) arrancarReloj();
+      }, ms)
+    );
+    return () => ids.forEach(clearTimeout);
   }, [sala && sala.estado]);
 
   // ⏱️ reloj de la carrera (cada segundo, solo mientras se juega)
@@ -221,9 +336,10 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
     });
   }, [lista]);
 
+  const enCarrera = !!sala && sala.estado === "jugando" && salida === null;
   const misSegundosParada = Math.floor((ahora - ultimaAccionRef.current) / 1000);
   const miCuentaAtras =
-    sala && sala.estado === "jugando" && yo && !yo.terminada && misSegundosParada >= ESPERA_INACTIVIDAD
+    enCarrera && yo && !yo.terminada && misSegundosParada >= ESPERA_INACTIVIDAD
       ? Math.max(0, ESPERA_INACTIVIDAD + CUENTA_ATRAS - misSegundosParada)
       : null;
 
@@ -245,7 +361,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
   // 🛟 red de seguridad: si a alguien se le apaga el móvil o pierde la conexión,
   // el móvil de la anfitriona la da por llegada cuando pasa su tiempo (+ un margen)
   useEffect(() => {
-    if (!soyAnfitriona || !sala || sala.estado !== "jugando") return;
+    if (!soyAnfitriona || !enCarrera) return;
     lista.forEach((j) => {
       if (j.uid === uid || j.terminada) return;
       if (segundosParada(j) >= ESPERA_INACTIVIDAD + CUENTA_ATRAS + MARGEN_SIN_CONEXION) {
@@ -255,11 +371,12 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
     });
   }, [ahora]);
 
-  // 🏁 cuando llegan todas (o la anfitriona la cierra) → clasificación con el vídeo
+  // 🏁 cuando llegan todas → clasificación con el vídeo
   useEffect(() => {
     if (!acabada || yaTerminadoRef.current) return;
     yaTerminadoRef.current = true;
     if (soyAnfitriona && sala.estado !== "terminada") terminarCarrera(codigo).catch(() => {});
+    localStorage.removeItem(CLAVE_SALA);
     alTerminar(
       lista.map((j) => ({
         nombre: j.nombre,
@@ -267,7 +384,8 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
         errores: j.errores,
         tiempoTotal: j.tiempoTotal,
         fallos: j.fallos || []
-      }))
+      })),
+      codigo
     );
   }, [acabada]);
 
@@ -291,10 +409,10 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
   }
 
   async function unirse() {
-    const n = nombreLimpio();
-    if (!n) return setError("Escribe tu nombre primero.");
     const c = codigoEscrito.trim().toUpperCase();
     if (c.length !== 4) return setError("El código tiene 4 caracteres.");
+    const n = nombreLimpio();
+    if (!n) return setError("Escribe tu nombre.");
     setOcupada(true);
     setError("");
     try {
@@ -311,12 +429,20 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
     const borrar = soyAnfitriona && sala && sala.estado === "espera";
     setCodigo(null);
     setSala(null);
+    setPaso("elegir");
     try {
       if (borrar) await borrarSala(c);
       else await salirDeSala(c, uid);
     } catch (e) {
       // si falla al salir no pasa nada: la sala se queda sin usar
     }
+  }
+
+  function confirmarSalir() {
+    const texto = soyAnfitriona
+      ? "¿Cerrar la partida? Se saldrán todas."
+      : "¿Seguro que quieres salir de la partida?";
+    if (window.confirm(texto)) salir();
   }
 
   function actualizarConfig(cambios) {
@@ -335,7 +461,8 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
     empezarCarrera(codigo, preguntas).catch((e) => setError(mensajeError(e)));
   }
 
-  function responder(i) {
+  function responder(i, evento) {
+    if (evento && evento.currentTarget) evento.currentTarget.blur();
     if (seleccion !== null || !yo) return;
     const idx = yo.respondidas;
     const p = sala.preguntas[idx];
@@ -380,10 +507,11 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
     );
   }
 
-  // ─────────── entrar: crear o unirse ───────────
+  // ─────────── entrar: primero elegir, luego el nombre ───────────
   if (!codigo) {
     return (
       <div style={styles.menuContainer}>
+        <style>{cssOnline}</style>
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>Carrera online</h1>
           <div style={styles.menuUnderline} />
@@ -395,49 +523,100 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
           ))}
         </div>
 
-        <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Tu nombre en la carrera</p>
-          <input
-            type="text"
-            value={nombre}
-            maxLength={20}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Cómo quieres que te vean"
-            style={styles.nombreInput}
-          />
-        </div>
+        {paso === "elegir" && (
+          <>
+            <button
+              onClick={() => {
+                setError("");
+                setPaso("unirme");
+              }}
+              style={{ ...est.opcion, background: "linear-gradient(135deg, #eef2e6, #f7f3ea)" }}
+            >
+              <img src={corredoraVerde} alt="" style={est.opcionImg} />
+              <span>
+                <p style={est.opcionTitulo}>Unirme a una partida</p>
+                <p style={est.opcionTexto}>Tengo el código que me ha pasado una compañera</p>
+              </span>
+            </button>
 
-        <button
-          onClick={crear}
-          disabled={ocupada}
-          style={{ ...styles.ctaButton, ...(ocupada ? styles.ctaButtonDisabled : {}) }}
-        >
-          Crear partida
-        </button>
+            <button
+              onClick={() => {
+                setError("");
+                setPaso("crear");
+              }}
+              style={{ ...est.opcion, background: "linear-gradient(135deg, #f7ecef, #f7f1e8)" }}
+            >
+              <img src={corredoraRosa} alt="" style={est.opcionImg} />
+              <span>
+                <p style={est.opcionTitulo}>Crear una partida</p>
+                <p style={est.opcionTexto}>Elijo yo las preguntas y doy la salida</p>
+              </span>
+            </button>
 
-        <p style={est.separador}>o únete con el código que te pasen</p>
+            <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
+          </>
+        )}
 
-        <div style={styles.configCard}>
-          <input
-            type="text"
-            value={codigoEscrito}
-            maxLength={4}
-            onChange={(e) => setCodigoEscrito(e.target.value.toUpperCase())}
-            placeholder="CÓDIGO"
-            style={{ ...styles.nombreInput, textAlign: "center", letterSpacing: 6, fontWeight: 700 }}
-          />
-          <button
-            onClick={unirse}
-            disabled={ocupada}
-            style={{ ...styles.ctaButton, marginTop: 10, ...(ocupada ? styles.ctaButtonDisabled : {}) }}
-          >
-            Unirme
-          </button>
-        </div>
+        {paso === "unirme" && (
+          <>
+            <div style={styles.configCard}>
+              <p style={styles.configCardTitle}>Código de la partida</p>
+              <input
+                type="text"
+                value={codigoEscrito}
+                maxLength={4}
+                onChange={(e) => setCodigoEscrito(e.target.value.toUpperCase())}
+                placeholder="ABCD"
+                style={{ ...styles.nombreInput, textAlign: "center", letterSpacing: 6, fontWeight: 700 }}
+              />
+              <p style={{ ...styles.configCardTitle, marginTop: 14 }}>Tu nombre en la carrera</p>
+              <input
+                type="text"
+                value={nombre}
+                maxLength={20}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Cómo quieres que te vean"
+                style={styles.nombreInput}
+              />
+            </div>
+            <button
+              onClick={unirse}
+              disabled={ocupada}
+              style={{ ...styles.ctaButton, ...(ocupada ? styles.ctaButtonDisabled : {}) }}
+            >
+              Unirme
+            </button>
+            {error && <p style={est.error}>{error}</p>}
+            <button onClick={() => setPaso("elegir")} style={styles.linkVolver}>⬅ Volver</button>
+          </>
+        )}
 
-        {error && <p style={est.error}>{error}</p>}
+        {paso === "crear" && (
+          <>
+            <div style={styles.configCard}>
+              <p style={styles.configCardTitle}>Tu nombre en la carrera</p>
+              <input
+                type="text"
+                value={nombre}
+                maxLength={20}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Cómo quieres que te vean"
+                style={styles.nombreInput}
+              />
+            </div>
+            <button
+              onClick={crear}
+              disabled={ocupada}
+              style={{ ...styles.ctaButton, ...(ocupada ? styles.ctaButtonDisabled : {}) }}
+            >
+              Crear partida
+            </button>
+            {error && <p style={est.error}>{error}</p>}
+            <button onClick={() => setPaso("elegir")} style={styles.linkVolver}>⬅ Volver</button>
+          </>
+        )}
 
-        <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
+        {paso === "elegir" && error && <p style={est.error}>{error}</p>}
       </div>
     );
   }
@@ -445,9 +624,11 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
   if (!sala) {
     return (
       <div style={styles.menuContainer}>
+        <style>{cssOnline}</style>
         <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 40 }}>
-          Entrando en la partida…
+          Entrando en la partida<span className="puntos-espera" />
         </p>
+        <button onClick={() => setCodigo(null)} style={styles.linkVolver}>⬅ Volver</button>
       </div>
     );
   }
@@ -474,6 +655,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
     return (
       <div style={styles.menuContainer}>
         <style>{globalStyles}</style>
+        <style>{cssOnline}</style>
 
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>Sala de espera</h1>
@@ -573,28 +755,71 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
               disabled={!puedeEmpezar}
               style={{ ...styles.ctaButton, ...(puedeEmpezar ? {} : styles.ctaButtonDisabled) }}
             >
-              🚩 Empezar carrera
+              🚩 Dar la salida
             </button>
           </>
         ) : (
           <div style={{ ...styles.configCard, textAlign: "center" }}>
-            <p style={styles.configSubLabel}>
-              {config.tipo === "bloques"
-                ? `Por bloques: ${config.bloques.join(", ") || "sin elegir todavía"}`
-                : "Preguntas generales"}{" "}
-              · {config.numPreguntas} preguntas
-            </p>
-            <p style={{ ...styles.configSubLabel, marginTop: 6 }}>
-              Esperando a que la anfitriona dé la salida…
+            <p style={est.etiquetaSuave}>En la línea de salida</p>
+            <div style={est.lineaSalida}>
+              {lista.map((j, i) => (
+                <img
+                  key={j.uid}
+                  src={IMAGEN_CORREDORA[j.color]}
+                  alt=""
+                  className="trote"
+                  style={{ ...est.salidaImg, animationDelay: `${i * 0.25}s` }}
+                />
+              ))}
+            </div>
+            <div style={est.chips}>
+              <span style={est.chipLavanda}>
+                {config.tipo === "bloques"
+                  ? config.bloques.length > 0
+                    ? config.bloques.join(" · ")
+                    : "Bloques por elegir"
+                  : "Preguntas generales"}
+              </span>
+              <span style={est.chipSalvia}>{config.numPreguntas} preguntas</span>
+            </div>
+            <p style={est.esperando}>
+              Esperando a que {anfitriona ? anfitriona.nombre : "la anfitriona"} dé la salida
+              <span className="puntos-espera" />
             </p>
           </div>
         )}
 
         {error && <p style={est.error}>{error}</p>}
 
-        <button onClick={salir} style={styles.linkVolver}>
+        <button onClick={confirmarSalir} style={styles.linkVolver}>
           {soyAnfitriona ? "Cerrar la partida" : "Salir de la partida"}
         </button>
+      </div>
+    );
+  }
+
+  // ─────────── salida: cordones y 3, 2, 1 ───────────
+  if (salida !== null) {
+    return (
+      <div style={styles.menuContainer}>
+        <style>{cssOnline}</style>
+        <div style={est.salida}>
+          {salida === "cordones" ? (
+            <>
+              <div style={est.heroFila}>
+                {lista.map((j) => (
+                  <img key={j.uid} src={IMAGEN_CORREDORA[j.color]} alt="" style={est.heroImg} />
+                ))}
+              </div>
+              <p style={est.salidaPregunta}>¿Te ataste los cordones?</p>
+              <p style={est.salidaEmpecemos}>¡Empecemos!</p>
+            </>
+          ) : (
+            <p key={salida} className="numero-salida" style={est.numero}>
+              {salida}
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -604,6 +829,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
     const quedan = lista.filter((j) => !j.terminada);
     return (
       <div style={styles.menuContainer}>
+        <style>{cssOnline}</style>
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>¡Has llegado!</h1>
           <div style={styles.menuUnderline} />
@@ -619,21 +845,45 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
           {yo.porTiempo && (
             <p style={styles.configSubLabel}>Se acabó tu tiempo: cuenta lo que llevabas respondido.</p>
           )}
-          <p style={styles.configSubLabel}>Esperando a que lleguen las demás…</p>
-          {quedan.map((j) => {
-            const parada = segundosParada(j);
-            const restante = ESPERA_INACTIVIDAD + CUENTA_ATRAS - parada;
-            return (
-              <p key={j.uid} style={{ ...styles.configSubLabel, marginTop: 4 }}>
-                {j.nombre} va por la {Math.min(j.respondidas + 1, total)} de {total}
-                {parada >= ESPERA_INACTIVIDAD &&
-                  (restante > 0
-                    ? ` · lleva un rato parada, le quedan unos ${restante} s`
-                    : " · comprobando si sigue conectada…")}
-              </p>
-            );
-          })}
+          <p style={est.esperando}>
+            Esperando a que lleguen las demás
+            <span className="puntos-espera" />
+          </p>
         </div>
+
+        {quedan.length > 0 && (
+          <div style={styles.configCard}>
+            <p style={est.etiquetaSuave}>Todavía en carrera</p>
+            {quedan.map((j) => {
+              const parada = segundosParada(j);
+              const restante = ESPERA_INACTIVIDAD + CUENTA_ATRAS - parada;
+              const hechas = Math.min(j.respondidas, total);
+              return (
+                <div key={j.uid} style={est.filaCarrera}>
+                  <img src={IMAGEN_CORREDORA[j.color]} alt="" className="trote" style={est.imgMini} />
+                  <div style={{ flex: 1 }}>
+                    <div style={est.filaCabecera}>
+                      <span>{j.nombre}</span>
+                      <span style={{ color: "#8a8173" }}>
+                        {hechas}/{total}
+                      </span>
+                    </div>
+                    <div style={est.barra}>
+                      <div style={{ ...est.barraRelleno, width: `${total ? (hechas / total) * 100 : 0}%` }} />
+                    </div>
+                    {parada >= ESPERA_INACTIVIDAD && (
+                      <span style={est.pillParada}>
+                        {restante > 0
+                          ? `Lleva un rato parada · le quedan unos ${restante} s`
+                          : "Comprobando si sigue conectada…"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {error && <p style={est.error}>{error}</p>}
       </div>
@@ -646,14 +896,16 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
   if (!p) return null;
 
   function estiloRespuesta(i) {
-    if (seleccion === null) return styles.simRespuestaBtn;
-    if (i === p.correcta) return { ...styles.simRespuestaBtn, background: "#e6eedb", borderColor: "#9db584" };
-    if (i === seleccion) return { ...styles.simRespuestaBtn, background: "#f6e0e0", borderColor: "#d9a0a0" };
-    return { ...styles.simRespuestaBtn, opacity: 0.55 };
+    const base = { ...styles.simRespuestaBtn, outline: "none" };
+    if (seleccion === null) return base;
+    if (i === p.correcta) return { ...base, background: "#e6eedb", borderColor: "#9db584" };
+    if (i === seleccion) return { ...base, background: "#f6e0e0", borderColor: "#d9a0a0" };
+    return { ...base, opacity: 0.55 };
   }
 
   return (
     <div style={styles.menuContainer}>
+      <style>{cssOnline}</style>
       <div style={styles.simHeaderBar}>
         <span style={styles.simTimer}>
           Pregunta {indice + 1} / {total}
@@ -674,7 +926,13 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
       <h3>{p.pregunta}</h3>
 
       {p.respuestas.map((r, i) => (
-        <button key={i} onClick={() => responder(i)} disabled={seleccion !== null} style={estiloRespuesta(i)}>
+        <button
+          key={`${indice}-${i}`}
+          className="respuesta-online"
+          onClick={(e) => responder(i, e)}
+          disabled={seleccion !== null}
+          style={estiloRespuesta(i)}
+        >
           {r}
         </button>
       ))}
@@ -702,6 +960,115 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar }) {
           Abandonar
         </button>
       )}
+    </div>
+  );
+}
+
+// 🔁 REVANCHA: va en la pantalla de clasificación de una partida online
+export function RevanchaOnline({ codigo, alEntrar }) {
+  const uid = getAuth().currentUser?.uid;
+  const [sala, setSala] = useState(null);
+  const [descartada, setDescartada] = useState(false);
+  const [error, setError] = useState("");
+  const entradoRef = useRef(false);
+  const reiniciadaRef = useRef(false);
+
+  useEffect(() => {
+    if (!codigo) return;
+    return vigilarSala(
+      codigo,
+      (datos) => setSala(datos),
+      () => {}
+    );
+  }, [codigo]);
+
+  const jugadoras = (sala && sala.jugadoras) || {};
+  const yo = uid ? jugadoras[uid] : null;
+  const soyAnfitriona = !!sala && sala.anfitriona === uid;
+  const quienPide = Object.values(jugadoras).find((j) => j.quiereRevancha === "pide");
+
+  // si la sala vuelve a la espera y estoy dentro → a la sala
+  useEffect(() => {
+    if (sala && sala.estado === "espera" && yo && !entradoRef.current) {
+      entradoRef.current = true;
+      localStorage.setItem(CLAVE_SALA, codigo);
+      alEntrar();
+    }
+  }, [sala, yo]);
+
+  // la anfitriona, en cuanto quiere revancha (la pida o la acepte), reabre la sala
+  useEffect(() => {
+    if (!sala || !soyAnfitriona || sala.estado === "espera") return;
+    if (yo && yo.quiereRevancha && !reiniciadaRef.current) {
+      reiniciadaRef.current = true;
+      reiniciarParaRevancha(codigo, sala).catch((e) => setError(mensajeError(e)));
+    }
+  }, [sala]);
+
+  if (!sala || !uid || descartada) return null;
+
+  function pedir(tipo) {
+    guardarMiProgreso(codigo, uid, { ...yo, quiereRevancha: tipo }).catch((e) => setError(mensajeError(e)));
+  }
+
+  async function unirmeOtraVez() {
+    try {
+      await unirseSala(codigo, uid, localStorage.getItem(CLAVE_NOMBRE) || "Jugadora");
+    } catch (e) {
+      setError(mensajeError(e));
+    }
+  }
+
+  let contenido = null;
+
+  if (sala.estado === "espera" && !yo && sala.revanchaDe) {
+    contenido = (
+      <>
+        <p style={styles.configCardTitle}>{sala.revanchaDe} no se ha quedado conforme…</p>
+        <p style={styles.configSubLabel}>¿Quieres la revancha?</p>
+        <button onClick={unirmeOtraVez} style={{ ...styles.ctaButton, marginTop: 12 }}>
+          🔁 ¡Venga, otra!
+        </button>
+        <button onClick={() => setDescartada(true)} style={styles.linkVolver}>
+          Por hoy ya está
+        </button>
+      </>
+    );
+  } else if (yo && yo.quiereRevancha) {
+    contenido = (
+      <p style={est.esperando}>
+        Esperando a que acepten la revancha
+        <span className="puntos-espera" />
+      </p>
+    );
+  } else if (yo && quienPide) {
+    contenido = (
+      <>
+        <p style={styles.configCardTitle}>{quienPide.nombre} no se ha quedado conforme…</p>
+        <p style={styles.configSubLabel}>¿Quieres la revancha?</p>
+        <button onClick={() => pedir("acepta")} style={{ ...styles.ctaButton, marginTop: 12 }}>
+          🔁 ¡Venga, otra!
+        </button>
+        <button onClick={() => setDescartada(true)} style={styles.linkVolver}>
+          Por hoy ya está
+        </button>
+      </>
+    );
+  } else if (yo) {
+    contenido = (
+      <button onClick={() => pedir("pide")} style={styles.ctaButton}>
+        🔁 Revancha con las mismas
+      </button>
+    );
+  }
+
+  if (!contenido) return null;
+
+  return (
+    <div style={est.revancha}>
+      <style>{cssOnline}</style>
+      {contenido}
+      {error && <p style={est.error}>{error}</p>}
     </div>
   );
 }

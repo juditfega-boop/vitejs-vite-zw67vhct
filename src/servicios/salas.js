@@ -73,9 +73,27 @@ import {
   export function vigilarSala(codigo, alCambiar, alError) {
     return onSnapshot(
       doc(db, "salas", codigo),
-      (snap) => alCambiar(snap.exists() ? snap.data() : null),
+      { includeMetadataChanges: true },
+      (snap) => alCambiar(snap.exists() ? snap.data() : null, snap.metadata.fromCache),
       alError
     );
+  }
+  
+  // 🔁 revancha: la sala vuelve a la espera solo con quienes la han pedido o aceptado
+  export function reiniciarParaRevancha(codigo, sala) {
+    const jugadoras = {};
+    let revanchaDe = "";
+    Object.entries(sala.jugadoras || {}).forEach(([id, j]) => {
+      if (!j.quiereRevancha) return;
+      jugadoras[id] = jugadoraNueva(j.nombre, j.color);
+      if (j.quiereRevancha === "pide") revanchaDe = j.nombre;
+    });
+    return updateDoc(doc(db, "salas", codigo), {
+      estado: "espera",
+      preguntas: [],
+      jugadoras,
+      revanchaDe
+    });
   }
   
   export function salirDeSala(codigo, uid) {

@@ -11,7 +11,7 @@ import iconoAciertoCheck from "../assets/kit/icono-fin-aciertos.png";
 import iconoErrorX from "../assets/kit/icono-sim-errores.png";
 import iconoHistorial from "../assets/bookbrand/icono-brand-historial.png";
 import iconoPapelera from "../assets/bookbrand/icono-brand-papelera.png";
-import CarreraOnline from "./CarreraOnline";
+import CarreraOnline, { RevanchaOnline } from "./CarreraOnline";
 
 const CLAVE_HISTORIAL_JUEGO = "opo_juego_historial_v1";
 
@@ -27,19 +27,19 @@ const FRASES_MINIJUEGO = [
 // 🎬 posiciones medidas (top/left en %) de cada carril en el vídeo
 const POSICIONES_VIDEO = {
   2: [
-    { top: 15, left: 6 },
-    { top: 32, left: 6 }
+    { top: 43, left: 6 },
+    { top: 58, left: 6 }
   ],
   3: [
-    { top: 15, left: 6 },
-    { top: 32, left: 6 },
-    { top: 49, left: 6 }
+    { top: 43, left: 6 },
+    { top: 58, left: 6 },
+    { top: 73, left: 6 }
   ],
   4: [
-    { top: 15, left: 6 },
-    { top: 32, left: 6 },
-    { top: 49, left: 6 },
-    { top: 66, left: 6 }
+    { top: 43, left: 6 },
+    { top: 58, left: 6 },
+    { top: 73, left: 6 },
+    { top: 89, left: 6 }
   ]
 };
 
@@ -146,6 +146,7 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
   const [refrescoHistorial, setRefrescoHistorial] = useState(0);
   const [enPausa, setEnPausa] = useState(false);
   const [modoOnline, setModoOnline] = useState(false);
+  const [codigoOnline, setCodigoOnline] = useState(null);
   const [pausaDesde, setPausaDesde] = useState(null);
 
   function pausarJuego() {
@@ -312,7 +313,8 @@ export default function CarreraPlaza({ preguntasBase, setPantalla, volverMenu })
   }
 
   // 🌐 al acabar la carrera online: misma clasificación y vídeo que en un solo móvil
-  function terminarOnline(puntuaciones) {
+  function terminarOnline(puntuaciones, codigo) {
+    setCodigoOnline(codigo || null);
     cambiarNumJugadoresJuego(puntuaciones.length);
     setPuntuacionesJuego(puntuaciones);
     setJugadoraExpandida(null);
@@ -419,6 +421,7 @@ if (vista === "detalle") {
       <button
         onClick={() => {
           setModoOnline(true);
+          setCodigoOnline(null);
           setVista("online");
         }}
         style={{ ...styles.ctaButton, marginTop: 10 }}
@@ -447,6 +450,7 @@ if (vista === "detalle") {
         preguntasBase={preguntasBase}
         volver={() => setVista("detalle")}
         alTerminar={terminarOnline}
+        codigoInicial={codigoOnline}
       />
     );
   }
@@ -797,11 +801,18 @@ if (vista === "detalle") {
             )}
         </div>
 
-        <p style={{ textAlign: "center", fontWeight: 700, color: "#4a463f" }}>
+        <p style={{ textAlign: "center", fontWeight: 700, color: "#4a463f", marginBottom: 2 }}>
           {hayEmpate
             ? `¡Empate entre ${ganadoras.map((g) => g.nombre).join(" y ")}!`
             : `🥇 Gana ${ganadoras[0]?.nombre}`}
         </p>
+        {!hayEmpate && ranking.length > 1 && ranking[1].aciertos === maxAciertos && (
+          <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 0 }}>
+            Empate a {maxAciertos} aciertos, pero {ganadoras[0]?.nombre} fue más rápida (
+            {formatearTiempo(Math.round((ranking[0].tiempoTotal || 0) / 1000))} frente a{" "}
+            {formatearTiempo(Math.round((ranking[1].tiempoTotal || 0) / 1000))})
+          </p>
+        )}
 
         <div style={styles.resultCard}>
           {ranking.map((j, i) => (
@@ -845,11 +856,22 @@ if (vista === "detalle") {
           </p>
         )}
 
-<button
-          onClick={modoOnline ? () => setVista("online") : comenzarPartida}
+{modoOnline && codigoOnline && (
+          <RevanchaOnline codigo={codigoOnline} alEntrar={() => setVista("online")} />
+        )}
+
+        <button
+          onClick={
+            modoOnline
+              ? () => {
+                  setCodigoOnline(null);
+                  setVista("online");
+                }
+              : comenzarPartida
+          }
           style={styles.ctaButton}
         >
-          Jugar otra vez
+          {modoOnline ? "Nueva partida online" : "Jugar otra vez"}
         </button>
 
         <button onClick={() => setVista("historial")} style={styles.linkVolver}>
