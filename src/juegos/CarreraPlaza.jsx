@@ -808,7 +808,7 @@ if (vista === "detalle") {
         </p>
         {!hayEmpate && ranking.length > 1 && ranking[1].aciertos === maxAciertos && (
           <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 0 }}>
-            Empate a {maxAciertos} aciertos, pero {ganadoras[0]?.nombre} fue más rápida (
+            Empate a {maxAciertos} aciertos, pero {ganadoras[0]?.nombre} respondió más rápido (
             {formatearTiempo(Math.round((ranking[0].tiempoTotal || 0) / 1000))} frente a{" "}
             {formatearTiempo(Math.round((ranking[1].tiempoTotal || 0) / 1000))})
           </p>

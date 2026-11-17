@@ -71,7 +71,28 @@ const cssOnline = `
   .numero-salida { animation: numeroSalida 0.85s ease-out both; }
   @keyframes numeroSalida { from { transform: scale(1.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .respuesta-online:focus { outline: none; }
+  .aviso-fondo { animation: avisoFondo 0.3s ease-out both; }
+  @keyframes avisoFondo { from { opacity: 0; } to { opacity: 1; } }
+  .aviso-tarjeta { animation: avisoTarjeta 0.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  @keyframes avisoTarjeta { from { opacity: 0; transform: translateY(14px) scale(0.97); } to { opacity: 1; transform: none; } }
 `;
+
+// 😅 si alguien rechaza la revancha
+const FRASES_RECHAZO = [
+  (n) => `${n} dice que hoy no: se va a casa a repasar a escondidas 📚`,
+  (n) => `${n} rechaza la revancha. Necesita un café y recuperar la dignidad ☕`,
+  (n) => `${n} se retira con la cabeza bien alta. Revancha denegada 🙅`,
+  (n) => `${n} ha pedido un aplazamiento… como si fuera un recurso de alzada 📄`,
+  (n) => `${n} no acepta: dice que vuelve cuando se haya leído la Ley 39 entera 😅`
+];
+
+function fraseRechazo(nombre) {
+  let suma = 0;
+  for (const letra of nombre) suma += letra.charCodeAt(0);
+  return FRASES_RECHAZO[suma % FRASES_RECHAZO.length](nombre);
+}
+
+const ESPERA_CORDONES = 45; // si alguien no pulsa "¡Empecemos!", se sale sin esperar
 
 const est = {
   franja: {
@@ -110,21 +131,20 @@ const est = {
   opcion: {
     display: "flex",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
     width: "100%",
     boxSizing: "border-box",
     textAlign: "left",
-    border: "1px solid #eadfcd",
-    borderRadius: 24,
-    padding: "16px 18px",
-    marginBottom: 14,
+    background: "transparent",
+    border: "none",
+    padding: "16px 4px",
     cursor: "pointer",
-    fontFamily: "inherit",
-    boxShadow: "0 2px 10px rgba(120, 100, 80, 0.06)"
+    fontFamily: "inherit"
   },
-  opcionImg: { width: 52, height: 64, objectFit: "contain", flexShrink: 0 },
+  opcionSeparador: { height: 1, background: "#f0e7da", margin: "0 4px" },
   opcionTitulo: { fontSize: 17, fontWeight: 700, color: "#4a463f", margin: 0 },
   opcionTexto: { fontSize: 13, color: "#8a8173", margin: "3px 0 0" },
+  opcionFlecha: { marginLeft: "auto", fontSize: 22, color: "#c9b9a3" },
   // sala de espera
   etiquetaSuave: { fontSize: 12, letterSpacing: 1, textTransform: "uppercase", color: "#a39a8c", margin: "0 0 6px" },
   lineaSalida: {
@@ -172,15 +192,33 @@ const est = {
   filaCabecera: { display: "flex", justifyContent: "space-between", fontSize: 14, color: "#4a463f" },
   barra: { height: 7, background: "#f0e7da", borderRadius: 999, marginTop: 6, overflow: "hidden" },
   barraRelleno: { height: "100%", background: "linear-gradient(90deg, #d7dcc0, #b9c79e)", borderRadius: 999 },
-  // revancha
-  revancha: {
-    background: "linear-gradient(135deg, #f1eaf7, #f7ecef)",
-    border: "1px solid #e6daee",
-    borderRadius: 24,
-    padding: "16px 18px",
-    margin: "14px 0",
-    textAlign: "center"
-  }
+  // cordones
+  cordonesFila: { display: "flex", justifyContent: "center", gap: 14, margin: "10px 0 18px" },
+  cordonesPersona: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: 64 },
+  cordonesNombre: { fontSize: 11, color: "#8a8173", textAlign: "center", lineHeight: 1.2 },
+  // avisos emergentes (revancha)
+  avisoFondo: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(74, 70, 63, 0.28)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    zIndex: 1000
+  },
+  avisoTarjeta: {
+    background: "linear-gradient(160deg, #fbf8f3, #f4ecf6)",
+    borderRadius: 28,
+    padding: "24px 20px 14px",
+    width: "100%",
+    maxWidth: 360,
+    boxSizing: "border-box",
+    textAlign: "center",
+    boxShadow: "0 10px 40px rgba(74, 70, 63, 0.18)"
+  },
+  avisoTitulo: { fontSize: 18, fontWeight: 700, color: "#4a463f", margin: "0 0 6px" },
+  avisoTexto: { fontSize: 15, color: "#6f675c", margin: "0 0 4px", lineHeight: 1.4 }
 };
 
 // 🏃‍♀️ la franja de la plaza: cada corredora avanza según sus aciertos
@@ -219,14 +257,15 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
   const [ocupada, setOcupada] = useState(false);
   const [seleccion, setSeleccion] = useState(null);
   const [indiceRespondido, setIndiceRespondido] = useState(0);
-  const [salida, setSalida] = useState(null); // null | "cordones" | 3 | 2 | 1
+  const [cuenta, setCuenta] = useState(null); // null | 3 | 2 | 1
   const [ahora, setAhora] = useState(Date.now());
   const inicioRef = useRef(Date.now());
   const ultimaAccionRef = useRef(Date.now());
   const yaTerminadoRef = useRef(false);
   const vistoRef = useRef({});
   const cortadaRef = useRef(false);
-  const vioEsperaRef = useRef(false);
+  const esperandoListasRef = useRef(false);
+  const cordonesDesdeRef = useRef(Date.now());
   const listaRef = useRef([]);
 
   // 💾 recordar en qué partida estoy, para poder volver a entrar
@@ -274,6 +313,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
   const anfitriona = sala && sala.jugadoras ? sala.jugadoras[sala.anfitriona] : null;
   const total = (sala && sala.preguntas && sala.preguntas.length) || 0;
   const yo = sala && sala.jugadoras ? sala.jugadoras[uid] : null;
+  const todasListas = lista.length > 0 && lista.every((j) => j.lista);
   const todasTerminadas =
     !!sala && sala.estado === "jugando" && lista.length > 0 && lista.every((j) => j.terminada);
   const acabada = !!sala && (sala.estado === "terminada" || todasTerminadas);
@@ -287,37 +327,51 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
     });
   }
 
-  // 👟 ¿Te ataste los cordones? ¡Empecemos! 3, 2, 1…
+  // 👟 ¿Te ataste los cordones? → cuando todo el mundo pulsa "¡Empecemos!": 3, 2, 1…
   useEffect(() => {
-    if (!sala) return;
-    if (sala.estado === "espera") {
-      vioEsperaRef.current = true;
+    if (!sala || sala.estado !== "jugando") return;
+    if (!todasListas) {
+      if (!esperandoListasRef.current) cordonesDesdeRef.current = Date.now();
+      esperandoListasRef.current = true;
+      ultimaAccionRef.current = Date.now();
       return;
     }
-    if (sala.estado !== "jugando") return;
-    ultimaAccionRef.current = Date.now();
-    const recienEmpezada = vioEsperaRef.current;
-    vioEsperaRef.current = false;
-    if (!recienEmpezada) {
+    if (!esperandoListasRef.current) {
       // he vuelto a entrar con la carrera ya en marcha: sin cuenta atrás
       arrancarReloj();
       return;
     }
-    setSalida("cordones");
+    esperandoListasRef.current = false;
+    setCuenta(3);
     const pasos = [
-      [2200, 3],
-      [3100, 2],
-      [4000, 1],
-      [4900, null]
+      [900, 2],
+      [1800, 1],
+      [2700, null]
     ];
     const ids = pasos.map(([ms, valor]) =>
       setTimeout(() => {
-        setSalida(valor);
+        setCuenta(valor);
         if (valor === null) arrancarReloj();
       }, ms)
     );
     return () => ids.forEach(clearTimeout);
-  }, [sala && sala.estado]);
+  }, [sala && sala.estado, todasListas]);
+
+  // ⏳ si alguien no pulsa "¡Empecemos!" en 45 s, el móvil de quien organiza sale sin esperar
+  useEffect(() => {
+    if (!soyAnfitriona || !sala || sala.estado !== "jugando" || todasListas) return;
+    if (Date.now() - cordonesDesdeRef.current < ESPERA_CORDONES * 1000) return;
+    lista.forEach((j) => {
+      if (j.lista) return;
+      const { uid: idJugadora, ...datos } = j;
+      guardarMiProgreso(codigo, idJugadora, { ...datos, lista: true }).catch(() => {});
+    });
+  }, [ahora]);
+
+  function estoyLista() {
+    if (!yo || yo.lista) return;
+    guardarMiProgreso(codigo, uid, { ...yo, lista: true }).catch((e) => setError(mensajeError(e)));
+  }
 
   // ⏱️ reloj de la carrera (cada segundo, solo mientras se juega)
   useEffect(() => {
@@ -336,7 +390,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
     });
   }, [lista]);
 
-  const enCarrera = !!sala && sala.estado === "jugando" && salida === null;
+  const enCarrera = !!sala && sala.estado === "jugando" && todasListas && cuenta === null;
   const misSegundosParada = Math.floor((ahora - ultimaAccionRef.current) / 1000);
   const miCuentaAtras =
     enCarrera && yo && !yo.terminada && misSegundosParada >= ESPERA_INACTIVIDAD
@@ -440,7 +494,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
 
   function confirmarSalir() {
     const texto = soyAnfitriona
-      ? "¿Cerrar la partida? Se saldrán todas."
+      ? "¿Cerrar la partida? Se cerrará para todo el grupo."
       : "¿Seguro que quieres salir de la partida?";
     if (window.confirm(texto)) salir();
   }
@@ -525,33 +579,37 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
 
         {paso === "elegir" && (
           <>
-            <button
-              onClick={() => {
-                setError("");
-                setPaso("unirme");
-              }}
-              style={{ ...est.opcion, background: "linear-gradient(135deg, #eef2e6, #f7f3ea)" }}
-            >
-              <img src={corredoraVerde} alt="" style={est.opcionImg} />
-              <span>
-                <p style={est.opcionTitulo}>Unirme a una partida</p>
-                <p style={est.opcionTexto}>Tengo el código que me ha pasado una compañera</p>
-              </span>
-            </button>
+            <div style={{ ...styles.configCard, padding: "6px 18px" }}>
+              <button
+                onClick={() => {
+                  setError("");
+                  setPaso("unirme");
+                }}
+                style={est.opcion}
+              >
+                <span>
+                  <p style={est.opcionTitulo}>Unirme a una partida</p>
+                  <p style={est.opcionTexto}>Tengo el código que me han pasado</p>
+                </span>
+                <span style={est.opcionFlecha}>›</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setError("");
-                setPaso("crear");
-              }}
-              style={{ ...est.opcion, background: "linear-gradient(135deg, #f7ecef, #f7f1e8)" }}
-            >
-              <img src={corredoraRosa} alt="" style={est.opcionImg} />
-              <span>
-                <p style={est.opcionTitulo}>Crear una partida</p>
-                <p style={est.opcionTexto}>Elijo yo las preguntas y doy la salida</p>
-              </span>
-            </button>
+              <div style={est.opcionSeparador} />
+
+              <button
+                onClick={() => {
+                  setError("");
+                  setPaso("crear");
+                }}
+                style={est.opcion}
+              >
+                <span>
+                  <p style={est.opcionTitulo}>Crear una partida</p>
+                  <p style={est.opcionTexto}>Elijo las preguntas y doy la salida</p>
+                </span>
+                <span style={est.opcionFlecha}>›</span>
+              </button>
+            </div>
 
             <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
           </>
@@ -665,17 +723,17 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
         <div style={{ ...styles.configCard, textAlign: "center" }}>
           <p style={styles.configSubLabel}>Código de la partida</p>
           <p style={est.codigoGrande}>{codigo}</p>
-          <p style={styles.configSubLabel}>Pásaselo a tus compañeras para que se unan</p>
+          <p style={styles.configSubLabel}>Compártelo para que se unan a la carrera</p>
         </div>
 
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Corredoras ({lista.length}/4)</p>
+          <p style={styles.configCardTitle}>En la carrera ({lista.length}/4)</p>
           {lista.map((j) => (
             <div key={j.uid} style={est.fila}>
               <img src={IMAGEN_CORREDORA[j.color]} alt="" style={est.imgFila} />
               <span>
                 {j.nombre}
-                {j.uid === sala.anfitriona ? " · anfitriona" : ""}
+                {j.uid === sala.anfitriona ? " · organiza" : ""}
                 {j.uid === uid ? " (tú)" : ""}
               </span>
             </div>
@@ -783,7 +841,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
               <span style={est.chipSalvia}>{config.numPreguntas} preguntas</span>
             </div>
             <p style={est.esperando}>
-              Esperando a que {anfitriona ? anfitriona.nombre : "la anfitriona"} dé la salida
+              Esperando a que {anfitriona ? anfitriona.nombre : "se"} dé la salida
               <span className="puntos-espera" />
             </p>
           </div>
@@ -798,33 +856,62 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
     );
   }
 
-  // ─────────── salida: cordones y 3, 2, 1 ───────────
-  if (salida !== null) {
+  // ─────────── salida: cordones (todo el mundo pulsa) y luego 3, 2, 1 ───────────
+  if (!todasListas) {
     return (
       <div style={styles.menuContainer}>
         <style>{cssOnline}</style>
         <div style={est.salida}>
-          {salida === "cordones" ? (
-            <>
-              <div style={est.heroFila}>
-                {lista.map((j) => (
-                  <img key={j.uid} src={IMAGEN_CORREDORA[j.color]} alt="" style={est.heroImg} />
-                ))}
+          <p style={est.salidaPregunta}>¿Te ataste los cordones?</p>
+          <div style={est.cordonesFila}>
+            {lista.map((j) => (
+              <div key={j.uid} style={est.cordonesPersona}>
+                <img
+                  src={IMAGEN_CORREDORA[j.color]}
+                  alt=""
+                  className={j.lista ? "trote" : ""}
+                  style={{ ...est.heroImg, opacity: j.lista ? 1 : 0.35, transition: "opacity 0.4s" }}
+                />
+                <span style={est.cordonesNombre}>
+                  {j.nombre}
+                  {j.lista ? " ✓" : ""}
+                </span>
               </div>
-              <p style={est.salidaPregunta}>¿Te ataste los cordones?</p>
-              <p style={est.salidaEmpecemos}>¡Empecemos!</p>
-            </>
+            ))}
+          </div>
+          {yo && !yo.lista ? (
+            <button onClick={estoyLista} style={styles.ctaButton}>
+              ¡Empecemos!
+            </button>
           ) : (
-            <p key={salida} className="numero-salida" style={est.numero}>
-              {salida}
+            <p style={est.esperando}>
+              Esperando al resto
+              <span className="puntos-espera" />
             </p>
           )}
+          <p style={{ ...styles.configSubLabel, marginTop: 14 }}>
+            Si en {ESPERA_CORDONES} s falta alguien, se sale sin esperar.
+          </p>
+          {error && <p style={est.error}>{error}</p>}
         </div>
       </div>
     );
   }
 
-  // ─────────── he llegado: esperando a las demás ───────────
+  if (cuenta !== null) {
+    return (
+      <div style={styles.menuContainer}>
+        <style>{cssOnline}</style>
+        <div style={est.salida}>
+          <p key={cuenta} className="numero-salida" style={est.numero}>
+            {cuenta}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────── he llegado: esperando al resto ───────────
   if (yo && yo.terminada && seleccion === null) {
     const quedan = lista.filter((j) => !j.terminada);
     return (
@@ -846,7 +933,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
             <p style={styles.configSubLabel}>Se acabó tu tiempo: cuenta lo que llevabas respondido.</p>
           )}
           <p style={est.esperando}>
-            Esperando a que lleguen las demás
+            Esperando al resto
             <span className="puntos-espera" />
           </p>
         </div>
@@ -874,8 +961,8 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
                     {parada >= ESPERA_INACTIVIDAD && (
                       <span style={est.pillParada}>
                         {restante > 0
-                          ? `Lleva un rato parada · le quedan unos ${restante} s`
-                          : "Comprobando si sigue conectada…"}
+                          ? `Lleva un rato sin responder · quedan unos ${restante} s`
+                          : "Comprobando la conexión…"}
                       </span>
                     )}
                   </div>
@@ -964,11 +1051,12 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
   );
 }
 
-// 🔁 REVANCHA: va en la pantalla de clasificación de una partida online
+// 🔁 REVANCHA: botón en la clasificación + avisos emergentes
 export function RevanchaOnline({ codigo, alEntrar }) {
   const uid = getAuth().currentUser?.uid;
   const [sala, setSala] = useState(null);
   const [descartada, setDescartada] = useState(false);
+  const [rechazosVistos, setRechazosVistos] = useState([]);
   const [error, setError] = useState("");
   const entradoRef = useRef(false);
   const reiniciadaRef = useRef(false);
@@ -984,8 +1072,13 @@ export function RevanchaOnline({ codigo, alEntrar }) {
 
   const jugadoras = (sala && sala.jugadoras) || {};
   const yo = uid ? jugadoras[uid] : null;
+  const otras = Object.entries(jugadoras)
+    .filter(([id]) => id !== uid)
+    .map(([id, j]) => ({ uid: id, ...j }));
   const soyAnfitriona = !!sala && sala.anfitriona === uid;
-  const quienPide = Object.values(jugadoras).find((j) => j.quiereRevancha === "pide");
+  const quienPide = otras.find((j) => j.quiereRevancha === "pide");
+  const rechazos = otras.filter((j) => j.quiereRevancha === "no");
+  const otrasQuieren = otras.some((j) => j.quiereRevancha === "pide" || j.quiereRevancha === "acepta");
 
   // si la sala vuelve a la espera y estoy dentro → a la sala
   useEffect(() => {
@@ -996,37 +1089,53 @@ export function RevanchaOnline({ codigo, alEntrar }) {
     }
   }, [sala, yo]);
 
-  // la anfitriona, en cuanto quiere revancha (la pida o la acepte), reabre la sala
+  // quien organiza reabre la sala cuando quiere revancha y alguien más también
   useEffect(() => {
-    if (!sala || !soyAnfitriona || sala.estado === "espera") return;
-    if (yo && yo.quiereRevancha && !reiniciadaRef.current) {
+    if (!sala || !soyAnfitriona || sala.estado === "espera" || reiniciadaRef.current) return;
+    if (yo && (yo.quiereRevancha === "pide" || yo.quiereRevancha === "acepta") && otrasQuieren) {
       reiniciadaRef.current = true;
       reiniciarParaRevancha(codigo, sala).catch((e) => setError(mensajeError(e)));
     }
   }, [sala]);
 
-  if (!sala || !uid || descartada) return null;
+  if (!sala || !uid) return null;
 
-  function pedir(tipo) {
+  function responderRevancha(tipo) {
     guardarMiProgreso(codigo, uid, { ...yo, quiereRevancha: tipo }).catch((e) => setError(mensajeError(e)));
   }
 
   async function unirmeOtraVez() {
     try {
-      await unirseSala(codigo, uid, localStorage.getItem(CLAVE_NOMBRE) || "Jugadora");
+      await unirseSala(codigo, uid, localStorage.getItem(CLAVE_NOMBRE) || "Participante");
     } catch (e) {
       setError(mensajeError(e));
     }
   }
 
-  let contenido = null;
+  // ── aviso emergente ──
+  let aviso = null;
+  const rechazoPendiente =
+    yo && yo.quiereRevancha === "pide" ? rechazos.find((j) => !rechazosVistos.includes(j.uid)) : null;
 
-  if (sala.estado === "espera" && !yo && sala.revanchaDe) {
-    contenido = (
+  if (rechazoPendiente) {
+    aviso = (
       <>
-        <p style={styles.configCardTitle}>{sala.revanchaDe} no se ha quedado conforme…</p>
-        <p style={styles.configSubLabel}>¿Quieres la revancha?</p>
-        <button onClick={unirmeOtraVez} style={{ ...styles.ctaButton, marginTop: 12 }}>
+        <p style={est.avisoTitulo}>Revancha rechazada</p>
+        <p style={est.avisoTexto}>{fraseRechazo(rechazoPendiente.nombre)}</p>
+        <button
+          onClick={() => setRechazosVistos((v) => [...v, rechazoPendiente.uid])}
+          style={{ ...styles.ctaButton, marginTop: 14 }}
+        >
+          Vale
+        </button>
+      </>
+    );
+  } else if (!descartada && sala.estado === "espera" && !yo && sala.revanchaDe) {
+    aviso = (
+      <>
+        <p style={est.avisoTitulo}>{sala.revanchaDe} no se ha quedado conforme…</p>
+        <p style={est.avisoTexto}>¿Quieres la revancha?</p>
+        <button onClick={unirmeOtraVez} style={{ ...styles.ctaButton, marginTop: 14 }}>
           🔁 ¡Venga, otra!
         </button>
         <button onClick={() => setDescartada(true)} style={styles.linkVolver}>
@@ -1034,41 +1143,59 @@ export function RevanchaOnline({ codigo, alEntrar }) {
         </button>
       </>
     );
-  } else if (yo && yo.quiereRevancha) {
-    contenido = (
-      <p style={est.esperando}>
-        Esperando a que acepten la revancha
-        <span className="puntos-espera" />
-      </p>
-    );
-  } else if (yo && quienPide) {
-    contenido = (
+  } else if (yo && !yo.quiereRevancha && quienPide && sala.estado !== "espera") {
+    aviso = (
       <>
-        <p style={styles.configCardTitle}>{quienPide.nombre} no se ha quedado conforme…</p>
-        <p style={styles.configSubLabel}>¿Quieres la revancha?</p>
-        <button onClick={() => pedir("acepta")} style={{ ...styles.ctaButton, marginTop: 12 }}>
+        <p style={est.avisoTitulo}>{quienPide.nombre} no se ha quedado conforme…</p>
+        <p style={est.avisoTexto}>¿Quieres la revancha?</p>
+        <button onClick={() => responderRevancha("acepta")} style={{ ...styles.ctaButton, marginTop: 14 }}>
           🔁 ¡Venga, otra!
         </button>
-        <button onClick={() => setDescartada(true)} style={styles.linkVolver}>
+        <button onClick={() => responderRevancha("no")} style={styles.linkVolver}>
           Por hoy ya está
         </button>
       </>
-    );
-  } else if (yo) {
-    contenido = (
-      <button onClick={() => pedir("pide")} style={styles.ctaButton}>
-        🔁 Revancha con las mismas
-      </button>
     );
   }
 
-  if (!contenido) return null;
+  // ── en la página: botón o estado ──
+  let enPagina = null;
+  if (yo && sala.estado !== "espera") {
+    if (!yo.quiereRevancha && !quienPide) {
+      enPagina = (
+        <button onClick={() => responderRevancha("pide")} style={styles.ctaButton}>
+          🔁 Revancha con el mismo grupo
+        </button>
+      );
+    } else if (yo.quiereRevancha === "pide") {
+      const todasRechazan = otras.length > 0 && otras.every((j) => j.quiereRevancha === "no");
+      enPagina = (
+        <p style={{ ...est.esperando, textAlign: "center", margin: "6px 0 12px" }}>
+          {todasRechazan ? (
+            "Esta vez nadie se apunta a la revancha"
+          ) : (
+            <>
+              Esperando respuesta a tu revancha
+              <span className="puntos-espera" />
+            </>
+          )}
+        </p>
+      );
+    }
+  }
 
   return (
-    <div style={est.revancha}>
+    <>
       <style>{cssOnline}</style>
-      {contenido}
+      {enPagina}
       {error && <p style={est.error}>{error}</p>}
-    </div>
+      {aviso && (
+        <div className="aviso-fondo" style={est.avisoFondo}>
+          <div className="aviso-tarjeta" style={est.avisoTarjeta}>
+            {aviso}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -32,6 +32,7 @@ import {
       respondidas: 0,
       tiempoTotal: 0,
       terminada: false,
+      lista: false, // ha pulsado "¡Empecemos!"
       fallos: []
     };
   }
@@ -84,7 +85,7 @@ import {
     const jugadoras = {};
     let revanchaDe = "";
     Object.entries(sala.jugadoras || {}).forEach(([id, j]) => {
-      if (!j.quiereRevancha) return;
+        if (j.quiereRevancha !== "pide" && j.quiereRevancha !== "acepta") return;
       jugadoras[id] = jugadoraNueva(j.nombre, j.color);
       if (j.quiereRevancha === "pide") revanchaDe = j.nombre;
     });
