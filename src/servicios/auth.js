@@ -3,9 +3,11 @@ import {
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    sendEmailVerification
   } from "firebase/auth";
-  import { auth } from "../firebase";
+  import { doc, updateDoc } from "firebase/firestore";
+  import { auth, db } from "../firebase";
   import { marcarSesionPendiente, reclamarSesion } from "./sesion";
   import { ADMIN_UID } from "./accesos";
 
@@ -14,7 +16,26 @@ import {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     // no esperamos a la nube: si tarda, se entra igual y se guarda cuando pueda
     if (cred.user.uid !== ADMIN_UID) reclamarSesion(cred.user.uid).catch(() => {});
+    // ✉️ correo para confirmar que la dirección es suya
+    auth.languageCode = "es";
+    sendEmailVerification(cred.user).catch(() => {});
     return cred;
+  }
+
+  export function reenviarVerificacion() {
+    auth.languageCode = "es";
+    return sendEmailVerification(auth.currentUser);
+  }
+
+  // mira si ya ha confirmado el correo; si es así, lo apunta en su solicitud
+  export async function comprobarVerificacion() {
+    const u = auth.currentUser;
+    if (!u) return false;
+    await u.reload();
+    if (!u.emailVerified) return false;
+    await u.getIdToken(true);
+    await updateDoc(doc(db, "accesos", u.uid), { correoConfirmado: true }).catch(() => {});
+    return true;
   }
 
   export async function iniciarSesion(email, password) {

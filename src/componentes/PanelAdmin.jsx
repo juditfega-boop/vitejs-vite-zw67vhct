@@ -51,7 +51,13 @@ export default function PanelAdmin() {
               borderTop: "1px solid #efe6d8"
             }}
           >
-            <span style={{ ...styles.configSubLabel, margin: 0, wordBreak: "break-all" }}>{p.email}</span>
+            <span style={{ ...styles.configSubLabel, margin: 0, wordBreak: "break-all" }}>
+              {p.email}
+              <br />
+              <span style={{ fontSize: 11, color: p.correoConfirmado ? "#6a9a6a" : "#c9a06a" }}>
+                {p.correoConfirmado ? "✉️ Correo confirmado" : "✉️ Sin confirmar el correo"}
+              </span>
+            </span>
             <button
               onClick={() => aprobar(p.uid)}
               style={{ ...styles.ctaButton, width: "auto", padding: "8px 18px", margin: 0 }}

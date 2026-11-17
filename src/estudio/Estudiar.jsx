@@ -1176,7 +1176,11 @@ if (vista === "repaso-fin") {
       </p>
 
       <button onClick={volverAErrores} style={styles.ctaButton}>
-        Volver a Repasar errores
+      Volver a Repasar errores
+      </button>
+
+      <button onClick={volverAProgreso} style={styles.linkVolver}>
+        ⬅ Volver a Mi evolución
       </button>
     </div>
   );

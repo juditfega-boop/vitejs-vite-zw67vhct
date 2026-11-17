@@ -1,5 +1,13 @@
-import { useState } from "react";
-import { registrarse, iniciarSesion, cerrarSesion, mensajeErrorAuth, recuperarContrasena } from "../servicios/auth";
+import { useEffect, useState } from "react";
+import {
+  registrarse,
+  iniciarSesion,
+  cerrarSesion,
+  mensajeErrorAuth,
+  recuperarContrasena,
+  reenviarVerificacion,
+  comprobarVerificacion
+} from "../servicios/auth";
 import { ADMIN_UID } from "../servicios/accesos";
 import PanelAdministracion from "./PanelAdministracion";
 import { styles } from "../estilos";
@@ -11,6 +19,30 @@ export default function CuentaUsuario({ usuario, estadoAcceso }) {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [mensajeOk, setMensajeOk] = useState("");
+  const [verificado, setVerificado] = useState(null);
+
+  // ✉️ mientras la solicitud está pendiente, mira si ya ha confirmado el correo
+  useEffect(() => {
+    if (!usuario || estadoAcceso !== "pendiente") return;
+    comprobarVerificacion().then(setVerificado).catch(() => setVerificado(false));
+  }, [usuario?.uid, estadoAcceso]);
+
+  async function yaConfirmado() {
+    setMensajeOk("");
+    const ok = await comprobarVerificacion().catch(() => false);
+    setVerificado(ok);
+    if (!ok) setMensajeOk("Todavía no aparece como confirmado. Pulsa el enlace del correo y vuelve a probar.");
+  }
+
+  async function reenviar() {
+    setMensajeOk("");
+    try {
+      await reenviarVerificacion();
+      setMensajeOk("Te hemos enviado otro correo. Mira también en spam.");
+    } catch (e) {
+      setMensajeOk(mensajeErrorAuth(e.code));
+    }
+  }
 
   async function enviar() {
     setError("");
@@ -71,6 +103,36 @@ export default function CuentaUsuario({ usuario, estadoAcceso }) {
           )}
           {estadoAcceso === "aprobada" && (
             <p style={styles.configSubLabel}>🌿 Tienes acceso completo.</p>
+          )}
+          {estadoAcceso === "pendiente" && verificado === false && (
+            <div
+              style={{
+                background: "#faf3e8",
+                border: "1px dashed #e4ddcf",
+                borderRadius: 16,
+                padding: "12px 14px",
+                marginTop: 10
+              }}
+            >
+              <p style={{ ...styles.configSubLabel, margin: 0 }}>
+                ✉️ <b>Confirma tu correo.</b> Te hemos enviado un enlace a {usuario.email}. Si no lo ves,
+                mira en spam.
+              </p>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10 }}>
+                <button
+                  onClick={yaConfirmado}
+                  style={{ ...styles.ctaButton, marginTop: 0, padding: "10px 14px", fontSize: 13, width: "auto" }}
+                >
+                  Ya lo he confirmado
+                </button>
+                <button onClick={reenviar} style={{ ...styles.linkVolver, marginTop: 0, width: "auto" }}>
+                  Reenviar
+                </button>
+              </div>
+            </div>
+          )}
+          {estadoAcceso === "pendiente" && verificado === true && (
+            <p style={styles.configSubLabel}>✉️ Correo confirmado.</p>
           )}
           <button onClick={salir} style={styles.linkVolver}>
             Cerrar sesión
