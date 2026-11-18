@@ -18,26 +18,28 @@ const cssPaso = `
 
 const num = (v) => parseFloat(v);
 
-// 🎥 cámara: lleva la puerta al centro de la pantalla y hace que ocupe "llenado" veces la pantalla
-function camara(p, llenado, medidas) {
+// 🎥 cámara: lleva la puerta al centro de la pantalla y hace que ocupe "llenado" veces la pantalla.
+// x, y = dónde está la sala en la pantalla (el mismo sitio que ocupa en la página)
+function camara(p, llenado, m) {
   if (!p || !llenado) return 'translate(0px, 0px) scale(1)';
-  const { VW, VH, Wm, Hm, ox } = medidas;
+  const { VW, VH, Wm, Hm, x, y } = m;
   const dw = (num(p.width) / 100) * Wm, dh = (num(p.height) / 100) * Hm;
   const cx = ((num(p.left) + num(p.width) / 2) / 100) * Wm;
   const cy = ((num(p.top) + num(p.height) / 2) / 100) * Hm;
   const s = Math.max(1, llenado * Math.min(VW / dw, VH / dh));
-  return `translate(${VW / 2 - ox - cx * s}px, ${VH / 2 - cy * s}px) scale(${s})`;
+  return `translate(${VW / 2 - x - cx * s}px, ${VH / 2 - y - cy * s}px) scale(${s})`;
 }
 
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+const fotograma = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
 /**
  * 🚪 Cruzar una puerta del Explorador, en los dos sentidos.
- * - Puertas (simples o dobles): la cámara se acerca andando, las hojas giran sobre sus
- *   bisagras, sale luz del otro lado y se cruza el hueco.
- * - Arcos (sin puerta): se cruzan andando.
- * - Destino artículo: al otro lado está el despacho. Destino sala: la sala siguiente.
- * La vuelta reproduce lo mismo al revés: sales, la puerta se cierra y la cámara se aleja.
+ * La animación empieza y termina EXACTAMENTE donde está la sala en la página
+ * (mismo sitio, mismo tamaño), así que no hay saltos al entrar ni al salir:
+ * - al empezar, el fondo de la pantalla se funde poco a poco mientras la cámara se acerca;
+ * - a mitad, se cambia la sala de la página por debajo (alCambiar), sin que se vea;
+ * - al terminar, todo se funde suavemente con la página ya cambiada.
  */
 export default function PasoPuerta({
   direccion, // 'entrar' | 'salir'
@@ -47,12 +49,17 @@ export default function PasoPuerta({
   imagenInterior, // lo que se ve al abrir la puerta (si es una sala)
   nivelPasillo,
   nivelInterior,
+  marco, // { top, left, width }: dónde está la sala en la pantalla al empezar
+  medirMarco, // vuelve a medir dónde está la sala en la página
+  alCambiar, // cambia la sala de la página (por debajo, sin que se vea)
   onComplete
 }) {
   const contRef = useRef(null);
-  const andarRef = useRef(null);
+  const fondoRef = useRef(null);
+  const sitioRef = useRef(null);
+  const pasoRef = useRef(null);
   const mundoRef = useRef(null);
-  const marcoRef = useRef(null);
+  const huecoRef = useRef(null);
   const luzRef = useRef(null);
   const hojasRef = useRef([]);
   const vinetaRef = useRef(null);
@@ -62,6 +69,7 @@ export default function PasoPuerta({
 
   const conHojas = puerta.tipo === 'simple' || puerta.tipo === 'doble';
   const l = num(puerta.left), t = num(puerta.top), w = num(puerta.width), h = num(puerta.height);
+  const sitio = marco || { top: 0, left: 0, width: Math.min(window.innerWidth, 560) };
 
   // hojas: trozos del propio dibujo, recortados justo encima de la puerta pintada
   const hojas = !conHojas
@@ -78,14 +86,20 @@ export default function PasoPuerta({
     const mundo = mundoRef.current;
     const pausa = (ms) => esperar(ms).then(() => { if (cancelado) throw new Error('cancelado'); });
 
+    const llenadoCerca = conHojas ? 0.5 : 0.95;
+    const llenadoDentro = conHojas ? 1.25 : 1.7;
+
     const medidas = {
       VW: contRef.current.clientWidth,
       VH: contRef.current.clientHeight,
       Wm: mundo.offsetWidth,
       Hm: mundo.offsetHeight,
-      ox: andarRef.current.offsetLeft
+      x: sitio.left,
+      y: sitio.top
     };
+    let llenadoActual = 0;
     const mover = (llenado, ms, curva = SUAVE) => {
+      llenadoActual = llenado;
       mundo.style.transition = ms ? `transform ${ms}ms ${curva}` : 'none';
       mundo.style.transform = camara(puerta, llenado, medidas);
     };
@@ -94,7 +108,30 @@ export default function PasoPuerta({
       el.style.transition = `opacity ${ms}ms ${curva}`;
       el.style.opacity = valor;
     };
-    const andar = (si) => andarRef.current && andarRef.current.classList.toggle('paso-andando', si);
+    const fijar = (el, valor) => {
+      if (!el) return;
+      el.style.transition = 'none';
+      el.style.opacity = valor;
+    };
+    // andar: un balanceo suave; al pararse vuelve a su sitio poco a poco (sin saltito)
+    const andar = (si) => {
+      const el = pasoRef.current;
+      if (!el) return;
+      if (si) {
+        el.style.transition = 'none';
+        el.style.transform = '';
+        el.classList.add('paso-andando');
+        return;
+      }
+      if (!el.classList.contains('paso-andando')) return;
+      const actual = getComputedStyle(el).transform;
+      el.classList.remove('paso-andando');
+      el.style.transition = 'none';
+      el.style.transform = actual === 'none' ? 'translateY(0px)' : actual;
+      void el.offsetWidth;
+      el.style.transition = 'transform 260ms ease-out';
+      el.style.transform = 'translateY(0px)';
+    };
     const girar = (abrir, ms) => {
       hojasRef.current.forEach((el, i) => {
         if (!el) return;
@@ -115,18 +152,38 @@ export default function PasoPuerta({
       el.style.opacity = visible ? 1 : 0;
       el.style.transform = `scale(${escala})`;
     };
-
-    const llenadoCerca = conHojas ? 0.5 : 0.95;
-    const llenadoDentro = conHojas ? 1.25 : 1.7;
+    // recoloca la animación en el sitio exacto donde está ahora la sala en la página
+    const colocar = (r) => {
+      [sitioRef.current, capaRef.current].forEach((el) => {
+        if (!el) return;
+        el.style.left = `${r.left}px`;
+        el.style.top = `${r.top}px`;
+        el.style.width = `${r.width}px`;
+      });
+      medidas.x = r.left;
+      medidas.y = r.top;
+      medidas.Wm = mundo.offsetWidth;
+      medidas.Hm = mundo.offsetHeight;
+      mover(llenadoActual, 0);
+    };
+    // cambia la sala de la página por debajo (tapada) y vuelve a medir su sitio
+    async function cambiarDeSala() {
+      alCambiar();
+      await fotograma();
+      if (cancelado) throw new Error('cancelado');
+      const r = medirMarco && medirMarco();
+      if (r) colocar(r);
+    }
 
     async function entrar() {
-      if (marcoRef.current) marcoRef.current.classList.add('paso-pulso');
+      if (huecoRef.current) huecoRef.current.classList.add('paso-pulso');
       await pausa(150);
-      if (marcoRef.current) marcoRef.current.classList.remove('paso-pulso');
+      if (huecoRef.current) huecoRef.current.classList.remove('paso-pulso');
 
-      // 1. caminar hasta la puerta
+      // 1. caminar hasta la puerta (lo de alrededor se va fundiendo)
       andar(true);
       mover(llenadoCerca, 950);
+      fundir(fondoRef.current, 1, 700);
       fundir(vinetaRef.current, 0.35, 950);
       await pausa(900);
 
@@ -143,10 +200,11 @@ export default function PasoPuerta({
       fundir(vinetaRef.current, 0.65, 700);
       await pausa(conHojas ? 560 : 430);
 
-      // 4. ya dentro: el otro lado ocupa la pantalla y se asienta
+      // 4. ya dentro: el otro lado ocupa su sitio y se asienta
       mostrarCapa(false, esArticulo ? 1.12 : 1.22, 0);
       void mundo.offsetWidth;
       mostrarCapa(true, 1, 480);
+      if (!esArticulo) fundir(sitioRef.current, 0, 480);
       fundir(vinetaRef.current, 0, 600);
       await pausa(esArticulo ? 700 : 820);
       andar(false);
@@ -156,16 +214,36 @@ export default function PasoPuerta({
         fundir(veloRef.current, 1, 320);
         await pausa(330);
       }
+
+      // 6. la página cambia por debajo y la animación se funde con ella
+      await cambiarDeSala();
+      fundir(contRef.current, 0, esArticulo ? 420 : 280);
+      await pausa(esArticulo ? 420 : 280);
     }
 
     async function salir() {
-      // se empieza ya dentro, con la puerta abierta detrás
+      // se empieza viendo la página tal cual; la puerta abierta espera detrás
       mover(llenadoDentro, 0);
       if (conHojas) girar(true, 0);
-      mostrarCapa(true, 1, 0);
-      if (vinetaRef.current) { vinetaRef.current.style.transition = 'none'; vinetaRef.current.style.opacity = 0.6; }
-      if (esArticulo && veloRef.current) { veloRef.current.style.transition = 'none'; veloRef.current.style.opacity = 1; }
-      void mundo.offsetWidth;
+
+      if (esArticulo) {
+        fundir(veloRef.current, 1, 300);
+        await pausa(300);
+        fijar(fondoRef.current, 1);
+        fijar(sitioRef.current, 1);
+        fijar(vinetaRef.current, 0.6);
+        mostrarCapa(true, 1, 0);
+      } else {
+        mostrarCapa(true, 1, 0);
+        void mundo.offsetWidth;
+        fundir(fondoRef.current, 1, 300);
+        fundir(sitioRef.current, 1, 300);
+        fundir(vinetaRef.current, 0.6, 300);
+        await pausa(300);
+      }
+
+      // por debajo, la página ya pasa a la sala de fuera
+      await cambiarDeSala();
 
       if (esArticulo) {
         fundir(veloRef.current, 0, 300);
@@ -188,11 +266,13 @@ export default function PasoPuerta({
         andar(true);
       }
 
-      // y la cámara vuelve a la sala
+      // la cámara vuelve a la sala y lo de alrededor reaparece
       mover(0, 850);
       fundir(vinetaRef.current, 0, 850);
-      await pausa(850);
+      await pausa(350);
       andar(false);
+      fundir(fondoRef.current, 0, 500);
+      await pausa(520);
     }
 
     (direccion === 'entrar' ? entrar() : salir())
@@ -205,64 +285,75 @@ export default function PasoPuerta({
   const radio = puerta.forma === 'recta' ? '3px' : '50% 50% 3px 3px / 24% 24% 3px 3px';
 
   return (
-    <div ref={contRef} style={{ position: 'fixed', inset: 0, zIndex: 500, background: '#f7f1e8', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'hidden' }}>
+    <div ref={contRef} style={{ position: 'fixed', inset: 0, zIndex: 500, overflow: 'hidden' }}>
       <style>{cssPaso}</style>
 
-      <div ref={andarRef} style={{ position: 'relative', width: '100%', maxWidth: 560 }}>
-        <div ref={mundoRef} style={{ position: 'relative', width: '100%', transformOrigin: '0 0', willChange: 'transform' }}>
-          {nivelPasillo}
+      {/* el fondo aparece poco a poco: al empezar se sigue viendo la página */}
+      <div ref={fondoRef} style={{ position: 'absolute', inset: 0, background: '#f7f1e8', opacity: 0 }} />
 
-          {conHojas && (
-            <>
-              <div
-                ref={luzRef}
-                style={{
-                  position: 'absolute', pointerEvents: 'none', opacity: 0, mixBlendMode: 'screen',
-                  left: `${l - w * 0.9}%`, top: `${t - h * 0.35}%`, width: `${w * 2.8}%`, height: `${h * 1.7}%`,
-                  background: 'radial-gradient(ellipse at center, rgba(255,226,165,0.95), rgba(255,226,165,0) 62%)'
-                }}
-              />
-              <div
-                ref={marcoRef}
-                style={{
-                  position: 'absolute', overflow: 'hidden', perspective: 650, borderRadius: radio,
-                  left: `${l}%`, top: `${t}%`, width: `${w}%`, height: `${h}%`
-                }}
-              >
+      <div
+        ref={sitioRef}
+        style={{
+          position: 'absolute', top: sitio.top, left: sitio.left, width: sitio.width,
+          opacity: direccion === 'salir' ? 0 : 1
+        }}
+      >
+        <div ref={pasoRef}>
+          <div ref={mundoRef} style={{ position: 'relative', width: '100%', transformOrigin: '0 0', willChange: 'transform' }}>
+            {nivelPasillo}
+
+            {conHojas && (
+              <>
                 <div
+                  ref={luzRef}
                   style={{
-                    position: 'absolute', inset: 0,
-                    backgroundImage: `url(${esArticulo ? imagenDespacho : imagenInterior})`,
-                    backgroundSize: 'cover', backgroundPosition: '50% 42%'
+                    position: 'absolute', pointerEvents: 'none', opacity: 0, mixBlendMode: 'screen',
+                    left: `${l - w * 0.9}%`, top: `${t - h * 0.35}%`, width: `${w * 2.8}%`, height: `${h * 1.7}%`,
+                    background: 'radial-gradient(ellipse at center, rgba(255,226,165,0.95), rgba(255,226,165,0) 62%)'
                   }}
                 />
-                <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(255,236,190,0.55), rgba(255,236,190,0) 70%)' }} />
-                {hojas.map((hoja, i) => (
+                <div
+                  ref={huecoRef}
+                  style={{
+                    position: 'absolute', overflow: 'hidden', perspective: 650, borderRadius: radio,
+                    left: `${l}%`, top: `${t}%`, width: `${w}%`, height: `${h}%`
+                  }}
+                >
                   <div
-                    key={i}
-                    ref={(el) => (hojasRef.current[i] = el)}
                     style={{
-                      position: 'absolute', top: 0, height: '100%', left: `${hoja.x}%`, width: `${hoja.ancho}%`,
-                      backfaceVisibility: 'hidden', willChange: 'transform',
-                      transformOrigin: hoja.lado === 'izq' ? 'left center' : 'right center',
-                      backgroundImage: `url(${imagenPasillo})`,
-                      backgroundSize: `${(100 / hoja.w) * 100}% ${(100 / h) * 100}%`,
-                      backgroundPosition: `${(hoja.l / (100 - hoja.w)) * 100}% ${(t / (100 - h)) * 100}%`
+                      position: 'absolute', inset: 0,
+                      backgroundImage: `url(${esArticulo ? imagenDespacho : imagenInterior})`,
+                      backgroundSize: 'cover', backgroundPosition: '50% 42%'
                     }}
-                  >
+                  />
+                  <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%, rgba(255,236,190,0.55), rgba(255,236,190,0) 70%)' }} />
+                  {hojas.map((hoja, i) => (
                     <div
+                      key={i}
+                      ref={(el) => (hojasRef.current[i] = el)}
                       style={{
-                        position: 'absolute', inset: 0, opacity: 0,
-                        background: hoja.lado === 'izq'
-                          ? 'linear-gradient(90deg, rgba(50,32,16,0.05), rgba(50,32,16,0.6))'
-                          : 'linear-gradient(270deg, rgba(50,32,16,0.05), rgba(50,32,16,0.6))'
+                        position: 'absolute', top: 0, height: '100%', left: `${hoja.x}%`, width: `${hoja.ancho}%`,
+                        backfaceVisibility: 'hidden', willChange: 'transform',
+                        transformOrigin: hoja.lado === 'izq' ? 'left center' : 'right center',
+                        backgroundImage: `url(${imagenPasillo})`,
+                        backgroundSize: `${(100 / hoja.w) * 100}% ${(100 / h) * 100}%`,
+                        backgroundPosition: `${(hoja.l / (100 - hoja.w)) * 100}% ${(t / (100 - h)) * 100}%`
                       }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                    >
+                      <div
+                        style={{
+                          position: 'absolute', inset: 0, opacity: 0,
+                          background: hoja.lado === 'izq'
+                            ? 'linear-gradient(90deg, rgba(50,32,16,0.05), rgba(50,32,16,0.6))'
+                            : 'linear-gradient(270deg, rgba(50,32,16,0.05), rgba(50,32,16,0.6))'
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -280,8 +371,12 @@ export default function PasoPuerta({
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0, pointerEvents: 'none' }}
         />
       ) : (
-        <div ref={capaRef} style={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', opacity: 0, pointerEvents: 'none', background: '#f7f1e8' }}>
-          <div style={{ position: 'relative', width: '100%', maxWidth: 560 }}>{nivelInterior}</div>
+        // la sala del otro lado, en el mismo sitio exacto que ocupará en la página
+        <div
+          ref={capaRef}
+          style={{ position: 'absolute', top: sitio.top, left: sitio.left, width: sitio.width, opacity: 0, pointerEvents: 'none' }}
+        >
+          {nivelInterior}
         </div>
       )}
 

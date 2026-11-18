@@ -17,6 +17,7 @@ import { obtenerPersonajeActivo } from "../personajes/personajeActivo";
 import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
 import BuscadorBloques, { filtrarBloques } from "../componentes/BuscadorBloques";
 import { renderizarTextoConNegrita } from "../utils/renderizarTexto";
+import EscenaMary from "./EscenaMary";
 
 import {
   registrarRespuesta,
@@ -100,6 +101,12 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
   const [respuestaDescartada, setRespuestaDescartada] = useState(null);
   const [buscarBloqueMuerte, setBuscarBloqueMuerte] = useState("");
   const [enPausa, setEnPausa] = useState(false);
+  const [derrumbando, setDerrumbando] = useState(false); // la pila se está cayendo (animación de derrota)
+  const [eventoEscena, setEventoEscena] = useState(null);
+
+  function lanzarEscena(tipo) {
+    setEventoEscena((e) => ({ tipo, id: (e?.id || 0) + 1 }));
+  }
 
   const personajeActivo = registroPersonajes[obtenerPersonajeActivo()] || registroPersonajes["ander-egg"];
 
@@ -151,20 +158,27 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     setAyudaDisponible(ayudaActiva);
     setRespuestaDescartada(null);
     setEnPausa(false);
+    setDerrumbando(false);
+    setEventoEscena(null);
     setVista("jugando");
   }
 
   function perderMuerte(pregunta, indiceElegido) {
+    if (derrumbando) return;
     setFraseDerrota(
       FRASES_DERROTA_MUERTE[Math.floor(Math.random() * FRASES_DERROTA_MUERTE.length)]
     );
     setPreguntaFallida(pregunta || null);
     setRespuestaFallidaIndice(typeof indiceElegido === "number" ? indiceElegido : null);
+    setMuerteRespuestaSeleccionada(typeof indiceElegido === "number" ? indiceElegido : null);
     setMostrarPorQueMurio(false);
-    setVista("derrota");
+    // primero se le cae la pila encima; la pantalla de derrota llega al terminar (onDerrumbe)
+    setDerrumbando(true);
+    lanzarEscena("derrota");
   }
 
   function comprobarMuerte(i) {
+    if (derrumbando || muerteMostrar) return;
     const pregunta = muertePreguntas[muerteIndice];
     const esCorrecta = i === pregunta.correcta;
 
@@ -176,6 +190,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
       setMuerteMostrar(true);
       setMuerteMensaje("Correcto");
       setMuerteAciertos((a) => a + 1);
+      lanzarEscena("acierto");
       return;
     }
 
@@ -184,6 +199,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
       setMuerteRespuestaSeleccionada(i);
       setMuerteMostrar(true);
       setMuerteMensaje("Incorrecto");
+      lanzarEscena("fallo");
       return;
     }
 
@@ -213,7 +229,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
 
   // ⏱️ cuenta atrás (si el cronómetro está activo)
   useEffect(() => {
-    if (vista !== "jugando" || !muerteCronometroActivo || muerteTiempoRestante === null || enPausa) return;
+    if (vista !== "jugando" || !muerteCronometroActivo || muerteTiempoRestante === null || enPausa || derrumbando) return;
 
     if (muerteTiempoRestante <= 0) {
       perderMuerte();
@@ -225,7 +241,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     }, 1000);
 
     return () => clearTimeout(id);
-  }, [vista, muerteTiempoRestante, muerteCronometroActivo, enPausa]);
+  }, [vista, muerteTiempoRestante, muerteCronometroActivo, enPausa, derrumbando]);
 
 // ☠️ DETALLE
 if (vista === "detalle") {
@@ -466,7 +482,7 @@ if (vista === "detalle") {
           {modoVidas !== "subita" && (
             <span style={styles.simTimer}>❤️ {vidasRestantes}</span>
           )}
-          {muerteCronometroActivo && (
+          {muerteCronometroActivo && !derrumbando && (
             <button
               onClick={() => setEnPausa(true)}
               title="Pausar"
@@ -481,10 +497,11 @@ if (vista === "detalle") {
 
         <div style={styles.muerteLayout}>
           <div style={styles.muerteImagenCol}>
-            <img
-              src={imagenMuerteSubita(muerteAciertos)}
-              alt="Tu trabajadora social"
-              style={styles.muerteImagen}
+          <EscenaMary
+              aciertos={muerteAciertos}
+              total={muertePreguntas.length}
+              evento={eventoEscena}
+              onDerrumbe={() => setVista("derrota")}
             />
           </div>
 
@@ -508,7 +525,7 @@ if (vista === "detalle") {
             {preguntaMuerte.respuestas.map((r, i) => {
               let bg = "#fff";
               if (muerteMostrar && i === preguntaMuerte.correcta) bg = "#d4edda";
-              else if (muerteMostrar && i === muerteRespuestaSeleccionada) bg = "#f8d7da";
+              else if ((muerteMostrar || derrumbando) && i === muerteRespuestaSeleccionada) bg = "#f8d7da";
 
               const descartada = i === respuestaDescartada;
 
@@ -516,7 +533,7 @@ if (vista === "detalle") {
                 <button
                   key={i}
                   onClick={() => comprobarMuerte(i)}
-                  disabled={muerteMostrar || descartada}
+                  disabled={muerteMostrar || descartada || derrumbando}
                   style={{
                     ...styles.button,
                     background: bg,
@@ -564,7 +581,8 @@ if (vista === "detalle") {
 // ☠️ DERROTA
 if (vista === "derrota") {
   return (
-    <div style={styles.derrotaContainer}>
+    <div style={{ ...styles.derrotaContainer, animation: "aparecerSuave 0.7s ease both" }}>
+      <style>{"@keyframes aparecerSuave { from { opacity: 0; } to { opacity: 1; } }"}</style>
       <img src={muerteImgDerrota} alt="La burocracia gana" style={styles.derrotaImagenFondo} />
 
       <p style={styles.derrotaTituloTop}>

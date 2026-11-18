@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import PasoPuerta from './PasoPuerta';
 import imagenesExplorador from './imagenesRegistry';
 import PUERTAS from './data/puertas';
@@ -64,6 +64,14 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
   const [transicion, setTransicion] = useState(null); // { direccion, sala, otroLado, puerta, ids }
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState('');
+  const contRef = useRef(null); // dónde está la sala en la página (para que la animación encaje justo encima)
+
+  function medirMarco() {
+    const el = contRef.current;
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { top: r.top, left: r.left, width: r.width };
+  }
 
   const ruta = useMemo(() => resolverRuta(data, rutaIds), [data, rutaIds]);
   const nodoActual = ruta[ruta.length - 1];
@@ -95,11 +103,10 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
     setOcupado(true);
     // la imagen del otro lado tiene que estar lista antes de abrir la puerta
     const clave = datos.direccion === 'entrar' ? datos.otroLado.imagenFondo : datos.sala.imagenFondo;
-    esperarImagen(clave).then(() => setTransicion({ ...datos, ids }));
+    esperarImagen(clave).then(() => setTransicion({ ...datos, ids, marco: medirMarco() }));
   }
 
   function alTerminarCruce() {
-    setRutaIds(transicion.ids);
     setTransicion(null);
     setOcupado(false);
   }
@@ -116,11 +123,13 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
       return;
     }
 
-    const destino = resolverRuta(data, idsDestino).slice(-1)[0];
+    const rutaDestino = resolverRuta(data, idsDestino);
     cruzar(idsDestino, {
       direccion: 'entrar',
       sala: nodoActual,
-      otroLado: destino,
+      otroLado: rutaDestino[rutaDestino.length - 1],
+      rutaSala: ruta,
+      rutaOtro: rutaDestino,
       puerta: puertaDe(nodoActual, childId)
     });
   }
@@ -128,11 +137,14 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
   function volver() {
     if (ocupado || rutaIds.length === 0) return;
     const idsDestino = rutaIds.slice(0, -1);
-    const padre = resolverRuta(data, idsDestino).slice(-1)[0];
+    const rutaPadre = resolverRuta(data, idsDestino);
+    const padre = rutaPadre[rutaPadre.length - 1];
     cruzar(idsDestino, {
       direccion: 'salir',
       sala: padre,
       otroLado: nodoActual,
+      rutaSala: rutaPadre,
+      rutaOtro: ruta,
       puerta: puertaDe(padre, nodoActual.id)
     });
   }
@@ -164,27 +176,24 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
     );
   }
 
-  if (transicion) {
-    const { direccion, sala, otroLado, puerta, ids } = transicion;
-    const esArticulo = esHojaNodo(otroLado);
-    const rutaSala = direccion === 'entrar' ? ruta : resolverRuta(data, ids);
-    return (
-      <PasoPuerta
-        direccion={direccion}
-        puerta={puerta}
-        esArticulo={esArticulo}
-        imagenPasillo={imagenesExplorador[sala.imagenFondo]}
-        imagenInterior={esArticulo ? null : imagenesExplorador[otroLado.imagenFondo]}
-        nivelPasillo={renderNodo(sala, false, rutaSala)}
-        nivelInterior={esArticulo ? null : renderNodo(otroLado, false)}
-        onComplete={alTerminarCruce}
-      />
-    );
-  }
-
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      {renderNodo(nodoActual, true)}
+    <div ref={contRef} style={{ position: 'relative', width: '100%' }}>
+      {renderNodo(nodoActual, !transicion)}
+      {transicion && (
+        <PasoPuerta
+          direccion={transicion.direccion}
+          puerta={transicion.puerta}
+          esArticulo={esHojaNodo(transicion.otroLado)}
+          imagenPasillo={imagenesExplorador[transicion.sala.imagenFondo]}
+          imagenInterior={esHojaNodo(transicion.otroLado) ? null : imagenesExplorador[transicion.otroLado.imagenFondo]}
+          nivelPasillo={renderNodo(transicion.sala, false, transicion.rutaSala)}
+          nivelInterior={esHojaNodo(transicion.otroLado) ? null : renderNodo(transicion.otroLado, false, transicion.rutaOtro)}
+          marco={transicion.marco}
+          medirMarco={medirMarco}
+          alCambiar={() => setRutaIds(transicion.ids)}
+          onComplete={alTerminarCruce}
+        />
+      )}
       {aviso && (
         <div
           style={{
