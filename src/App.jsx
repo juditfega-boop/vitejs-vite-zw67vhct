@@ -234,7 +234,14 @@ useEffect(() => {
           style={styles.landingImage}
         />
 
-        <div style={styles.landingOverlay}>
+<style>{"@keyframes aparecerPortada { from { opacity: 0; } to { opacity: 1; } }"}</style>
+        <div
+          key={verIntro ? "esperando" : "visible"}
+          style={{
+            ...styles.landingOverlay,
+            ...(verIntro ? { opacity: 0 } : { animation: "aparecerPortada 1s ease 0.15s both" })
+          }}
+        >
           <p style={styles.landingFrase}>"{frase}"</p>
 
           <button

@@ -40,7 +40,7 @@ const PARTES = [
   { x: 160, y: 585, w: 540, h: 110, efecto: "flor", retraso: 5.9 }   // "la app para preparar…"
 ];
 
-const DURACION = 7000;
+const DURACION = 7100; // la portada exacta termina de aparecer a los 6,9 s
 const pct = (y) => ((y - FRANJA.arriba) / FRANJA.alto) * 100;
 const recorte = (p) => {
   const arriba = (p.y / PORTADA.alto) * 100;
@@ -135,15 +135,21 @@ export default function IntroAnimada({ onFin }) {
   const [saliendo, setSaliendo] = useState(false);
   const terminado = useRef(false);
 
-  function terminar() {
+  // al terminar sola ya es la portada exacta: se quita sin fundido (no se nota nada).
+  // si se salta con un toque, a mitad, entonces sí se funde.
+  function terminar(saltada) {
     if (terminado.current) return;
     terminado.current = true;
+    if (!saltada) {
+      onFin();
+      return;
+    }
     setSaliendo(true);
     setTimeout(onFin, 600);
   }
 
   useEffect(() => {
-    const id = setTimeout(terminar, DURACION);
+    const id = setTimeout(() => terminar(false), DURACION);
     return () => clearTimeout(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -171,7 +177,7 @@ export default function IntroAnimada({ onFin }) {
 
   return (
     <div
-      onClick={terminar}
+    onClick={() => terminar(true)}
       className={`intro-fondo ${saliendo ? "intro-salida" : ""}`}
       style={{ position: "fixed", inset: 0, zIndex: 2000, overflow: "hidden", cursor: "pointer", background: "#f7f6f4" }}
     >
