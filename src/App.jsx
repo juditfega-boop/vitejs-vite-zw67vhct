@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import portada from "./assets/portada.jpeg";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
@@ -85,6 +85,7 @@ export default function App() {
   const [verIntro, setVerIntro] = useState(
     () => window.location.hash !== "#inicio" && !sessionStorage.getItem("opo_intro_vista")
   );
+  const imagenPortadaRef = useRef(null); // la animación de entrada se coloca justo encima de esta imagen
 
   // 🔐 cuenta y estado de acceso ("cargando" | "sin-cuenta" | "pendiente" | "aprobada")
   const [avisoExpulsion, setAvisoExpulsion] = useState(false);
@@ -229,8 +230,9 @@ useEffect(() => {
     return (
       <div style={styles.landingContainer}>
         <img
+          ref={imagenPortadaRef}
           src={portada}
-          alt="Asistontas"
+          alt="Insistentes Sociales"
           style={styles.landingImage}
         />
 
@@ -254,7 +256,8 @@ useEffect(() => {
 
         {verIntro && (
           <IntroAnimada
-            onFin={() => {
+          imagenRef={imagenPortadaRef}
+          onFin={() => {
               sessionStorage.setItem("opo_intro_vista", "1");
               setVerIntro(false);
             }}

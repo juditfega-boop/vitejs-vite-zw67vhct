@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import portada from "../assets/portada.jpeg";
 import capaDecorado from "../assets/kit/intro/intro-decorado.png";
 import capaRaices from "../assets/kit/intro/intro-raices.png";
@@ -67,8 +67,9 @@ const cssPartes = PARTES.map((p, i) => {
 }).join("\n");
 
 const css = `
-  .intro-fondo { animation: introFondo 1.1s ease 0.2s both; }
+  .intro-fondo { animation: introFondo 1.1s ease 0.2s both, introSinFondo 0.6s ease 6.3s forwards; }
   @keyframes introFondo { from { background-color: #e6d3b2; } to { background-color: #f7f6f4; } }
+  @keyframes introSinFondo { from { background-color: #f7f6f4; } to { background-color: transparent; } }
   .intro-aparece { animation: introAparece var(--dura, 0.9s) ease var(--retraso, 0s) both; }
   @keyframes introAparece { from { opacity: 0; } to { opacity: 1; } }
   @keyframes introSeVa { to { opacity: 0; } }
@@ -116,12 +117,32 @@ const css = `
   ${cssPartes}
 `;
 
-// 📐 dónde se ve la portada en pantalla (igual que una imagen "cover" centrada)
-function medir() {
+// 📐 dónde se dibuja de verdad la portada en pantalla: se mide la propia imagen de la portada
+// (su caja y su object-fit), para que la animación quede encima al píxel
+function medir(imagen) {
   const VW = window.innerWidth;
   const VH = window.innerHeight;
-  const s = Math.max(VW / PORTADA.ancho, VH / PORTADA.alto);
-  return { VW, VH, s, ox: (VW - PORTADA.ancho * s) / 2, oy: (VH - PORTADA.alto * s) / 2 };
+  if (!imagen) {
+    const s = Math.max(VW / PORTADA.ancho, VH / PORTADA.alto);
+    return { VW, VH, sx: s, sy: s, ox: (VW - PORTADA.ancho * s) / 2, oy: (VH - PORTADA.alto * s) / 2 };
+  }
+  const r = imagen.getBoundingClientRect();
+  const ancho = r.width;
+  // si la imagen aún no ha cargado y su alto es automático, se calcula por la proporción
+  const alto = r.height > 1 ? r.height : (ancho * PORTADA.alto) / PORTADA.ancho;
+  const ajuste = getComputedStyle(imagen).objectFit;
+  let sx = ancho / PORTADA.ancho;
+  let sy = alto / PORTADA.alto;
+  if (ajuste === "cover") sx = sy = Math.max(sx, sy);
+  if (ajuste === "contain" || ajuste === "scale-down") sx = sy = Math.min(sx, sy);
+  return {
+    VW,
+    VH,
+    sx,
+    sy,
+    ox: r.left + (ancho - PORTADA.ancho * sx) / 2,
+    oy: r.top + (alto - PORTADA.alto * sy) / 2
+  };
 }
 
 /**
@@ -130,8 +151,20 @@ function medir() {
  * con su flor, y de otra el brote pequeño. Después florece el resto de la portada.
  * Un toque en cualquier sitio la salta.
  */
-export default function IntroAnimada({ onFin }) {
-  const [m] = useState(medir);
+export default function IntroAnimada({ onFin, imagenRef }) {
+  const [m, setM] = useState(null);
+
+  // se mide antes de pintar nada, y otra vez cuando la portada termina de cargar
+  useLayoutEffect(() => {
+    const imagen = imagenRef && imagenRef.current;
+    setM(medir(imagen));
+    if (imagen && !imagen.complete) {
+      const alCargar = () => setM(medir(imagen));
+      imagen.addEventListener("load", alCargar);
+      return () => imagen.removeEventListener("load", alCargar);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [saliendo, setSaliendo] = useState(false);
   const terminado = useRef(false);
 
@@ -153,22 +186,26 @@ export default function IntroAnimada({ onFin }) {
     return () => clearTimeout(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { s, ox, oy, VW, VH } = m;
-  const aPantalla = (x, y) => [ox + x * s, oy + y * s];
+  if (!m) {
+    return <div style={{ position: "fixed", inset: 0, zIndex: 2000, background: "#e6d3b2" }} />;
+  }
+
+  const { sx, sy, ox, oy, VW } = m;
+  const aPantalla = (x, y) => [ox + x * sx, oy + y * sy];
   const franja = {
     position: "absolute",
     left: ox,
-    top: oy + FRANJA.arriba * s,
-    width: PORTADA.ancho * s,
-    height: FRANJA.alto * s,
+    top: oy + FRANJA.arriba * sy,
+    width: PORTADA.ancho * sx,
+    height: FRANJA.alto * sy,
     pointerEvents: "none"
   };
   const portadaEntera = {
     position: "absolute",
     left: ox,
     top: oy,
-    width: PORTADA.ancho * s,
-    height: PORTADA.alto * s,
+    width: PORTADA.ancho * sx,
+    height: PORTADA.alto * sy,
     pointerEvents: "none"
   };
 
@@ -177,7 +214,7 @@ export default function IntroAnimada({ onFin }) {
 
   return (
     <div
-    onClick={() => terminar(true)}
+      onClick={() => terminar(true)}
       className={`intro-fondo ${saliendo ? "intro-salida" : ""}`}
       style={{ position: "fixed", inset: 0, zIndex: 2000, overflow: "hidden", cursor: "pointer", background: "#f7f6f4" }}
     >
@@ -197,14 +234,14 @@ export default function IntroAnimada({ onFin }) {
         src={capaBrote}
         alt=""
         className="intro-brote-crece"
-        style={{ position: "absolute", left: fx, top: fy, width: BROTE.ancho * s, height: BROTE.alto * s, pointerEvents: "none" }}
+        style={{ position: "absolute", left: fx, top: fy, width: BROTE.ancho * sx, height: BROTE.alto * sy, pointerEvents: "none" }}
       />
 
       {/* hojas de la planta que caen y se hunden en la tierra */}
       {HOJAS.map((h, i) => {
         const [lx, ly] = aPantalla(h.cae[0], h.cae[1]);
-        const w = h.w * s;
-        const alto = h.h * s;
+        const w = h.w * sx;
+        const alto = h.h * sy;
         return (
           <div
             key={i}
@@ -216,8 +253,8 @@ export default function IntroAnimada({ onFin }) {
               width: w,
               height: alto,
               backgroundImage: `url(${capaPlanta})`,
-              backgroundSize: `${PORTADA.ancho * s}px ${FRANJA.alto * s}px`,
-              backgroundPosition: `${-h.x * s}px ${-(h.y - FRANJA.arriba) * s}px`,
+              backgroundSize: `${PORTADA.ancho * sx}px ${FRANJA.alto * sy}px`,
+              backgroundPosition: `${-h.x * sx}px ${-(h.y - FRANJA.arriba) * sy}px`,
               animationDelay: `${h.retraso}ms`,
               "--giro": `${h.giro}deg`,
               "--dx": `${(h.sale / 100) * VW - lx}px`,
