@@ -19,7 +19,9 @@ const ETAPAS = [
   { mary: mary2, libros: libros2, base: [51.7, 34.4], centro: 22, vaiven: 0.7 },
   { mary: mary3, libros: libros3, base: [50.2, 27.1], centro: 18, vaiven: 0.35 }
 ];
-const ANCHO = 260; // ancho máximo de la escena en px
+// 🔍 los dibujos traen mucho margen vacío: solo se enseña la parte central (en % del dibujo)
+const RECORTE = { x: 20, ancho: 60, y: 4, alto: 89 };
+const ALTO = "min(320px, 42vh)"; // alto de la escena (el ancho sale solo)
 
 // 🖼️ todo se prepara al cargar, para que ningún cambio de etapa aparezca a medias
 [mary0, mary1, mary2, mary3, libros0, libros1, libros2, libros3, imagenDerrota].forEach((src) => {
