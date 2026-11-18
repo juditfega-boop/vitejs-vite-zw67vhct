@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import PasoPuerta from './PasoPuerta';
 import imagenesExplorador from './imagenesRegistry';
 import PUERTAS from './data/puertas';
+import LlaveSala, { llavesDeHoy, guardarLlave } from './LlaveSala';
 
 // 🖼️ precarga: las imágenes se descargan y preparan antes de necesitarlas
 const imagenesPreparadas = {};
@@ -38,6 +39,20 @@ function resolverRuta(raiz, ids) {
   return ruta;
 }
 
+// 🔑 de qué artículo a qué artículo va una sala (sale solo del JSON: los números de sus artículos)
+function rangoDe(nodo) {
+  const numeros = [];
+  (function recorrer(n) {
+    if (esHojaNodo(n)) {
+      const m = /(\d+)/.exec(n.id);
+      if (m) numeros.push(Number(m[1]));
+    } else {
+      (n.children || []).forEach(recorrer);
+    }
+  })(nodo);
+  return numeros.length ? { desde: Math.min(...numeros), hasta: Math.max(...numeros) } : null;
+}
+
 function encontrarRutaCompleta(raiz, idBuscado) {
   function buscar(nodo, camino) {
     if (nodo.id === idBuscado) return camino;
@@ -64,6 +79,7 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
   const [transicion, setTransicion] = useState(null); // { direccion, sala, otroLado, puerta, ids }
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState('');
+  const [llave, setLlave] = useState(null); // { destino, rango, ids, datos }: sala cerrada con llave
   const contRef = useRef(null); // dónde está la sala en la página (para que la animación encaje justo encima)
 
   function medirMarco() {
@@ -124,14 +140,33 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
     }
 
     const rutaDestino = resolverRuta(data, idsDestino);
-    cruzar(idsDestino, {
+    const destino = rutaDestino[rutaDestino.length - 1];
+    const datos = {
       direccion: 'entrar',
       sala: nodoActual,
-      otroLado: rutaDestino[rutaDestino.length - 1],
+      otroLado: destino,
       rutaSala: ruta,
       rutaOtro: rutaDestino,
       puerta: puertaDe(nodoActual, childId)
-    });
+    };
+
+    // 🔑 las salas (no los artículos) piden su llave una vez al día
+    if (!esHojaNodo(destino) && !llavesDeHoy().includes(destino.id)) {
+      const rango = rangoDe(destino);
+      if (rango) {
+        setLlave({ destino, rango, ids: idsDestino, datos });
+        return;
+      }
+    }
+
+    cruzar(idsDestino, datos);
+  }
+
+  function abrirConLlave() {
+    const { destino, ids, datos } = llave;
+    guardarLlave(destino.id);
+    setLlave(null);
+    cruzar(ids, datos);
   }
 
   function volver() {
@@ -193,6 +228,9 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
           alCambiar={() => setRutaIds(transicion.ids)}
           onComplete={alTerminarCruce}
         />
+      )}
+      {llave && (
+        <LlaveSala sala={llave.destino} rango={llave.rango} onAbrir={abrirConLlave} onCerrar={() => setLlave(null)} />
       )}
       {aviso && (
         <div
