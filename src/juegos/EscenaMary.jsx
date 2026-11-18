@@ -168,8 +168,20 @@ export default function EscenaMary({ aciertos, total = 20, evento, onDerrumbe })
   const previa = anterior !== null ? ETAPAS[Math.min(anterior, 3)] : null;
   const origen = (e) => `${e.base[0]}% ${e.base[1]}%`;
 
+  // proporción de la ventana recortada (el dibujo entero es 2:3)
+  const proporcion = (RECORTE.ancho * 2) / (RECORTE.alto * 3);
+
   return (
-    <div style={{ position: "relative", width: "100%", maxWidth: ANCHO, aspectRatio: "2 / 3", margin: "0 auto" }}>
+    <div style={{ position: "relative", height: ALTO, aspectRatio: `${proporcion}`, maxWidth: "100%", margin: "0 auto" }}>
+    <div
+      style={{
+        position: "absolute",
+        width: `${(100 / RECORTE.ancho) * 100}%`,
+        height: `${(100 / RECORTE.alto) * 100}%`,
+        left: `${(-RECORTE.x / RECORTE.ancho) * 100}%`,
+        top: `${(-RECORTE.y / RECORTE.alto) * 100}%`
+      }}
+    >
       <style>{cssEscena}</style>
 
       {/* Mary (la anterior se funde mientras aparece la nueva) */}
@@ -242,7 +254,8 @@ export default function EscenaMary({ aciertos, total = 20, evento, onDerrumbe })
             "--dura": h.dura
           }}
         />
-      ))}
-    </div>
-  );
-}
+        ))}
+        </div>
+        </div>
+      );
+    }

@@ -103,6 +103,13 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
   const [enPausa, setEnPausa] = useState(false);
   const [derrumbando, setDerrumbando] = useState(false); // la pila se está cayendo (animación de derrota)
   const [eventoEscena, setEventoEscena] = useState(null);
+  // 📱 en pantallas estrechas, Mary va encima de las respuestas (más grande)
+  const [pantallaEstrecha, setPantallaEstrecha] = useState(() => window.innerWidth < 640);
+  useEffect(() => {
+    const medir = () => setPantallaEstrecha(window.innerWidth < 640);
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, []);
 
   function lanzarEscena(tipo) {
     setEventoEscena((e) => ({ tipo, id: (e?.id || 0) + 1 }));
@@ -495,9 +502,19 @@ if (vista === "detalle") {
 
         <h3 style={styles.muertePreguntaTitulo}>{preguntaMuerte.pregunta}</h3>
 
-        <div style={styles.muerteLayout}>
-          <div style={styles.muerteImagenCol}>
-          <EscenaMary
+        <div
+          style={{
+            ...styles.muerteLayout,
+            ...(pantallaEstrecha ? { display: "flex", flexDirection: "column", alignItems: "stretch", gap: 8 } : {})
+          }}
+        >
+          <div
+            style={{
+              ...styles.muerteImagenCol,
+              ...(pantallaEstrecha ? { width: "100%", maxWidth: "100%", flex: "none", display: "flex", justifyContent: "center", margin: "4px 0 8px" } : {})
+            }}
+          >
+            <EscenaMary
               aciertos={muerteAciertos}
               total={muertePreguntas.length}
               evento={eventoEscena}
@@ -505,7 +522,12 @@ if (vista === "detalle") {
             />
           </div>
 
-          <div style={styles.muertePreguntaCol}>
+          <div
+            style={{
+              ...styles.muertePreguntaCol,
+              ...(pantallaEstrecha ? { width: "100%", maxWidth: "100%", flex: "none" } : {})
+            }}
+          >
             {ayudaActiva && (
               <div style={{ marginBottom: 10 }}>
                 {ayudaDisponible ? (
@@ -654,8 +676,9 @@ if (vista === "victoria") {
         <img
           src={muerteImgVictoria}
           alt="Has sobrevivido"
-          style={{ display: "block", width: 140, margin: "0 auto 16px" }}
+          style={{ display: "block", width: 140, margin: "0 auto 16px", animation: "saltoVictoria 0.9s cubic-bezier(0.3, 1.4, 0.5, 1) both" }}
         />
+        <style>{"@keyframes saltoVictoria { 0% { opacity: 0; transform: translateY(30px) scale(0.9); } 60% { opacity: 1; transform: translateY(-10px) scale(1.02); } 100% { transform: none; } }"}</style>
 
         <div style={styles.menuHeader}>
           <h1 style={styles.menuTitle}>🎉 ¡Has sobrevivido!</h1>
