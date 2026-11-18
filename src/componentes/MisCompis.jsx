@@ -69,6 +69,8 @@ export default function MisCompis({ usuario, volver, irACarrera }) {
   const [error, setError] = useState("");
   const [ocupada, setOcupada] = useState(false);
   const [empujonPedido, setEmpujonPedido] = useState(() => empujonPedidoHoy());
+  const [eligiendoEmpujon, setEligiendoEmpujon] = useState(false);
+  const [elegidosEmpujon, setElegidosEmpujon] = useState([]);
 
   async function cargar() {
     try {
@@ -145,12 +147,18 @@ export default function MisCompis({ usuario, volver, irACarrera }) {
     setOcupada(false);
   }
 
+  function marcarParaEmpujon(uid) {
+    setElegidosEmpujon((lista) => (lista.includes(uid) ? lista.filter((x) => x !== uid) : [...lista, uid]));
+  }
+
   async function pedirUnEmpujon() {
     setOcupada(true);
     setError("");
     try {
-      await pedirEmpujon(usuario.uid, perfil.nombre, compis);
+      const elegidos = compis.filter((c) => elegidosEmpujon.includes(c.uid));
+      await pedirEmpujon(usuario.uid, perfil.nombre, elegidos);
       setEmpujonPedido(true);
+      setEligiendoEmpujon(false);
       avisar("Empujón pedido ✨");
     } catch (e) {
       setError(e.message || "No se ha podido pedir.");
@@ -258,16 +266,20 @@ export default function MisCompis({ usuario, volver, irACarrera }) {
           <p style={{ ...styles.configCardTitle, margin: 0 }}>¿Hoy te cuesta?</p>
           {empujonPedido ? (
             <p style={{ ...styles.configSubLabel, margin: "4px 0 0" }}>
-              Empujón pedido. Tus compis ya lo saben: sus hechizos te llegarán al buzón 💛
+              Empujón pedido. Sus hechizos te llegarán al buzón 💛
             </p>
           ) : (
             <>
               <p style={{ ...styles.configSubLabel, margin: "4px 0 8px" }}>
-                Avisa a tus compis y te mandarán ánimos.
+              Elige a quién avisar y te mandarán ánimos.
               </p>
               <button
-                onClick={pedirUnEmpujon}
-                disabled={ocupada || compis.length === 0}
+                onClick={() => {
+                  setError("");
+                  setElegidosEmpujon([]);
+                  setEligiendoEmpujon(true);
+                }}
+                disabled={compis.length === 0}
                 style={{
                   ...styles.ctaButton,
                   width: "auto",
@@ -311,6 +323,53 @@ export default function MisCompis({ usuario, volver, irACarrera }) {
       {error && !compiElegida && <p style={est.error}>{error}</p>}
 
       <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
+
+      {eligiendoEmpujon && (
+        <div className="aviso-fondo" style={estHechizos.avisoFondo} onClick={() => setEligiendoEmpujon(false)}>
+          <div className="aviso-tarjeta" style={estHechizos.avisoTarjeta} onClick={(e) => e.stopPropagation()}>
+            <p style={estHechizos.titulo}>¿A quién le pides un empujón?</p>
+            <p style={estHechizos.subtitulo}>Le llegará un aviso para mandarte ánimos</p>
+            {compis.map((c) => {
+              const marcado = elegidosEmpujon.includes(c.uid);
+              return (
+                <button key={c.uid} onClick={() => marcarParaEmpujon(c.uid)} style={est.filaCompi}>
+                  <span style={est.inicial}>{c.nombre.charAt(0).toUpperCase()}</span>
+                  <p style={est.nombre}>{c.nombre}</p>
+                  <span
+                    style={{
+                      marginLeft: "auto",
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      border: marcado ? "none" : "1.5px solid #d8cbe6",
+                      background: marcado ? "linear-gradient(135deg, #b9a8de, #e2a3a9)" : "transparent",
+                      color: "#fff",
+                      fontSize: 14,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0
+                    }}
+                  >
+                    {marcado ? "✓" : ""}
+                  </span>
+                </button>
+              );
+            })}
+            {error && <p style={est.error}>{error}</p>}
+            <button
+              onClick={pedirUnEmpujon}
+              disabled={ocupada || elegidosEmpujon.length === 0}
+              style={{ ...styles.ctaButton, marginTop: 14, opacity: elegidosEmpujon.length === 0 ? 0.55 : 1 }}
+            >
+              {elegidosEmpujon.length ? `Pedir empujón (${elegidosEmpujon.length})` : "Pedir empujón"}
+            </button>
+            <button onClick={() => setEligiendoEmpujon(false)} style={estHechizos.cerrar}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
 
       {compiElegida && (
         <div className="aviso-fondo" style={estHechizos.avisoFondo} onClick={() => setCompiElegida(null)}>

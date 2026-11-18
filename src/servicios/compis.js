@@ -147,16 +147,16 @@ import {
     nuevo.conteo[paraUid] = (nuevo.conteo[paraUid] || 0) + 1;
     localStorage.setItem(CLAVE_ENVIADOS, JSON.stringify(nuevo));
   }
-  // 🙋 "Necesito un empujón": aviso a todas mis compis (una vez al día)
+// 🙋 "Necesito un empujón": aviso a las compis que elijas (una vez al día)
 const CLAVE_EMPUJON = "opo_empujon_pedido_v1";
 
 export function empujonPedidoHoy() {
   return localStorage.getItem(CLAVE_EMPUJON) === hoy();
 }
 
-export async function pedirEmpujon(deUid, deNombre, compis) {
-  if (empujonPedidoHoy()) throw new Error("Hoy ya lo has pedido. Tus compis ya lo saben 💛");
-  if (!compis.length) throw new Error("Primero añade a algún compi.");
-  await Promise.all(compis.map((c) => mandarAviso(c.uid, { tipo: "empujon", de: deUid, nombre: deNombre })));
+export async function pedirEmpujon(deUid, deNombre, elegidos) {
+  if (empujonPedidoHoy()) throw new Error("Hoy ya lo has pedido 💛");
+  if (!elegidos.length) throw new Error("Elige al menos a un compi.");
+  await Promise.all(elegidos.map((c) => mandarAviso(c.uid, { tipo: "empujon", de: deUid, nombre: deNombre })));
   localStorage.setItem(CLAVE_EMPUJON, hoy());
 }
