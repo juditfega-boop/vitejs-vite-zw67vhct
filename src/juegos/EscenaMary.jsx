@@ -14,10 +14,10 @@ import imagenDerrota from "../assets/trabajadora-derrota.png";
 // centro = altura (en %) desde donde salen volando las hojas.
 // vaiven = cuánto se balancea la pila (más libros, más inestable).
 const ETAPAS = [
-  { mary: mary0, libros: libros0, base: [49.1, 52.4], centro: 28, vaiven: 1.6 },
-  { mary: mary1, libros: libros1, base: [51.0, 37.0], centro: 22, vaiven: 1.1 },
-  { mary: mary2, libros: libros2, base: [51.7, 34.4], centro: 22, vaiven: 0.7 },
-  { mary: mary3, libros: libros3, base: [50.2, 27.1], centro: 18, vaiven: 0.35 }
+    { mary: mary0, libros: libros0, base: [49.1, 52.4], centro: 28, vaiven: 4.2, hojaCada: 700 },
+    { mary: mary1, libros: libros1, base: [51.0, 37.0], centro: 22, vaiven: 3, hojaCada: 1100 },
+    { mary: mary2, libros: libros2, base: [51.7, 34.4], centro: 22, vaiven: 2, hojaCada: 1700 },
+    { mary: mary3, libros: libros3, base: [50.2, 27.1], centro: 18, vaiven: 1, hojaCada: 2800 }
 ];
 // 🔍 los dibujos traen mucho margen vacío: solo se enseña la parte central (en % del dibujo)
 const RECORTE = { x: 20, ancho: 60, y: 4, alto: 89 };
@@ -30,11 +30,13 @@ const ALTO = "min(320px, 42vh)"; // alto de la escena (el ancho sale solo)
 });
 
 const cssEscena = `
-  .mary-vaiven { animation: maryVaiven 3.4s ease-in-out infinite; }
-  @keyframes maryVaiven {
-    0%, 100% { transform: rotate(calc(var(--vaiven) * -1deg)); }
-    50% { transform: rotate(calc(var(--vaiven) * 1deg)); }
-  }
+.mary-vaiven { animation: maryVaiven 2.6s ease-in-out infinite; }
+@keyframes maryVaiven {
+  0%, 100% { transform: rotate(calc(var(--vaiven) * -1deg)) translateX(calc(var(--vaiven) * -0.5%)); }
+  30% { transform: rotate(calc(var(--vaiven) * 0.4deg)) translateX(0); }
+  50% { transform: rotate(calc(var(--vaiven) * 1deg)) translateX(calc(var(--vaiven) * 0.5%)); }
+  75% { transform: rotate(calc(var(--vaiven) * -0.3deg)) translateX(0); }
+}
   .mary-libros-entra { animation: maryAsentar 0.8s ease-out both; }
   @keyframes maryAsentar { from { opacity: 0; transform: translateY(-5%); } to { opacity: 1; transform: none; } }
   .mary-libros-sale { animation: marySubir 1s cubic-bezier(0.5, 0, 0.75, 0.6) forwards; }
@@ -79,21 +81,30 @@ export default function EscenaMary({ aciertos, total = 20, evento, onDerrumbe })
     return () => clearTimeout(id);
   }, [etapaActual]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function soltarHojas(cuantas, { abajo = false, desde } = {}) {
+  // 🍂 hojas sueltas: hacia arriba (se las lleva el viento al acertar) o cayendo (se escapan de la pila)
+  function soltarHojas(cuantas, { abajo = false, lenta = false, desde } = {}) {
     const e = ETAPAS[Math.min(vista.etapa, 3)];
     const nuevas = Array.from({ length: cuantas }, () => ({
       id: ++idHoja.current,
-      x: e.base[0] + azar(-8, 8),
-      y: desde ?? e.centro + azar(-5, 5),
+      x: e.base[0] + azar(-12, 12),
+      y: desde ?? e.centro + azar(-8, 8),
       dx: `${azar(-320, 320)}%`,
-      dy: abajo ? `${azar(420, 620)}%` : `${azar(-380, -180)}%`,
-      rot: `${azar(-140, 140)}deg`,
-      dura: `${azar(1.1, 1.6)}s`
+      dy: abajo ? `${azar(lenta ? 550 : 420, lenta ? 820 : 650)}%` : `${azar(-420, -200)}%`,
+      rot: `${azar(-200, 200)}deg`,
+      dura: lenta ? azar(2.2, 3.2) : azar(1.1, 1.7)
     }));
     setHojas((h) => [...h, ...nuevas]);
     const ids = nuevas.map((n) => n.id);
-    setTimeout(() => setHojas((h) => h.filter((x) => !ids.includes(x.id))), 1800);
+    const masLarga = Math.max(...nuevas.map((n) => n.dura));
+    setTimeout(() => setHojas((h) => h.filter((x) => !ids.includes(x.id))), masLarga * 1000 + 200);
   }
+
+  // 🍂 mientras dura la pila, se le van escapando hojas (más cuanto más alta)
+  useEffect(() => {
+    if (vista.etapa >= 4 || aplastada) return;
+    const id = setInterval(() => soltarHojas(1, { abajo: true, lenta: true }), ETAPAS[vista.etapa].hojaCada);
+    return () => clearInterval(id);
+  }, [vista.etapa, aplastada]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 🎬 lo que pasa en cada respuesta
   useEffect(() => {
@@ -103,11 +114,11 @@ export default function EscenaMary({ aciertos, total = 20, evento, onDerrumbe })
     const timers = [];
 
     if (evento.tipo === "acierto") {
-      soltarHojas(3);
-      libros && libros.animate(
-        [{ transform: "translateY(0)" }, { transform: "translateY(-2.5%)" }, { transform: "translateY(0)" }],
-        { duration: 650, easing: "ease-in-out" }
-      );
+        soltarHojas(9);
+        libros && libros.animate(
+          [{ transform: "translateY(0)" }, { transform: "translateY(-5%) rotate(-2deg)" }, { transform: "translateY(0)" }],
+          { duration: 700, easing: "ease-in-out" }
+        );
       mary && mary.animate(
         [{ transform: "scaleY(1)" }, { transform: "scaleY(1.015)" }, { transform: "scaleY(1)" }],
         { duration: 650, easing: "ease-in-out" }
@@ -118,31 +129,33 @@ export default function EscenaMary({ aciertos, total = 20, evento, onDerrumbe })
       // casi se cae: la pila se tambalea, se escapa una hoja y Mary se encoge del susto
       libros && libros.animate(
         [
-          { transform: "rotate(0deg)" },
-          { transform: "rotate(-6deg)" },
-          { transform: "rotate(5deg)" },
-          { transform: "rotate(-3deg)" },
-          { transform: "rotate(1.5deg)" },
-          { transform: "rotate(0deg)" }
-        ],
-        { duration: 1100, easing: "ease-in-out" }
-      );
-      mary && mary.animate(
-        [{ transform: "scaleY(1)" }, { transform: "scaleY(0.95)" }, { transform: "scaleY(1)" }],
-        { duration: 700, easing: "ease-out" }
-      );
-      soltarHojas(2, { abajo: true });
+            { transform: "rotate(0deg)" },
+            { transform: "rotate(-13deg) translateX(-3%)" },
+            { transform: "rotate(11deg) translateX(3%)" },
+            { transform: "rotate(-7deg)" },
+            { transform: "rotate(4deg)" },
+            { transform: "rotate(-1.5deg)" },
+            { transform: "rotate(0deg)" }
+          ],
+          { duration: 1400, easing: "ease-in-out" }
+        );
+        mary && mary.animate(
+          [{ transform: "scaleY(1)" }, { transform: "scaleY(0.9) scaleX(1.03)" }, { transform: "scaleY(1)" }],
+          { duration: 800, easing: "ease-out" }
+        );
+        soltarHojas(7, { abajo: true });
     }
 
     if (evento.tipo === "derrota") {
+        soltarHojas(6, { abajo: true });
       // la pila se tambalea cada vez más… y se le cae encima
       libros && libros.animate(
         [
-          { transform: "rotate(0deg) translateY(0)", offset: 0 },
-          { transform: "rotate(-5deg) translateY(0)", offset: 0.22 },
-          { transform: "rotate(6deg) translateY(0)", offset: 0.44 },
-          { transform: "rotate(-3deg) translateY(-2%)", offset: 0.6 },
-          { transform: "rotate(9deg) translateY(30%)", offset: 1 }
+            { transform: "rotate(0deg) translateY(0)", offset: 0 },
+            { transform: "rotate(-11deg) translateX(-3%)", offset: 0.2 },
+            { transform: "rotate(13deg) translateX(3%)", offset: 0.4 },
+            { transform: "rotate(-8deg) translateY(-3%)", offset: 0.6 },
+            { transform: "rotate(18deg) translateY(32%)", offset: 1 }
         ],
         { duration: 1500, easing: "cubic-bezier(0.55, 0, 0.85, 0.4)", fill: "forwards" }
       );
@@ -157,7 +170,7 @@ export default function EscenaMary({ aciertos, total = 20, evento, onDerrumbe })
       );
       timers.push(setTimeout(() => {
         setAplastada(true);
-        soltarHojas(7, { desde: 62 });
+        soltarHojas(18, { desde: 62 });
       }, 1380));
       timers.push(setTimeout(() => alDerrumbe.current && alDerrumbe.current(), 2600));
     }
@@ -253,7 +266,7 @@ export default function EscenaMary({ aciertos, total = 20, evento, onDerrumbe })
             "--dx": h.dx,
             "--dy": h.dy,
             "--rot": h.rot,
-            "--dura": h.dura
+            "--dura": `${h.dura}s`
           }}
         />
         ))}
