@@ -6,7 +6,8 @@ import {
   marcarAvisoProcesado,
   anadirCompis,
   CLAVE_NOMBRE_APP,
-  CLAVE_SALA_CARRERA
+  CLAVE_SALA_CARRERA,
+  mandarHechizo
 } from "../servicios/compis";
 import { unirseSala } from "../servicios/salas";
 import { HECHIZOS, estHechizos, cssHechizos, haceCuanto } from "./hechizos";
@@ -55,7 +56,19 @@ const est = {
     background: "linear-gradient(135deg, #f2cb8f, #eeb9bd)",
     cursor: "pointer"
   },
-  error: { color: "#c96a6a", fontSize: 12, margin: "6px 0 0" }
+  error: { color: "#c96a6a", fontSize: 12, margin: "6px 0 0" },
+  botonHechizo: {
+    width: 48,
+    height: 48,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "1px solid #eadfcd",
+    borderRadius: 16,
+    background: "linear-gradient(135deg, #fffaf2, #f8efe4)",
+    cursor: "pointer",
+    padding: 0
+  }
 };
 
 // ✉️ BUZÓN: tarjeta en Inicio + ventana con los avisos
@@ -63,6 +76,7 @@ export default function Buzon({ usuario, irACarrera }) {
   const [avisos, setAvisos] = useState([]);
   const [abierto, setAbierto] = useState(false);
   const [error, setError] = useState("");
+  const [enviando, setEnviando] = useState(null);
   const vistosRef = useRef(null);
   const salaPendiente = localStorage.getItem(CLAVE_SALA_CARRERA);
 
@@ -112,7 +126,28 @@ export default function Buzon({ usuario, irACarrera }) {
     }
   }
 
+  // 💛 responder a un "necesito un empujón" con un hechizo de un toque
+  async function mandarAnimo(aviso, hechizo) {
+    setError("");
+    setEnviando(aviso.id);
+    try {
+      const miNombre = localStorage.getItem(CLAVE_NOMBRE_APP) || "Tu compi";
+      await mandarHechizo(usuario.uid, miNombre, aviso.de, hechizo);
+      await marcarAvisoProcesado(usuario.uid, aviso.id);
+    } catch (e) {
+      setError(e.message || "No se ha podido mandar.");
+    }
+    setEnviando(null);
+  }
+
   function contenidoAviso(a) {
+    if (a.tipo === "empujon") {
+      return {
+        imagen: HECHIZOS.animo.imagen,
+        texto: `${a.nombre} necesita un empujón`,
+        sub: a.procesado ? "Ya le has mandado ánimos ✨" : `Mándale un hechizo · ${haceCuanto(a.fecha)}`
+      };
+    }
     if (a.tipo === "compi") {
       return {
         imagen: iconoSobre,
@@ -172,6 +207,21 @@ export default function Buzon({ usuario, irACarrera }) {
                   <span>
                     <p style={estHechizos.filaTexto}>{c.texto}</p>
                     <p style={estHechizos.filaSub}>{c.sub}</p>
+                    {a.tipo === "empujon" && !a.procesado && (
+                      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                        {["animo", "cafe", "lio"].map((id) => (
+                          <button
+                            key={id}
+                            onClick={() => mandarAnimo(a, id)}
+                            disabled={enviando === a.id}
+                            title={HECHIZOS[id].texto}
+                            style={est.botonHechizo}
+                          >
+                            <img src={HECHIZOS[id].imagen} alt="" style={{ width: 34, height: 34, objectFit: "contain" }} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {a.hechizo === "reto" && a.codigo && (
                       <button onClick={() => aceptarReto(a)} style={est.botonPequeno}>
                         Unirme a la carrera

@@ -8,7 +8,9 @@ import {
   mandarHechizo,
   hechizosRestantes,
   CLAVE_NOMBRE_APP,
-  CLAVE_SALA_CARRERA
+  CLAVE_SALA_CARRERA,
+  pedirEmpujon,
+  empujonPedidoHoy
 } from "../servicios/compis";
 import { crearSala } from "../servicios/salas";
 import { HECHIZOS, ORDEN_HECHIZOS, estHechizos, cssHechizos } from "./hechizos";
@@ -66,6 +68,7 @@ export default function MisCompis({ usuario, volver, irACarrera }) {
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
   const [ocupada, setOcupada] = useState(false);
+  const [empujonPedido, setEmpujonPedido] = useState(() => empujonPedidoHoy());
 
   async function cargar() {
     try {
@@ -138,6 +141,19 @@ export default function MisCompis({ usuario, volver, irACarrera }) {
       avisar(`Hechizo enviado a ${para.nombre} ✨`);
     } catch (e) {
       setError(e.message || "No se ha podido enviar.");
+    }
+    setOcupada(false);
+  }
+
+  async function pedirUnEmpujon() {
+    setOcupada(true);
+    setError("");
+    try {
+      await pedirEmpujon(usuario.uid, perfil.nombre, compis);
+      setEmpujonPedido(true);
+      avisar("Empujón pedido ✨");
+    } catch (e) {
+      setError(e.message || "No se ha podido pedir.");
     }
     setOcupada(false);
   }
@@ -225,6 +241,46 @@ export default function MisCompis({ usuario, volver, irACarrera }) {
           >
             Añadir
           </button>
+        </div>
+      </div>
+
+      <div
+        style={{
+          ...styles.configCard,
+          background: "linear-gradient(135deg, #fbefe6, #f8e9ee)",
+          display: "flex",
+          alignItems: "center",
+          gap: 14
+        }}
+      >
+        <img src={HECHIZOS.animo.imagen} alt="" style={{ width: 64, height: 64, objectFit: "contain", flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <p style={{ ...styles.configCardTitle, margin: 0 }}>¿Hoy te cuesta?</p>
+          {empujonPedido ? (
+            <p style={{ ...styles.configSubLabel, margin: "4px 0 0" }}>
+              Empujón pedido. Tus compis ya lo saben: sus hechizos te llegarán al buzón 💛
+            </p>
+          ) : (
+            <>
+              <p style={{ ...styles.configSubLabel, margin: "4px 0 8px" }}>
+                Avisa a tus compis y te mandarán ánimos.
+              </p>
+              <button
+                onClick={pedirUnEmpujon}
+                disabled={ocupada || compis.length === 0}
+                style={{
+                  ...styles.ctaButton,
+                  width: "auto",
+                  margin: 0,
+                  padding: "10px 18px",
+                  fontSize: 14,
+                  opacity: compis.length === 0 ? 0.55 : 1
+                }}
+              >
+                Necesito un empujón
+              </button>
+            </>
+          )}
         </div>
       </div>
 
