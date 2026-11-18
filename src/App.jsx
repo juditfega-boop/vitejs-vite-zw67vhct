@@ -40,6 +40,7 @@ import Tarjetero from "./componentes/Tarjetero";
 import iconoTarjetero from "./assets/kit/icono-hub-erre-que-erre.png";
 import Buzon from "./componentes/Buzon";
 import MisCompis from "./componentes/MisCompis";
+import IntroAnimada from "./componentes/IntroAnimada";
 import iconoSobre from "./assets/kit/icono-buzon-sobre.png";
 import {
   obtenerStats,
@@ -79,6 +80,10 @@ export default function App() {
   );
   const [frase] = useState(
     () => FRASES_BIENVENIDA[Math.floor(Math.random() * FRASES_BIENVENIDA.length)]
+  );
+  // 🌱 animación de entrada: una vez cada vez que se abre la app (no al volver a la portada)
+  const [verIntro, setVerIntro] = useState(
+    () => window.location.hash !== "#inicio" && !sessionStorage.getItem("opo_intro_vista")
   );
 
   // 🔐 cuenta y estado de acceso ("cargando" | "sin-cuenta" | "pendiente" | "aprobada")
@@ -239,6 +244,15 @@ useEffect(() => {
             Empezar a estudiar
           </button>
         </div>
+
+        {verIntro && (
+          <IntroAnimada
+            onFin={() => {
+              sessionStorage.setItem("opo_intro_vista", "1");
+              setVerIntro(false);
+            }}
+          />
+        )}
       </div>
     );
   }
