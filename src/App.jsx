@@ -20,34 +20,34 @@ import SalvaTrabajadoraSocial from "./juegos/SalvaTrabajadoraSocial";
 import Estudiar from "./estudio/Estudiar";
 import Simulacro from "./estudio/Simulacro";
 import muerteImg0 from "./assets/trabajadora-0.png";
-import casaIcono from "./assets/casa-icono.png";
-import iconoLibro from "./assets/kit/icono-libro-estudiar.png";
 import iconoReloj from "./assets/kit/icono-reloj-simulacro.png";
-import iconoDados from "./assets/kit/icono-dados-minijuegos.png";
-import iconoGrafico from "./assets/kit/icono-grafico-evolucion.png";
-import iconoCarpeta from "./assets/kit/icono-carpeta-favoritos.png";
-import iconoCalendario from "./assets/kit/icono-calendario-inicio.png";
-import iconoTaza from "./assets/kit/icono-taza-perfil.png";
-import iconoPlantita from "./assets/kit/icono-plantita-evolucion.png";
-import iconoRachaLlama from "./assets/bookbrand/icono-brand-racha-llama.png";
 import iconoPerfilSilueta from "./assets/kit/icono-perfil-silueta.png";
 import iconoPerfilHero from "./assets/kit/icono-perfil-hero.png";
-import iconoNube from "./assets/bookbrand/icono-brand-nube.png";
-import iconoCandado from "./assets/kit/icono-candado.png";
 import { leerBanco } from "./servicios/banco";
-import { ADMIN_UID } from "./servicios/accesos";
 import Tarjetero from "./componentes/Tarjetero";
-import iconoTarjetero from "./assets/kit/icono-hub-erre-que-erre.png";
 import Buzon from "./componentes/Buzon";
 import MisCompis from "./componentes/MisCompis";
 import IntroAnimada from "./componentes/IntroAnimada";
-import iconoSobre from "./assets/kit/icono-buzon-sobre.png";
+import BarraInferior, { PANTALLAS_CON_BARRA } from "./componentes/BarraInferior";
+import InicioHoy from "./componentes/InicioHoy";
+import MiExpediente from "./componentes/MiExpediente";
+import GuiaRapida from "./componentes/GuiaRapida";
+import { TituloHub, SubtituloMano, Rejilla, Tile, COLOR_SECCION, FONDO_PAPEL, PAGINA, cssHub } from "./componentes/Hub";
+import { useCalendario } from "./servicios/calendario";
+import ErreDelDia from "./erre/ErreDelDia";
+import iconoExplora from "./assets/kit/icono-explora.png";
+import iconoErre from "./assets/kit/icono-hub-erre-que-erre.png";
+import iconoTarjetero from "./assets/kit/icono-tarjetero.png";
+import iconoRepaso from "./assets/kit/icono-repaso.png";
+import iconoRepasarErrores from "./assets/kit/icono-repasar-errores-hero.png";
+import iconoFavoritas from "./assets/kit/icono-favoritos-corazon.png";
 import {
   obtenerStats,
   guardarStats,
   obtenerRacha,
   obtenerTiempos,
   obtenerFavoritos,
+  clasificarErrores,
   guardarFavoritos,
   CLAVE_RACHA,
   CLAVE_TIEMPOS,
@@ -121,7 +121,7 @@ export default function App() {
     if (datos.racha) localStorage.setItem(CLAVE_RACHA, JSON.stringify(datos.racha));
     if (datos.tiempos) localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos.tiempos));
     if (datos.favoritos) guardarFavoritos(datos.favoritos);
-    if (datos.erre) guardarNivelesErre(datos.erre);
+    if (datos.erre) guardarNivelesErre(datos.erre, false); // copiar desde la nube no cuenta como ficha hecha hoy
   }
 
   async function sincronizarConNube() {
@@ -181,11 +181,37 @@ export default function App() {
     sincronizarConNube();
   }
 
-// 🏠 el botón de pánico (definido en index.html) se oculta en Inicio y en la Portada
+  // ⬅ volver a una de las pantallas principales (guardando el progreso en la nube)
+  function volverA(destino) {
+    setPantalla(destino);
+    sincronizarConNube();
+  }
+
+  // 🗓️ calendario de la cuenta (para "Hoy toca…", la ración y la semana)
+  const calendario = useCalendario(aprobada ? usuario : null);
+
+  // ✍️ letra manuscrita de los títulos (Caveat), una sola vez
+  useEffect(() => {
+    if (document.getElementById("fuente-caveat")) return;
+    const enlace = document.createElement("link");
+    enlace.id = "fuente-caveat";
+    enlace.rel = "stylesheet";
+    enlace.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap";
+    document.head.appendChild(enlace);
+  }, []);
+
+  // al cambiar de pantalla, empezar arriba
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pantalla]);
+
+// 🏠 el botón de pánico (definido en index.html) se oculta en la Portada y en las
+// pantallas con barra: solo aparece dentro de una tarea (test, juego, examen…)
 useEffect(() => {
   const boton = document.getElementById("boton-panico");
   if (boton) {
-    const ocultarEn = pantalla === "inicio" || pantalla === "landing";
+    // (en Explora tampoco: el propio Explorador la esconde para no romper la inmersión)
+    const ocultarEn = pantalla === "landing" || pantalla === "explora" || PANTALLAS_CON_BARRA.includes(pantalla);
     boton.style.display = ocultarEn ? "none" : "block";
   }
 }, [pantalla]);
@@ -203,18 +229,10 @@ useEffect(() => {
   }, [preguntasBase, aprobada]);
 
   // 🔐 pantallas que solo pueden usar las cuentas aprobadas
-  const PANTALLAS_BLOQUEADAS = ["simulacro", "carrera", "muerte", "archivos", "calendario", "compis"];
+  const PANTALLAS_BLOQUEADAS = ["simulacro", "carrera", "muerte", "archivos", "calendario", "compis", "tarjetero"];
 
   // 🔒 aspecto de las tarjetas bloqueadas (no se aplica mientras se comprueba la cuenta)
   const mostrarBloqueo = !aprobada && estadoAcceso !== "cargando";
-  const estiloBloqueado = { opacity: 0.5, filter: "grayscale(35%)", position: "relative" };
-  const candado = (
-    <img
-      src={iconoCandado}
-      alt="Bloqueado"
-      style={{ position: "absolute", top: 10, right: 10, width: 30 }}
-    />
-  );
   if (PANTALLAS_BLOQUEADAS.includes(pantalla) && !aprobada) {
     return conPersonaje(
       <PantallaBloqueada
@@ -267,234 +285,199 @@ useEffect(() => {
     );
   }
 
-// 🟣 MENÚ PRINCIPAL — INICIO (rediseño)
-if (pantalla === "inicio") {
-  const racha = obtenerRacha().racha;
-  const statsInicio = obtenerStats();
-
-  const totalRespondidas = Object.values(statsInicio).reduce((a, b) => a + (b.veces || 0), 0);
-  const pendientesEstudio = Math.max(0, preguntasVisibles.length - Object.keys(statsInicio).length);
-
-  const bloquesResumen = {};
-  preguntasBase.forEach((p) => {
-    const b = p.bloque || "Sin bloque";
-    if (!bloquesResumen[b]) bloquesResumen[b] = { respondidas: 0, aciertos: 0 };
-  });
-  Object.values(statsInicio).forEach((s) => {
-    const b = s.bloque || "Sin bloque";
-    if (!bloquesResumen[b]) bloquesResumen[b] = { respondidas: 0, aciertos: 0 };
-    bloquesResumen[b].respondidas += s.veces || 0;
-    bloquesResumen[b].aciertos += s.aciertos || 0;
-  });
-  const bloquesConDatos = Object.values(bloquesResumen).filter((b) => b.respondidas > 0);
-  const bloquesFavorables = bloquesConDatos.filter((b) => b.aciertos / b.respondidas >= 0.6).length;
-  const bloquesSeguimiento = bloquesConDatos.filter((b) => b.aciertos / b.respondidas < 0.4).length;
-  const porcentajeFavorable = bloquesConDatos.length
-    ? Math.round((bloquesFavorables / bloquesConDatos.length) * 100)
-    : 0;
-
-    return conPersonaje(
-      <div style={styles.menuContainer}>
-        <div style={styles.inicioHeader}>
-        <img src={casaIcono} alt="" style={styles.inicioCasaIcono} />
-        <span style={styles.inicioHeaderTexto}>Inicio</span>
-      </div>
-
-      {aprobada && usuario && <Buzon usuario={usuario} irACarrera={abrirCarreraOnline} />}
-
-      <div style={styles.inicioHeroCard}>
-        <img src={iconoPlantita} alt="" style={styles.inicioHeroIcono} />
-        <div style={styles.inicioHeroTexto}>
-        <p style={{ ...styles.inicioHeroTitulo, ...styles.heroRachaRow }}>
-            <img src={iconoRachaLlama} alt="" style={styles.iconoInlinePequeno} />
-            ¡Llevas {racha} {racha === 1 ? "día" : "días"} seguidos!
-          </p>
-          <p style={styles.inicioHeroSubtitulo}>
-            Estás construyendo tu futuro un día a la vez.
-          </p>
-          {pendientesEstudio > 0 && (
-            <div style={styles.inicioHeroPill}>
-              🌿 Hoy tienes {pendientesEstudio} preguntas nuevas por descubrir
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div style={styles.inicioGrid}>
-        <button
-          onClick={() => setPantalla("estudiar-estudio")}
-          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaLavanda }}
-        >
-          <img src={iconoLibro} alt="" style={styles.inicioTarjetaIcono} />
-          <p style={styles.inicioTarjetaTitulo}>Estudiar</p>
-          <p style={styles.inicioTarjetaSubtitulo}>Tests por bloques o generales</p>
-          <div style={{ ...styles.inicioTarjetaLinea, background: "#b9a8de" }} />
-        </button>
-
-        <button
-          onClick={() => setPantalla("simulacro")}
-          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaRosa, ...(mostrarBloqueo ? estiloBloqueado : {}) }}
-        >
-          {mostrarBloqueo && candado}
-          <img src={iconoReloj} alt="" style={styles.inicioTarjetaIcono} />
-          <p style={styles.inicioTarjetaTitulo}>Simulacro oficial</p>
-          <p style={styles.inicioTarjetaSubtitulo}>Examen completo, 100 preguntas</p>
-          <div style={{ ...styles.inicioTarjetaLinea, background: "#e2a3a9" }} />
-        </button>
-
-        <button
-          onClick={() => setPantalla("minijuegos")}
-          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaSalvia }}
-        >
-<img src={iconoDados} alt="" style={styles.inicioTarjetaIconoGrande} />          <p style={styles.inicioTarjetaTitulo}>Minijuegos</p>
-          <p style={styles.inicioTarjetaSubtitulo}>Repasa jugando y diviértete</p>
-          <div style={{ ...styles.inicioTarjetaLinea, background: "#8fb89a" }} />
-        </button>
-
-        <button
-          onClick={() => setPantalla("estudiar-progreso")}
-          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaBeige }}
-        >
-<img src={iconoGrafico} alt="" style={styles.inicioTarjetaIconoGrande} />          <p style={styles.inicioTarjetaTitulo}>Mi evolución</p>
-          <p style={styles.inicioTarjetaSubtitulo}>Estadísticas, errores y favoritas</p>
-          <div style={{ ...styles.inicioTarjetaLinea, background: "#d9a25c" }} />
-        </button>
-
-        <button
-          onClick={() => setPantalla("calendario")}
-          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaMuted, ...(mostrarBloqueo ? estiloBloqueado : {}) }}
-        >
-          {mostrarBloqueo && candado}
-          <img src={iconoCalendario} alt="" style={styles.inicioTarjetaIcono} />
-          <p style={styles.inicioTarjetaTitulo}>Mi calendario</p>
-          <p style={styles.inicioTarjetaSubtitulo}>Planifica tus días de estudio</p>
-          <div style={{ ...styles.inicioTarjetaLinea, background: "#c3bcae" }} />
-        </button>
-
-        <button
-          onClick={() => setPantalla("ajustes")}
-          style={{ ...styles.inicioTarjeta, ...styles.inicioTarjetaLavandaClara }}
-        >
-          <img src={iconoTaza} alt="" style={styles.inicioTarjetaIcono} />
-          <p style={styles.inicioTarjetaTitulo}>Mi perfil</p>
-          <p style={styles.inicioTarjetaSubtitulo}>Sincroniza tu progreso</p>
-          <div style={{ ...styles.inicioTarjetaLinea, background: "#b9a8de" }} />
-        </button>
-      </div>
-
-      <div style={styles.inicioJardinCard}>
-        <p style={styles.inicioJardinTitulo}>🌿 Tu jardín de conocimiento</p>
-        <p style={styles.inicioJardinSubtitulo}>Cada respuesta es una raíz más fuerte.</p>
-
-        <div style={styles.inicioJardinGrid}>
-          <div style={styles.inicioJardinItem}>
-            <p style={styles.inicioJardinValor}>{totalRespondidas}</p>
-            <p style={styles.inicioJardinEtiqueta}>Preguntas aprendidas</p>
-          </div>
-          <div style={styles.inicioJardinItem}>
-            <p style={styles.inicioJardinValor}>{porcentajeFavorable}%</p>
-            <p style={styles.inicioJardinEtiqueta}>Bloques con evolución favorable</p>
-          </div>
-          <div style={styles.inicioJardinItem}>
-            <p style={styles.inicioJardinValor}>{bloquesSeguimiento}</p>
-            <p style={styles.inicioJardinEtiqueta}>Bloques necesitan seguimiento</p>
-          </div>
-          <div style={styles.inicioJardinItem}>
-            <p style={styles.inicioJardinValor}>{racha}</p>
-            <p style={styles.inicioJardinEtiqueta}>Tu racha actual</p>
-          </div>
-        </div>
-
-        <button onClick={() => setPantalla("estudiar-progreso")} style={styles.inicioJardinBoton}>
-          Ver mi evolución →
-        </button>
-      </div>
-
-      <p style={styles.inicioFraseFinal}>"{frase}"</p>
+// 🧭 pantallas principales: fondo de papel, contenido y barra inferior
+function conBarra(contenido) {
+  return conPersonaje(
+    <div style={{ ...FONDO_PAPEL, minHeight: "100vh", width: "100%" }}>
+      <style>{cssHub}</style>
+      <div style={PAGINA}>{contenido}</div>
+      <BarraInferior activa={pantalla} irA={setPantalla} />
     </div>
   );
 }
 
-// 🎮 HUB DE MINIJUEGOS
+// 🟣 INICIO
+if (pantalla === "inicio") {
+  return conBarra(
+    <>
+      <InicioHoy
+        usuario={aprobada ? usuario : null}
+        preguntas={preguntasVisibles}
+        bloquesDe={preguntasBase}
+        calendario={calendario}
+        irA={setPantalla}
+        buzon={aprobada && usuario ? <Buzon usuario={usuario} irACarrera={abrirCarreraOnline} /> : null}
+      />
+      <p style={{ ...styles.inicioFraseFinal, marginTop: 22 }}>"{frase}"</p>
+      <GuiaRapida />
+    </>
+  );
+}
+
+// 📖 ESTUDIAR: memorizar la ley
+if (pantalla === "estudiar") {
+  const c = COLOR_SECCION.estudiar;
+  return conBarra(
+    <>
+      <TituloHub titulo="Estudiar" subtitulo="Memoriza la ley a tu manera" color={c.linea} />
+      <Rejilla>
+        <Tile
+          icono={iconoExplora}
+          nombre="Explora la Constitución"
+          texto="Recorre sus salas y abre cada artículo"
+          fondo={c.fondo}
+          linea={c.linea}
+          ancho={2}
+          alto={120}
+          onClick={() => setPantalla("explora")}
+        />
+        <Tile
+          icono={iconoErre}
+          nombre="Erre que erre"
+          texto="Escribe un artículo de memoria"
+          fondo={c.fondoClaro}
+          linea={c.linea}
+          onClick={() => setPantalla("erre")}
+        />
+        <Tile
+          icono={iconoHubConstruyeConstitucion}
+          nombre="Construye"
+          texto="Coloca cada parte en su sitio"
+          fondo={c.fondo}
+          linea={c.linea}
+          onClick={() => setPantalla("construye")}
+        />
+        <Tile
+          icono={iconoHubConectaConstitucion}
+          nombre="Conecta"
+          texto="Une cada artículo con lo que dice"
+          fondo={c.fondo}
+          linea={c.linea}
+          bloqueado={mostrarBloqueo}
+          onClick={() => setPantalla("archivos")}
+        />
+        <Tile
+          icono={iconoTarjetero}
+          nombre="Tarjetero"
+          texto="Tus resúmenes en carpetas"
+          fondo={c.fondoClaro}
+          linea={c.linea}
+          bloqueado={mostrarBloqueo}
+          onClick={() => setPantalla("tarjetero")}
+        />
+      </Rejilla>
+    </>
+  );
+}
+
+// 📝 TEST: preguntas como las del examen
+if (pantalla === "test") {
+  const c = COLOR_SECCION.test;
+  const { prioritarios, seguimiento } = clasificarErrores(preguntasVisibles);
+  const pendientes = prioritarios.length + seguimiento.length;
+  const favoritas = obtenerFavoritos().length;
+  return conBarra(
+    <>
+      <TituloHub titulo="Test" subtitulo="Practica con preguntas como las del examen" color={c.linea} />
+      <Rejilla>
+        <Tile
+          icono={iconoRepaso}
+          nombre="Repaso"
+          texto="Por bloques o general, a tu ritmo"
+          fondo={c.fondo}
+          linea={c.linea}
+          alto={180}
+          onClick={() => setPantalla("estudiar-estudio")}
+        />
+        <Tile
+          icono={iconoReloj}
+          nombre="Simulacro oficial"
+          texto="Examen completo de 100 preguntas"
+          fondo={c.fondo}
+          linea={c.linea}
+          alto={180}
+          bloqueado={mostrarBloqueo}
+          onClick={() => setPantalla("simulacro")}
+        />
+      </Rejilla>
+      <SubtituloMano>Para reforzar</SubtituloMano>
+      <Rejilla>
+        <Tile
+          icono={iconoRepasarErrores}
+          nombre="Repasar errores"
+          texto="Las que has fallado"
+          etiqueta={pendientes > 0 ? `${pendientes} ${pendientes === 1 ? "pendiente" : "pendientes"}` : null}
+          fondo={c.fondoClaro}
+          linea={c.linea}
+          alto={140}
+          onClick={() => setPantalla("estudiar-errores")}
+        />
+        <Tile
+          icono={iconoFavoritas}
+          nombre="Favoritas"
+          texto="Las que has guardado"
+          etiqueta={favoritas > 0 ? `${favoritas} ${favoritas === 1 ? "guardada" : "guardadas"}` : null}
+          fondo={c.fondoClaro}
+          linea={c.linea}
+          alto={140}
+          onClick={() => setPantalla("estudiar-favoritos")}
+        />
+      </Rejilla>
+    </>
+  );
+}
+
+// 🎮 JUEGOS
 if (pantalla === "minijuegos") {
-  const listaMinijuegos = [
-    {
-      id: "carrera",
-      nombre: "Carrera por la Plaza",
-      descripcion: "Compite respondiendo preguntas y llega antes a la meta.",
-      miniatura: iconoHubCarreraPlaza,
-      colorFlecha: "#f3cdd2",
-      destino: "carrera"
-    },
-    {
-      id: "muerte",
-      nombre: "Salva a tu trabajadora social",
-      descripcion: "Responde rápido y ayuda a rescatarla antes de que sea tarde.",
-      miniatura: iconoHubSalvaTrabajadora,
-      colorFlecha: "#f6d7ae",
-      destino: "muerte"
-    },
-    {
-      id: "archivos",
-      nombre: "Conecta la Constitución",
-      descripcion: "Une artículos y conceptos para completar la conexión.",
-      miniatura: iconoHubConectaConstitucion,
-      colorFlecha: "#d7dcc0",
-      destino: "archivos"
-    },
-    {
-      id: "construye",
-      nombre: "Construye la Constitución",
-      descripcion: "Coloca cada parte de la Constitución en su lugar correcto.",
-      miniatura: iconoHubConstruyeConstitucion,
-      colorFlecha: "#d9cdf0",
-      destino: "construye"
-    }
-  ];
-
-  return conPersonaje(
-    <div style={styles.menuContainer}>
-      <style>{globalStyles}</style>
-
-      <div style={styles.menuHeader}>
-        <h1 style={styles.menuTitle}>Minijuegos</h1>
-        <div style={styles.menuUnderline} />
+  const c = COLOR_SECCION.juegos;
+  return conBarra(
+    <>
+      <TituloHub titulo="Juegos" subtitulo="Repasa jugando: compite o aguanta la presión" color={c.linea} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Tile
+          icono={iconoHubCarreraPlaza}
+          nombre="Carrera por la Plaza"
+          texto="Compite con tus compis y llega antes a la meta"
+          fondo={c.fondo}
+          linea={c.linea}
+          ancho={2}
+          alto={130}
+          bloqueado={mostrarBloqueo}
+          onClick={() => setPantalla("carrera")}
+        />
+        <Tile
+          icono={iconoHubSalvaTrabajadora}
+          nombre="Salva a tu trabajadora social"
+          texto="Responde rápido antes de que se le caiga todo encima"
+          fondo={c.fondoClaro}
+          linea={c.linea}
+          ancho={2}
+          alto={130}
+          bloqueado={mostrarBloqueo}
+          onClick={() => setPantalla("muerte")}
+        />
       </div>
+    </>
+  );
+}
 
-      <p style={styles.minijuegosSubtitulo}>
-        Aprende jugando, repasa sin darte cuenta y disfruta del camino.
-      </p>
-
-      {listaMinijuegos.map((j) => (
-        <button
-          key={j.id}
-          onClick={() => setPantalla(j.destino)}
-          style={{
-            ...styles.minijuegoFilaCard,
-            ...(mostrarBloqueo && j.id !== "construye" ? estiloBloqueado : {})
-          }}
-        >
-          {mostrarBloqueo && j.id !== "construye" && candado}
-          <img src={j.miniatura} alt={j.nombre} style={styles.minijuegoFilaImg} />
-          <div style={styles.minijuegoFilaTexto}>
-            <p style={styles.minijuegoFilaTitulo}>{j.nombre}</p>
-            <p style={styles.minijuegoFilaDescripcion}>{j.descripcion}</p>
-          </div>
-          <span style={{ ...styles.minijuegoFilaFlecha, background: j.colorFlecha }}>→</span>
-        </button>
-      ))}
-
-      <button onClick={volverMenu} style={styles.linkVolver}>
-        ⬅ Volver al menú
-      </button>
-    </div>
+// 🗂️ MI EXPEDIENTE
+if (pantalla === "expediente") {
+  return conBarra(
+    <MiExpediente
+      usuario={usuario}
+      aprobada={aprobada}
+      mostrarBloqueo={mostrarBloqueo}
+      calendario={calendario}
+      irA={setPantalla}
+    />
   );
 }
 
 // 🗓️ MI CALENDARIO
 if (pantalla === "calendario") {
   return conPersonaje(
-    <MiCalendario volverMenu={volverMenu} irAPerfil={() => setPantalla("ajustes")} />
+    <MiCalendario volverMenu={() => volverA("expediente")} irAPerfil={() => setPantalla("ajustes")} />
   );
 }
 
@@ -504,38 +487,66 @@ if (pantalla === "muerte") {
       <SalvaTrabajadoraSocial
         preguntasBase={preguntasBase}
         setPantalla={setPantalla}
-        volverMenu={volverMenu}
+        volverMenu={() => volverA("minijuegos")}
       />
     );
   }
 
-  // 📖 ESTUDIAR
+  // 📖 TEST → REPASO (por bloques o general)
   if (pantalla === "estudiar-estudio") {
     return conPersonaje(
       <Estudiar
+        key={pantalla}
         preguntasBase={preguntasVisibles}
-        volverMenu={volverMenu}
+        volverMenu={() => volverA("test")}
         sincronizarConNube={sincronizarConNube}
         vistaInicial="config"
       />
     );
   }
 
-  // 📈 MI EVOLUCIÓN
+  // 🗂️ TEST → REPASAR ERRORES
+  if (pantalla === "estudiar-errores") {
+    return conPersonaje(
+      <Estudiar
+        key={pantalla}
+        preguntasBase={preguntasVisibles}
+        volverMenu={() => volverA("test")}
+        sincronizarConNube={sincronizarConNube}
+        vistaInicial="errores"
+      />
+    );
+  }
+
+  // ❤️ TEST → FAVORITAS
+  if (pantalla === "estudiar-favoritos") {
+    return conPersonaje(
+      <Estudiar
+        key={pantalla}
+        preguntasBase={preguntasVisibles}
+        volverMenu={() => volverA("test")}
+        sincronizarConNube={sincronizarConNube}
+        vistaInicial="favoritos"
+      />
+    );
+  }
+
+  // 📈 MI EXPEDIENTE → EVOLUCIÓN (solo estadísticas)
   if (pantalla === "estudiar-progreso") {
     return conPersonaje(
       <Estudiar
+        key={pantalla}
         preguntasBase={preguntasVisibles}
-        volverMenu={volverMenu}
+        volverMenu={() => volverA("expediente")}
         sincronizarConNube={sincronizarConNube}
-        vistaInicial="progreso"
+        vistaInicial="estadisticas"
       />
     );
   }
 
   // 📝 SIMULACRO OFICIAL
   if (pantalla === "simulacro") {
-    return <Simulacro preguntasBase={preguntasBase} volverMenu={volverMenu} />;
+    return <Simulacro preguntasBase={preguntasBase} volverMenu={() => volverA("test")} />;
   }
 
   // 🏁 CARRERA POR LA PLAZA
@@ -544,32 +555,67 @@ if (pantalla === "muerte") {
       <CarreraPlaza
         preguntasBase={preguntasBase}
         setPantalla={setPantalla}
-        volverMenu={volverMenu}
+        volverMenu={() => volverA("minijuegos")}
         vistaInicial={carreraOnline ? "online" : "detalle"}
       />
     );
   }
 
-  // 🏛️ CONSTRUYE LA CONSTITUCIÓN
-  if (pantalla === "construye") {
-    return <ConstruyeConstitucion setPantalla={setPantalla} />;
+  // 🏛️ CONSTRUYE LA CONSTITUCIÓN (y Explora, que vive dentro)
+  if (pantalla === "construye" || pantalla === "explora") {
+    return (
+      <ConstruyeConstitucion
+        key={pantalla}
+        setPantalla={setPantalla}
+        volver={() => volverA("estudiar")}
+        vistaInicial={pantalla === "explora" ? "explorar" : "detalle"}
+      />
+    );
   }
 
-  // 📁 CONECTA LA CONSTITUCIÓN
+  // 🔁 ERRE QUE ERRE (te propone el artículo que menos dominas)
+  if (pantalla === "erre") {
+    return conPersonaje(
+      <ErreDelDia volver={() => volverA("estudiar")} irAExplorar={() => setPantalla("explora")} />
+    );
+  }
+
+  // 📁 CONECTA LA CONSTITUCIÓN (al salir, vuelve a Estudiar)
   if (pantalla === "archivos") {
-    return conPersonaje(<ConectaConstitucion setPantalla={setPantalla} volverMenu={volverMenu} />);
+    return conPersonaje(
+      <ConectaConstitucion
+        setPantalla={(p) => setPantalla(p === "minijuegos" || p === "inicio" ? "estudiar" : p)}
+        volverMenu={() => volverA("estudiar")}
+      />
+    );
   }
 
   // 💌 MIS COMPIS
   if (pantalla === "compis") {
     return conPersonaje(
-      <MisCompis usuario={usuario} volver={() => setPantalla("ajustes")} irACarrera={abrirCarreraOnline} />
+      <MisCompis usuario={usuario} volver={() => setPantalla("expediente")} irACarrera={abrirCarreraOnline} />
     );
   }
 
-  // 🗂️ MI TARJETERO (de momento, solo para la administradora, desde Mi perfil)
+  // 🗂️ MI TARJETERO (cada cuenta el suyo)
   if (pantalla === "tarjetero") {
-    return conPersonaje(<Tarjetero volver={() => setPantalla("ajustes")} />);
+    return conPersonaje(<Tarjetero volver={() => setPantalla("expediente")} />);
+  }
+
+  // ⚖️ MIS IMPUGNACIONES
+  if (pantalla === "impugnaciones") {
+    return conPersonaje(
+      <div style={styles.menuContainer}>
+        <div style={styles.menuHeader}>
+          <h1 style={styles.menuTitle}>Impugnaciones</h1>
+          <div style={styles.menuUnderline} />
+        </div>
+        <MisImpugnaciones />
+        <button onClick={() => setPantalla("expediente")} style={styles.linkVolver}>
+          ⬅ Volver a Mi expediente
+        </button>
+      </div>
+    );
   }
 
   // ⚙️ AJUSTES — perfil y código de sincronización
@@ -601,36 +647,6 @@ if (pantalla === "muerte") {
 
 <CuentaUsuario usuario={usuario} estadoAcceso={estadoAcceso} />
 
-{usuario && aprobada && (
-  <button
-    onClick={() => setPantalla("compis")}
-    style={{ ...styles.minijuegoFilaCard, width: "100%", boxSizing: "border-box" }}
-  >
-    <img src={iconoSobre} alt="" style={styles.minijuegoFilaImg} />
-    <div style={styles.minijuegoFilaTexto}>
-      <p style={styles.minijuegoFilaTitulo}>Mis compis</p>
-      <p style={styles.minijuegoFilaDescripcion}>Tu código, tus compis y sus hechizos.</p>
-    </div>
-    <span style={{ ...styles.minijuegoFilaFlecha, background: "#f3cdd2" }}>→</span>
-  </button>
-)}
-
-{usuario && usuario.uid === ADMIN_UID && (
-  <button
-    onClick={() => setPantalla("tarjetero")}
-    style={{ ...styles.minijuegoFilaCard, width: "100%", boxSizing: "border-box" }}
-  >
-    <img src={iconoTarjetero} alt="" style={styles.minijuegoFilaImg} />
-    <div style={styles.minijuegoFilaTexto}>
-      <p style={styles.minijuegoFilaTitulo}>Mi tarjetero</p>
-      <p style={styles.minijuegoFilaDescripcion}>Tus resúmenes, ordenados en carpetas.</p>
-    </div>
-    <span style={{ ...styles.minijuegoFilaFlecha, background: "#d9cdf0" }}>→</span>
-  </button>
-)}
-
-<MisImpugnaciones />
-
         <div style={styles.perfilNotaCard}>
           <span style={{ fontSize: 22 }}>🌸</span>
           <p style={{ margin: 0 }}>
@@ -638,8 +654,8 @@ if (pantalla === "muerte") {
           </p>
         </div>
 
-        <button onClick={volverMenu} style={styles.linkVolver}>
-          ⬅ Volver al menú
+        <button onClick={() => volverA("expediente")} style={styles.linkVolver}>
+          ⬅ Volver a Mi expediente
         </button>
       </div>
     );

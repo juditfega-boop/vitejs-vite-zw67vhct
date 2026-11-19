@@ -56,7 +56,7 @@ export default function PersonajeFlotante({ mensajeContextual, poolMensajesExtra
       if (!arrastrandoRef.current) return;
       seMovioRef.current = true;
       const nuevoX = Math.min(Math.max(10, e.clientX - offsetRef.current.x), window.innerWidth - 70);
-      const nuevoY = Math.min(Math.max(10, e.clientY - offsetRef.current.y), window.innerHeight - 70);
+      const nuevoY = Math.min(Math.max(10, e.clientY - offsetRef.current.y), window.innerHeight - 150); // sin meterse detrás de la barra inferior
       setPos({ x: nuevoX, y: nuevoY });
     }
     function soltar() {

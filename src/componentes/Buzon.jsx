@@ -32,6 +32,32 @@ const est = {
     cursor: "pointer"
   },
   tarjetaImg: { width: 62, height: 62, objectFit: "contain", flexShrink: 0 },
+  icono: {
+    position: "relative",
+    width: 46,
+    height: 46,
+    border: "none",
+    borderRadius: 15,
+    background: "#fffaf2",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    padding: 0,
+    flexShrink: 0
+  },
+  iconoImg: { width: 32, height: 32, objectFit: "contain" },
+  punto: {
+    position: "absolute",
+    top: 7,
+    right: 7,
+    width: 10,
+    height: 10,
+    borderRadius: "50%",
+    background: "#c96a6a",
+    border: "2px solid #fffaf2"
+  },
   tarjetaTitulo: { fontSize: 15, fontWeight: 700, color: "#4a463f", margin: 0 },
   tarjetaTexto: { fontSize: 12, color: "#8a8578", margin: "3px 0 0" },
   flecha: { marginLeft: "auto", fontSize: 22, color: "#c2b3d6" },
@@ -100,13 +126,16 @@ export default function Buzon({ usuario, irACarrera }) {
             .catch(() => {});
         });
 
-      setAvisos(lista);
+      // 🍂 los avisos de hace más de 7 días caducan solos
+      const SIETE_DIAS = 7 * 24 * 60 * 60 * 1000;
+      const viejos = lista.filter((a) => a.fecha && a.fecha.toDate && Date.now() - a.fecha.toDate().getTime() > SIETE_DIAS);
+      viejos.forEach((a) => borrarAviso(usuario.uid, a.id).catch(() => {}));
+      setAvisos(lista.filter((a) => !viejos.includes(a)));
     });
   }, [usuario?.uid]);
 
   const noLeidos = avisos.filter((a) => !a.leido).length + (salaPendiente ? 1 : 0);
 
-  if (avisos.length === 0 && !salaPendiente) return null;
 
   function abrir() {
     setError("");
@@ -163,22 +192,14 @@ export default function Buzon({ usuario, irACarrera }) {
     <>
       <style>{cssHechizos}</style>
 
-      <button onClick={abrir} style={est.tarjeta}>
-        <img
-          src={iconoSobre}
-          alt=""
-          className={noLeidos > 0 ? "sobre-latido" : ""}
-          style={est.tarjetaImg}
-        />
-        <span>
-          <p style={est.tarjetaTitulo}>
-            {noLeidos > 0 ? `Tienes ${noLeidos} ${noLeidos === 1 ? "aviso" : "avisos"}` : "Tu buzón"}
-          </p>
-          <p style={est.tarjetaTexto}>
-            {noLeidos > 0 ? "Toca para abrir el buzón" : "No hay nada nuevo"}
-          </p>
-        </span>
-        <span style={est.flecha}>›</span>
+      {/* ✉️ sobre pequeño en la cabecera de Inicio, con un puntito si hay algo nuevo */}
+      <button
+        onClick={abrir}
+        aria-label={noLeidos > 0 ? `Buzón: ${noLeidos} ${noLeidos === 1 ? "aviso nuevo" : "avisos nuevos"}` : "Buzón"}
+        style={est.icono}
+      >
+        <img src={iconoSobre} alt="" className={noLeidos > 0 ? "sobre-latido" : ""} style={est.iconoImg} />
+        {noLeidos > 0 && <span style={est.punto} />}
       </button>
 
       {abierto && (

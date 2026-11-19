@@ -17,7 +17,7 @@ const ORDEN_TIPOS = ["E", "R", "M", "F", "V", "L"];
 
 const TIPOS_CON_PROGRESO = ["E", "R", "M", "F"];
 
-const HOY_TE_TOCA = {
+export const HOY_TE_TOCA = {
   E: { texto: "estudio", frase: "Un tema más hacia la plaza." },
   R: { texto: "repaso", frase: "Tests o tarjetas, sin agobios." },
   M: { texto: "repaso mensual", frase: "Hoy toca mirar todo lo del mes." },
