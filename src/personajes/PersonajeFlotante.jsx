@@ -91,7 +91,7 @@ export default function PersonajeFlotante({ mensajeContextual, poolMensajesExtra
   }
 
   return (
-    <div style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 50 }}>
+    <div data-guia="personaje" style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 50 }}>
       <button
         onPointerDown={iniciarArrastre}
         onClick={alPulsar}

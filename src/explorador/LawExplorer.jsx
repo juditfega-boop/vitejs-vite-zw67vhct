@@ -3,6 +3,7 @@ import PasoPuerta from './PasoPuerta';
 import imagenesExplorador from './imagenesRegistry';
 import PUERTAS from './data/puertas';
 import LlaveSala, { llavesDeHoy, guardarLlave } from './LlaveSala';
+import { marcarRacion } from '../servicios/progreso';
 
 // 🖼️ precarga: las imágenes se descargan y preparan antes de necesitarlas
 const imagenesPreparadas = {};
@@ -91,6 +92,11 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
 
   const ruta = useMemo(() => resolverRuta(data, rutaIds), [data, rutaIds]);
   const nodoActual = ruta[ruta.length - 1];
+
+  // 🍲 abrir un artículo cuenta para la tarea «Explora» de tu ración
+  useEffect(() => {
+    if (esHojaNodo(nodoActual)) marcarRacion('explora');
+  }, [nodoActual]);
 
   // el aviso de "sala en obras" desaparece solo
   useEffect(() => {

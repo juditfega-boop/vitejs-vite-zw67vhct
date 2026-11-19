@@ -67,9 +67,10 @@ export function Rejilla({ children }) {
 }
 
 // tarjeta grande: icono, nombre, explicación y una rayita de color
-export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1, bloqueado, onClick, etiqueta }) {
+export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1, bloqueado, onClick, etiqueta, guia }) {
   return (
     <button
+      data-guia={guia}
       onClick={onClick}
       className="tile-hub"
       style={{
@@ -136,9 +137,10 @@ export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1
 }
 
 // fila de Mi expediente: icono, nombre y explicación
-export function Fila({ icono, nombre, texto, bloqueado, onClick }) {
+export function Fila({ icono, nombre, texto, bloqueado, onClick, guia }) {
   return (
     <button
+      data-guia={guia}
       onClick={onClick}
       className="tile-hub"
       style={{

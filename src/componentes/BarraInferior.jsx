@@ -31,6 +31,7 @@ export default function BarraInferior({ activa, irA }) {
       {/* hueco al final de la página para que la barra no tape lo último */}
       <div style={{ height: ALTO_BARRA + 24 }} />
       <nav
+        data-guia="barra"
         aria-label="Navegación principal"
         style={{
           position: "fixed",
@@ -57,6 +58,7 @@ export default function BarraInferior({ activa, irA }) {
           return (
             <button
               key={p.id}
+              data-guia={`tab-${p.id}`}
               className="barra-pestana"
               onClick={() => {
                 window.scrollTo(0, 0);

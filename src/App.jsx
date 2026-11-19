@@ -32,7 +32,7 @@ import IntroAnimada from "./componentes/IntroAnimada";
 import BarraInferior, { PANTALLAS_CON_BARRA } from "./componentes/BarraInferior";
 import InicioHoy from "./componentes/InicioHoy";
 import MiExpediente from "./componentes/MiExpediente";
-import GuiaRapida from "./componentes/GuiaRapida";
+import GuiaVisita, { CLAVE_VISITA } from "./componentes/GuiaVisita";
 import { TituloHub, SubtituloMano, Rejilla, Tile, COLOR_SECCION, FONDO_PAPEL, PAGINA, cssHub } from "./componentes/Hub";
 import { useCalendario } from "./servicios/calendario";
 import ErreDelDia from "./erre/ErreDelDia";
@@ -188,6 +188,23 @@ export default function App() {
     sincronizarConNube();
   }
 
+  // 🧭 visita guiada: sale sola la primera vez que se llega a Inicio
+  const [pasoGuia, setPasoGuia] = useState(null);
+  useEffect(() => {
+    if (pantalla !== "inicio" || pasoGuia !== null) return;
+    try {
+      if (!localStorage.getItem(CLAVE_VISITA)) setPasoGuia(0);
+    } catch {}
+  }, [pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function terminarGuia() {
+    try {
+      localStorage.setItem(CLAVE_VISITA, "1");
+    } catch {}
+    setPasoGuia(null);
+    setPantalla("inicio");
+  }
+
   // 🗓️ calendario de la cuenta (para "Hoy toca…", la ración y la semana)
   const calendario = useCalendario(aprobada ? usuario : null);
 
@@ -293,6 +310,9 @@ function conBarra(contenido) {
       <style>{cssHub}</style>
       <div style={PAGINA}>{contenido}</div>
       <BarraInferior activa={pantalla} irA={setPantalla} />
+      {pasoGuia !== null && (
+        <GuiaVisita paso={pasoGuia} setPaso={setPasoGuia} pantalla={pantalla} irA={setPantalla} onFin={terminarGuia} />
+      )}
     </div>
   );
 }
@@ -309,7 +329,7 @@ if (pantalla === "inicio") {
         irA={setPantalla}
         buzon={aprobada && usuario ? <Buzon usuario={usuario} irACarrera={abrirCarreraOnline} /> : null}
       />
-      <GuiaRapida />
+
     </>
   );
 }
@@ -323,6 +343,7 @@ if (pantalla === "estudiar") {
       <Rejilla>
         <Tile
           icono={iconoExplora}
+          guia="explora"
           nombre="Explora la Constitución"
           texto="Recorre sus salas y abre cada artículo"
           fondo={c.fondo}
@@ -333,6 +354,7 @@ if (pantalla === "estudiar") {
         />
         <Tile
           icono={iconoErre}
+          guia="erre"
           nombre="Erre que erre"
           texto="Escribe un artículo de memoria"
           fondo={c.fondoClaro}
@@ -341,6 +363,7 @@ if (pantalla === "estudiar") {
         />
         <Tile
           icono={iconoHubConstruyeConstitucion}
+          guia="construye"
           nombre="Construye"
           texto="Coloca cada parte en su sitio"
           fondo={c.fondo}
@@ -349,6 +372,7 @@ if (pantalla === "estudiar") {
         />
         <Tile
           icono={iconoHubConectaConstitucion}
+          guia="conecta"
           nombre="Conecta"
           texto="Une cada artículo con lo que dice"
           fondo={c.fondo}
@@ -358,6 +382,7 @@ if (pantalla === "estudiar") {
         />
         <Tile
           icono={iconoTarjetero}
+          guia="tarjetero"
           nombre="Tarjetero"
           texto="Tus resúmenes en carpetas"
           fondo={c.fondoClaro}
@@ -382,6 +407,7 @@ if (pantalla === "test") {
       <Rejilla>
         <Tile
           icono={iconoRepaso}
+          guia="repaso"
           nombre="Repaso"
           texto="Por bloques o general, a tu ritmo"
           fondo={c.fondo}
@@ -391,6 +417,7 @@ if (pantalla === "test") {
         />
         <Tile
           icono={iconoReloj}
+          guia="simulacro"
           nombre="Simulacro oficial"
           texto="Examen completo de 100 preguntas"
           fondo={c.fondo}
@@ -404,6 +431,7 @@ if (pantalla === "test") {
       <Rejilla>
         <Tile
           icono={iconoRepasarErrores}
+          guia="errores"
           nombre="Repasar errores"
           texto="Las que has fallado"
           etiqueta={pendientes > 0 ? `${pendientes} ${pendientes === 1 ? "pendiente" : "pendientes"}` : null}
@@ -414,6 +442,7 @@ if (pantalla === "test") {
         />
         <Tile
           icono={iconoFavoritas}
+          guia="favoritas"
           nombre="Favoritas"
           texto="Las que has guardado"
           etiqueta={favoritas > 0 ? `${favoritas} ${favoritas === 1 ? "guardada" : "guardadas"}` : null}
@@ -436,6 +465,7 @@ if (pantalla === "minijuegos") {
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <Tile
           icono={iconoHubCarreraPlaza}
+          guia="carrera"
           nombre="Carrera por la Plaza"
           texto="Compite con tus compis y llega antes a la meta"
           fondo={c.fondo}
@@ -447,6 +477,7 @@ if (pantalla === "minijuegos") {
         />
         <Tile
           icono={iconoHubSalvaTrabajadora}
+          guia="salva"
           nombre="Salva a tu trabajadora social"
           texto="Responde rápido antes de que se le caiga todo encima"
           fondo={c.fondoClaro}
@@ -470,6 +501,10 @@ if (pantalla === "expediente") {
       mostrarBloqueo={mostrarBloqueo}
       calendario={calendario}
       irA={setPantalla}
+      verInstrucciones={() => {
+        setPantalla("inicio");
+        setPasoGuia(0);
+      }}
     />
   );
 }

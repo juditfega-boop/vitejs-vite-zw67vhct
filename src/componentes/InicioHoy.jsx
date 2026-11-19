@@ -20,6 +20,7 @@ import iconoErre from "../assets/kit/icono-hub-erre-que-erre.png";
 import iconoReloj from "../assets/kit/icono-reloj-simulacro.png";
 import iconoTaza from "../assets/kit/icono-taza-perfil.png";
 import iconoDados from "../assets/kit/icono-dados-minijuegos.png";
+import iconoExplora from "../assets/kit/icono-explora.png";
 import semana0 from "../assets/kit/jardin-semana-0.png";
 import semana1 from "../assets/kit/jardin-semana-1.png";
 import semana2 from "../assets/kit/jardin-semana-2.png";
@@ -36,8 +37,26 @@ const COLOR_TAREA = {
   test: "#f8e6e8",
   errores: "#fbf0f1",
   erre: "#ebe4f7",
+  explora: "#f1ecfa",
   simulacro: "#f8e6e8"
 };
+
+// 🧩 las tareas que puede llevar la ración
+const TAREAS = {
+  erre: { id: "erre", titulo: "Erre que erre", texto: "1 artículo", icono: iconoErre, destino: "erre" },
+  explora: { id: "explora", titulo: "Explora", texto: "1 artículo", icono: iconoExplora, destino: "explora" },
+  test: { id: "test", titulo: "Test de 10", texto: "De lo que estudias", icono: iconoTest, destino: "estudiar-estudio" },
+  errores: { id: "errores", titulo: "Errores", texto: "Tus pendientes", icono: iconoErrores, destino: "estudiar-errores" },
+  simulacro: { id: "simulacro", titulo: "Simulacro", texto: "Con calma", icono: iconoReloj, destino: "simulacro" }
+};
+
+// las que se pueden añadir o quitar en "Personalizar"
+const PERSONALIZABLES = [
+  { id: "erre", nombre: "Erre que erre", detalle: "Memorizar un artículo" },
+  { id: "explora", nombre: "Explora la Constitución", detalle: "Abrir un artículo" },
+  { id: "test", nombre: "Test de 10", detalle: "Preguntas de lo que estudias" },
+  { id: "errores", nombre: "Repasar errores", detalle: "Solo si tienes pendientes" }
+];
 
 const cssInicio = `
   @keyframes selloHecho { 0% { opacity: 0; transform: rotate(-12deg) scale(1.8); } 70% { opacity: 1; transform: rotate(-12deg) scale(0.95); } 100% { opacity: 1; transform: rotate(-12deg) scale(1); } }
@@ -46,23 +65,33 @@ const cssInicio = `
   .racion-tarjeta:active { transform: scale(0.97) !important; }
 `;
 
-// 📝 qué toca hoy, según el día del calendario (y lo que hayas añadido tú)
+// 📝 qué toca hoy, según el día del calendario (y lo que hayas añadido o quitado tú)
+// extras: { erre: "siempre" | "nunca", … } — lo que no está, va "según el día"
 function tareasDeHoy(tipo, pendientes, extras) {
-  const errores = pendientes > 0
-    ? [{ id: "errores", titulo: "Errores", texto: `${Math.min(10, pendientes)} pendientes`, icono: iconoErrores, destino: "estudiar-errores" }]
-    : [];
-  const test = (titulo, texto) => ({ id: "test", titulo, texto, icono: iconoTest, destino: "estudiar-estudio" });
-  const erre = { id: "erre", titulo: "Erre que erre", texto: "1 artículo", icono: iconoErre, destino: "erre" };
+  let ids;
+  if (tipo === "E") ids = ["erre", "explora"]; // estudio: memorizar
+  else if (tipo === "R") ids = ["test", "errores"]; // repaso
+  else if (tipo === "M") ids = ["test"]; // repaso mensual
+  else if (tipo === "F") ids = ["simulacro"]; // repaso final
+  else ids = ["test", "errores"]; // día sin marcar: a tu ritmo
 
-  let tareas;
-  if (tipo === "R") tareas = errores.length ? [...errores, erre] : [test("Test de 10", "Del bloque que quieras"), erre];
-  else if (tipo === "M") tareas = [test("Test mezclado", "Todos los bloques")];
-  else if (tipo === "F") tareas = [{ id: "simulacro", titulo: "Simulacro", texto: "Con calma", icono: iconoReloj, destino: "simulacro" }];
-  // día de estudio, o día sin marcar en el calendario
-  else tareas = [test("Test de 10", "Del bloque que estudias"), ...errores];
+  PERSONALIZABLES.forEach(({ id }) => {
+    const modo = extras[id] === true ? "siempre" : extras[id];
+    if (modo === "siempre" && !ids.includes(id)) ids.push(id);
+    if (modo === "nunca") ids = ids.filter((x) => x !== id);
+  });
 
-  if (extras.erre && !tareas.some((t) => t.id === "erre")) tareas.push(erre);
-  return tareas;
+  return ids
+    .filter((id) => id !== "errores" || pendientes > 0) // quien empieza no tiene errores que repasar
+    .map((id) => {
+      const t = { ...TAREAS[id] };
+      if (id === "errores") t.texto = `${Math.min(10, pendientes)} pendientes`;
+      if (id === "test" && tipo === "M") {
+        t.titulo = "Test por bloques";
+        t.texto = "De lo que estudias";
+      }
+      return t;
+    });
 }
 
 // 🍃 hojita de cada día (dibujada en el mismo trazo que las ilustraciones)
@@ -106,33 +135,6 @@ function Washi({ color, rot = -4, left = "50%" }) {
   );
 }
 
-// interruptor del cuaderno
-function Interruptor({ activo, onCambio, etiqueta }) {
-  return (
-    <button
-      role="switch"
-      aria-checked={activo}
-      aria-label={etiqueta}
-      onClick={() => onCambio(!activo)}
-      style={{
-        flexShrink: 0,
-        width: 48,
-        height: 28,
-        borderRadius: 999,
-        border: "none",
-        padding: 3,
-        cursor: "pointer",
-        background: activo ? "linear-gradient(135deg, #b9a8de, #e2a3a9)" : "#e8e0d4",
-        display: "flex",
-        justifyContent: activo ? "flex-end" : "flex-start",
-        transition: "background 0.2s ease"
-      }}
-    >
-      <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#fffdf9", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }} />
-    </button>
-  );
-}
-
 export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, irA, buzon }) {
   const tipo = usuario ? calendario.tipoHoy : null;
   const datosTipo = tipo ? TIPOS_DIA[tipo] : null;
@@ -161,6 +163,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
 
   function cambiarExtra(clave, valor) {
     const nuevos = { ...extras, [clave]: valor };
+    if (valor === undefined) delete nuevos[clave];
     setExtras(nuevos);
     guardarExtrasRacion(nuevos);
   }
@@ -228,11 +231,12 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
       {/* cabecera: nombre y buzón */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <span style={{ ...MANO, fontSize: 30, color: "#5b4a3a" }}>Insistentes Sociales</span>
-        {buzon}
+        <span data-guia="buzon">{buzon}</span>
       </div>
 
       {/* 🌤️ lo que toca hoy, teñido según el día del calendario */}
       <button
+        data-guia="hoy"
         onClick={() => irA("calendario")}
         style={{
           ...tarjeta,
@@ -291,11 +295,12 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
       </button>
 
       {/* 🍲 TU RACIÓN DE HOY */}
-      <div style={{ marginBottom: 16 }}>
+      <div data-guia="racion" style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "0 0 4px" }}>
           <p style={{ ...MANO, margin: 0, fontSize: 25, lineHeight: 1, color: "#5b4a3a" }}>Tu ración de hoy</p>
           {!descanso && (
             <button
+              data-guia="personalizar"
               onClick={() => setPersonalizando(true)}
               style={{ border: "none", background: "transparent", padding: 0, fontFamily: "inherit", fontSize: 12, color: "#8a6a4f", cursor: "pointer" }}
             >
@@ -314,7 +319,14 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
           </div>
         ) : (
           <>
-            <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${tareas.length === 4 ? 2 : Math.max(1, tareas.length)}, minmax(0, 1fr))`,
+                gap: 10,
+                paddingTop: 8
+              }}
+            >
               {tareas.map((t, i) => {
                 const hecho = !!racion[t.id];
                 return (
@@ -324,12 +336,11 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
                     onClick={() => irA(t.destino)}
                     style={{
                       position: "relative",
-                      flex: 1,
                       minWidth: 0,
                       display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      gap: 3,
+                      flexDirection: tareas.length === 4 ? "row" : "column",
+                      alignItems: tareas.length === 4 ? "center" : "flex-start",
+                      gap: tareas.length === 4 ? 8 : 3,
                       background: COLOR_TAREA[t.id],
                       border: "none",
                       borderRadius: 18,
@@ -363,9 +374,11 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
                         HECHO
                       </span>
                     )}
-                    <img src={t.icono} alt="" style={{ width: 44, height: 44, objectFit: "contain" }} />
-                    <span style={{ fontSize: 13.5, fontWeight: 700, opacity: hecho ? 0.6 : 1 }}>{t.titulo}</span>
-                    <span style={{ fontSize: 11, color: "#5c5850", lineHeight: 1.3 }}>{t.texto}</span>
+                    <img src={t.icono} alt="" style={{ width: tareas.length === 4 ? 38 : 44, height: tareas.length === 4 ? 38 : 44, objectFit: "contain", flexShrink: 0 }} />
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ display: "block", fontSize: 13.5, fontWeight: 700, opacity: hecho ? 0.6 : 1 }}>{t.titulo}</span>
+                      <span style={{ display: "block", fontSize: 11, color: "#5c5850", lineHeight: 1.3 }}>{t.texto}</span>
+                    </span>
                   </button>
                 );
               })}
@@ -403,7 +416,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
       </div>
 
       {/* 🌿 TU JARDÍN: la planta de tu semana */}
-      <div style={tarjeta}>
+      <div data-guia="jardin" style={tarjeta}>
         <Washi color="#c9dcb5" rot={3} left="84%" />
         <p style={{ ...MANO, margin: "0 0 2px", fontSize: 25, lineHeight: 1, color: "#5b4a3a" }}>Tu jardín</p>
 
@@ -491,16 +504,50 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
           >
             <p style={{ ...MANO, margin: "0 0 4px", fontSize: 28, lineHeight: 1, color: "#5b4a3a" }}>Personaliza tu ración</p>
             <p style={{ margin: "0 0 14px", fontSize: 12.5, color: "#5c5850", lineHeight: 1.45 }}>
-              Se suma a lo que toca según tu calendario. En los días de descanso no se añade nada.
+              Elige qué quieres hacer cada día. «Según el día» sigue lo que toca en tu calendario. En los días de descanso no se añade nada.
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderTop: "1px solid #efe6d8" }}>
-              <img src={iconoErre} alt="" style={{ width: 40, height: 40, objectFit: "contain" }} />
-              <span style={{ flex: 1, fontSize: 13.5 }}>
-                <b>Erre que erre</b>
-                <span style={{ display: "block", fontSize: 12, color: "#5c5850" }}>Una ficha cada día</span>
-              </span>
-              <Interruptor activo={!!extras.erre} onCambio={(v) => cambiarExtra("erre", v)} etiqueta="Añadir Erre que erre cada día" />
-            </div>
+            {PERSONALIZABLES.map((p) => {
+              const modo = extras[p.id] === true ? "siempre" : extras[p.id] || "dia";
+              return (
+                <div key={p.id} style={{ padding: "9px 0", borderTop: "1px solid #efe6d8" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                    <img src={TAREAS[p.id].icono} alt="" style={{ width: 34, height: 34, objectFit: "contain" }} />
+                    <span style={{ fontSize: 13.5 }}>
+                      <b>{p.nombre}</b>
+                      <span style={{ display: "block", fontSize: 11.5, color: "#5c5850" }}>{p.detalle}</span>
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }} role="radiogroup" aria-label={p.nombre}>
+                    {[
+                      ["dia", "Según el día"],
+                      ["siempre", "Siempre"],
+                      ["nunca", "Nunca"]
+                    ].map(([valor, texto]) => (
+                      <button
+                        key={valor}
+                        role="radio"
+                        aria-checked={modo === valor}
+                        onClick={() => cambiarExtra(p.id, valor === "dia" ? undefined : valor)}
+                        style={{
+                          flex: 1,
+                          border: "none",
+                          borderRadius: 999,
+                          padding: "7px 4px",
+                          fontSize: 12,
+                          fontFamily: "inherit",
+                          cursor: "pointer",
+                          color: modo === valor ? "#5a4636" : "#7d7468",
+                          fontWeight: modo === valor ? 700 : 400,
+                          background: modo === valor ? "linear-gradient(135deg, #f2cb8f, #eeb9bd)" : "#f3ede3"
+                        }}
+                      >
+                        {texto}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
             <button
               onClick={() => setPersonalizando(false)}
               style={{
