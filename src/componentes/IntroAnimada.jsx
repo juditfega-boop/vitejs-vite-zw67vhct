@@ -35,8 +35,8 @@ const PARTES = [
   { x: 520, y: 0, w: 332, h: 330, efecto: "flor", retraso: 4.55 },   // acuarela de arriba a la derecha
   { x: 0, y: 1430, w: 300, h: 416, efecto: "flor", retraso: 4.75 },  // acuarela de abajo a la izquierda
   { x: 540, y: 1440, w: 312, h: 406, efecto: "flor", retraso: 4.95 }, // acuarela de abajo a la derecha
-  { x: 360, y: 290, w: 130, h: 90, efecto: "flor", retraso: 4.9 },   // corazón
-  { x: 80, y: 380, w: 720, h: 205, efecto: "escribe", retraso: 5.0 }, // título y subrayado
+  { x: 360, y: 276, w: 130, h: 104, efecto: "flor", retraso: 4.9 },  // corazón
+  { x: 80, y: 382, w: 720, h: 203, efecto: "escribe", retraso: 5.0 }, // título ("insistentes sociales") y subrayado
   { x: 160, y: 585, w: 540, h: 110, efecto: "flor", retraso: 5.9 }   // "la app para preparar…"
 ];
 
