@@ -101,7 +101,8 @@ export function actualizarRacha() {
   ayer.setDate(ayer.getDate() - 1);
   const ayerStr = ayer.toISOString().slice(0, 10);
 
-  const nuevaRacha = datos.ultimaFecha === ayerStr ? datos.racha + 1 : 1;
+  const nuevaRacha =
+    datos.ultimaFecha === ayerStr || soloDescansoEntre(datos.ultimaFecha, hoy) ? datos.racha + 1 : 1;
 
   localStorage.setItem(CLAVE_RACHA, JSON.stringify({ ultimaFecha: hoy, racha: nuevaRacha }));
 }
@@ -158,6 +159,86 @@ export function obtenerNivelesErre() {
   }
 }
 
-export function guardarNivelesErre(niveles) {
+// cuentaParaHoy = false cuando solo se copian los niveles desde la nube (no es una ficha hecha hoy)
+export function guardarNivelesErre(niveles, cuentaParaHoy = true) {
   localStorage.setItem(CLAVE_ERRE, JSON.stringify(niveles));
+  if (cuentaParaHoy) marcarRacion("erre");
+}
+
+// 🗓️ ¿entre esos dos días (sin contarlos) solo hubo días libres o de vacaciones del calendario?
+// Así, descansar lo que tenías planificado no rompe la racha.
+function soloDescansoEntre(desde, hasta) {
+  if (!desde) return false;
+  let dias = {};
+  try {
+    dias = (JSON.parse(localStorage.getItem("opo_calendario_copia_v1")) || {}).dias || {};
+  } catch {}
+  const d = new Date(desde + "T12:00:00");
+  d.setDate(d.getDate() + 1);
+  let hayHueco = false;
+  for (let i = 0; i < 60; i++) {
+    const clave = d.toISOString().slice(0, 10);
+    if (clave >= hasta) return hayHueco;
+    if (dias[clave] !== "L" && dias[clave] !== "V") return false;
+    hayHueco = true;
+    d.setDate(d.getDate() + 1);
+  }
+  return false;
+}
+
+// 🔥 la racha que sigue viva hoy (si el último día fue hace tiempo y no eran
+// días de descanso, ya se ha roto aunque esté guardada)
+export function rachaVigente() {
+  const { ultimaFecha, racha } = obtenerRacha();
+  if (!ultimaFecha) return 0;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const ayer = new Date();
+  ayer.setDate(ayer.getDate() - 1);
+  const ayerStr = ayer.toISOString().slice(0, 10);
+  if (ultimaFecha === hoy || ultimaFecha === ayerStr) return racha;
+  // ¿todos los días desde entonces hasta ayer fueron de descanso?
+  return soloDescansoEntre(ultimaFecha, hoy) ? racha : 0;
+}
+
+// 🍲 "Tu ración de hoy": lo que ya has hecho hoy (se reinicia cada día)
+// test = has terminado un test · errores = has terminado un repaso de errores
+// erre = has hecho una ficha de Erre que erre · simulacro = has terminado un simulacro
+export const CLAVE_RACION = "opo_racion_hoy_v1";
+
+function hoyLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+export function obtenerRacion() {
+  try {
+    const datos = JSON.parse(localStorage.getItem(CLAVE_RACION)) || {};
+    return datos.fecha === hoyLocal() ? datos : { fecha: hoyLocal() };
+  } catch {
+    return { fecha: hoyLocal() };
+  }
+}
+
+export function marcarRacion(clave) {
+  const datos = obtenerRacion();
+  if (datos[clave]) return;
+  datos[clave] = true;
+  localStorage.setItem(CLAVE_RACION, JSON.stringify(datos));
+}
+
+// 🌱 "Tu jardín": preguntas resueltas (las que pasaron a 🟢 en Repasar errores).
+// La planta nunca encoge: se guarda el máximo al que has llegado.
+export const CLAVE_JARDIN = "opo_jardin_v1";
+
+export function preguntasResueltasJardin() {
+  const ahora = Object.values(obtenerStats()).filter((s) => escalonDe(s) === ESCALON.RESUELTO).length;
+  let maximo = 0;
+  try {
+    maximo = (JSON.parse(localStorage.getItem(CLAVE_JARDIN)) || {}).maximo || 0;
+  } catch {}
+  if (ahora > maximo) {
+    maximo = ahora;
+    localStorage.setItem(CLAVE_JARDIN, JSON.stringify({ maximo }));
+  }
+  return maximo;
 }

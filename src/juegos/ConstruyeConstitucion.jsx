@@ -49,8 +49,8 @@ const FRASES_COMPROBAR_INCORRECTO = [
 
 // 🏛️ "Construye la Constitución" — componente independiente y autocontenido.
 // Recibe por prop solo lo que necesita para volver al hub de minijuegos.
-export default function ConstruyeConstitucion({ setPantalla }) {
-  const [vista, setVista] = useState("detalle"); // "detalle" | "config" | "jugando" | "explorar" | "erre"
+export default function ConstruyeConstitucion({ setPantalla, volver = () => setPantalla("minijuegos"), vistaInicial = "detalle" }) {
+  const [vista, setVista] = useState(vistaInicial); // "detalle" | "config" | "jugando" | "explorar" | "erre"
   const [articuloPractica, setArticuloPractica] = useState(null);
 
   // Oculta la casita de navegación global mientras se explora el edificio,
@@ -191,7 +191,7 @@ if (vista === "detalle") {
   return (
     <div style={styles.menuContainer}>
       <div style={styles.quizHeaderRow}>
-        <button onClick={() => setPantalla("minijuegos")} style={styles.quizVolverBtn}>
+      <button onClick={volver} style={styles.quizVolverBtn}>
           ⬅
         </button>
       </div>
@@ -235,7 +235,7 @@ if (vista === "detalle") {
         <span style={{ color: "#8a8578" }}>→</span>
       </button>
 
-      <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
+      <button onClick={volver} style={styles.linkVolver}>
         🍃 Volver
       </button>
     </div>
@@ -256,7 +256,7 @@ if (vista === "explorar" || vista === "erre") {
           display: vista === "erre" ? "none" : "block"
         }}
       >
-        <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
+        <button onClick={() => (vistaInicial === "explorar" ? volver() : setVista("detalle"))} style={styles.linkVolver}>
           ⬅ Volver
         </button>
         <LawExplorer
@@ -422,8 +422,8 @@ if (vista === "config") {
           ⬅ Elegir otra vez qué construir
         </button>
 
-        <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver a minijuegos
+        <button onClick={volver} style={styles.linkVolver}>
+          ⬅ Volver a Estudiar
         </button>
       </div>
     );

@@ -12,7 +12,8 @@ import {
   guardarPartida,
   borrarPartida,
   clasificarErrores,
-  ESCALON
+  ESCALON,
+  marcarRacion
 } from "../servicios/progreso";
 import { styles } from "../estilos";
 import iconoTazaPlantita from "../assets/kit/icono-taza-plantita-evolucion.png";
@@ -224,6 +225,12 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     boton.style.display = vista === "quiz" || vista === "repaso" ? "none" : "";
   }, [vista]);
 
+  // 🍲 "Tu ración de hoy": terminar un test o un repaso de errores cuenta
+  useEffect(() => {
+    if (vista === "resultado") marcarRacion("test");
+    if (vista === "repaso-fin" && repasoResumen.respondidas > 0) marcarRacion("errores");
+  }, [vista]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function toggleFavorito(id) {
     const idStr = String(id);
     const yaEra = favoritos.includes(idStr);
@@ -315,8 +322,11 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   }
 
   function volverAProgreso() {
-    setVista("progreso");
     sincronizarConNube();
+    // si has entrado directamente en Repasar errores (desde Test), "volver" te lleva allí o fuera
+    if (vistaInicial === "progreso") setVista("progreso");
+    else if (vistaInicial === "errores" && vista !== "errores") setVista("errores");
+    else volverMenu();
   }
 
   function volverAErrores() {
@@ -534,7 +544,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
 
         <div style={styles.menuHeader}>
         <div style={styles.estudiarHeaderRow}>
-            <h1 style={styles.menuTitle}>Estudiar</h1>
+        <h1 style={styles.menuTitle}>Repaso</h1>
             <img src={iconoLibroEstudiar} alt="" style={styles.estudiarHeaderIcono} />
           </div>
           <div style={styles.menuUnderline} />
