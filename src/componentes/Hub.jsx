@@ -67,7 +67,8 @@ export function Rejilla({ children }) {
 }
 
 // tarjeta grande: icono, nombre, explicación y una rayita de color
-export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1, bloqueado, onClick, etiqueta, guia }) {
+export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1, bloqueado, onClick, etiqueta, guia, tamIcono, fundirIcono }) {
+  const lado = tamIcono || (ancho === 2 ? 92 : 68);
   return (
     <button
       data-guia={guia}
@@ -100,7 +101,14 @@ export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1
       <img
         src={icono}
         alt=""
-        style={{ flexShrink: 0, width: ancho === 2 ? 92 : 68, height: ancho === 2 ? 92 : 68, objectFit: "contain" }}
+        style={{
+          flexShrink: 0,
+          width: lado,
+          height: lado,
+          objectFit: "contain",
+          // si la imagen trae fondo blanco, se funde con el color de la tarjeta
+          ...(fundirIcono ? { mixBlendMode: "multiply" } : {})
+        }}
       />
       <span style={{ display: "flex", flexDirection: "column", flex: 1, alignSelf: "stretch", justifyContent: ancho === 2 ? "center" : "flex-start" }}>
         <span style={{ fontSize: 15, fontWeight: 700, marginTop: ancho === 2 ? 0 : 8 }}>{nombre}</span>

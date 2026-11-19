@@ -11,6 +11,7 @@ import carpetaRoja from "../assets/kit/icono-carpetita-prioritarios.png";
 import carpetaAmarilla from "../assets/kit/icono-carpetita-seguimiento.png";
 import carpetaVerde from "../assets/kit/icono-carpetita-resueltos.png";
 import iconoTaza from "../assets/kit/icono-taza-perfil.png";
+import iconoLlave from "../assets/kit/icono-explora.png";
 
 // 🎞️ Mini-animaciones de la visita guiada: van solas, en bucle, y ocupan poco.
 
@@ -219,4 +220,34 @@ export function AnimCalendario() {
   );
 }
 
-export const ANIMACIONES = { planta: AnimPlanta, erre: AnimErre, carpetas: AnimCarpetas, calendario: AnimCalendario };
+// 🔑 abrir la llave de una sala: fallo, pista y ¡abierta!
+export function AnimLlave() {
+  const f = useFotograma(3, 1800);
+  const caja = (valor, mal) => ({
+    display: "inline-block",
+    minWidth: 30,
+    padding: "2px 6px",
+    margin: "0 3px",
+    borderRadius: 8,
+    textAlign: "center",
+    fontWeight: 700,
+    border: `1.5px solid ${mal ? "#e2a3a9" : valor ? "#8fb89a" : "#d8cbb6"}`,
+    background: mal ? "#f9e3e3" : valor ? "#e3ecd9" : "#fffaf2"
+  });
+  return (
+    <div style={{ ...marco, gap: 12, padding: "0 10px" }}>
+      <img src={iconoLlave} alt="" style={{ width: 62, height: 62, objectFit: "contain", transform: f === 2 ? "rotate(-12deg)" : "none", transition: "transform 0.4s ease" }} />
+      <div key={f} style={{ fontSize: 12.5, lineHeight: 1.5, animation: f === 0 ? "guiaTiembla 0.45s ease 0.3s" : "guiaAparece 0.4s ease both" }}>
+        <b style={{ display: "block", marginBottom: 2 }}>Título I</b>
+        Del <span style={caja(f === 2, f === 0)}>{f === 0 ? "9" : f === 1 ? "…" : "10"}</span> al{" "}
+        <span style={caja(f === 2, f === 0)}>{f === 0 ? "50" : f === 1 ? "…" : "55"}</span>
+        <span style={{ display: "block", fontSize: 11, color: f === 2 ? "#5f8a5a" : "#8a6a4f", marginTop: 3 }}>
+          {f === 0 ? "No es correcto, vuelve a intentarlo" : f === 1 ? "Una pista: empieza en el artículo 10." : "¡Sala abierta!"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export const ANIMACIONES = {
+  llave: AnimLlave, planta: AnimPlanta, erre: AnimErre, carpetas: AnimCarpetas, calendario: AnimCalendario };

@@ -1,8 +1,10 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MANO } from "./Hub";
 import { ANIMACIONES } from "./guiaAnimaciones";
 import registroPersonajes from "../personajes/registroPersonajes";
 import { obtenerPersonajeActivo } from "../personajes/personajeActivo";
+import MaryPoses, { ALTO_POSE } from "./MaryPoses";
+import maryCara from "../assets/kit/mary/mary-cara-guia.png";
 
 // 🧭 VISITA GUIADA: tu personaje te enseña la app pantalla a pantalla.
 // Cada paso dice en qué pantalla está, qué parte ilumina (data-guia="…")
@@ -12,15 +14,17 @@ export const CLAVE_VISITA = "opo_visita_guiada_v1";
 function pasos(nombre) {
   return [
     // 👋 bienvenida
-    { seccion: "Bienvenida", pantalla: "inicio", texto: <>¡Hola! Soy <b>{nombre}</b> y te voy a enseñar tu herramienta.</> },
+    { seccion: "Bienvenida", pantalla: "inicio", presentacion: true, texto: <>¡Hola! Soy <b>{nombre}</b> y te voy a ayudar a conocer tu herramienta. ¡Pínchame para empezar!</> },
     {
       seccion: "Bienvenida",
       pantalla: "inicio",
       texto: (
         <>
           <b>Insistentes Sociales</b> es tu herramienta para preparar la oposición de Trabajo Social: maneras diferentes de estudiar,
-          test como los del examen y repaso jugando. Está hecha por una insistente trabajadora social para más insistentes sociales,
-          para que estudiar sea ameno y divertido.
+          test como los del examen y repasar jugando.
+          <span style={{ display: "block", marginTop: 10 }}>
+            Está hecha por una Insistente Trabajadora Social para más Insistentes Sociales, para que estudiar sea ameno y divertido.
+          </span>
         </>
       )
     },
@@ -53,8 +57,8 @@ function pasos(nombre) {
       guia: "racion",
       texto: (
         <>
-          <b>Tu ración de hoy</b>: unos 15–20 minutos según el día. Estudio: Erre que erre y Explora. Repaso: un test y tus errores.
-          Repaso mensual: test por bloques. Repaso final: simulacro. Y si es día libre, a descansar.
+          <b>Tu ración de hoy</b>: unos 15–20 minutos según el día. En función de lo que hayas puesto en tu calendario, te aparecerán
+          tareas para estudiar y repasar. Y si es tu día libre, ¡te toca descansar!
         </>
       )
     },
@@ -109,8 +113,31 @@ function pasos(nombre) {
       guia: "explora",
       texto: (
         <>
-          <b>Explora la Constitución</b>: recórrela como un edificio, donde cada Título es una sala. Una vez al día, para entrar en
-          cada sala abres su llave: dices de qué artículo a qué artículo va.
+          <b>Explora la Constitución</b>: recórrela como si fuera un edificio. Cada Título es una sala y, dentro, vas abriendo sus
+          Capítulos y Secciones hasta llegar a cada artículo. Así te aprendes dónde está cada cosa.
+        </>
+      )
+    },
+    {
+      seccion: "Estudiar",
+      pantalla: "estudiar",
+      guia: "explora",
+      anim: "llave",
+      texto: (
+        <>
+          Una vez al día, cada sala está <b>cerrada con llave</b>: para abrirla, escribe de qué artículo a qué artículo va y pulsa
+          Comprobar. Si fallas, al segundo intento te da una pista y al tercero puedes ver la respuesta.
+        </>
+      )
+    },
+    {
+      seccion: "Estudiar",
+      pantalla: "estudiar",
+      guia: "explora",
+      texto: (
+        <>
+          Cuando llegas a un artículo, lo lees y, con <b>Practicar este artículo</b>, lo memorizas en Erre que erre para comprobar si
+          te lo has aprendido.
         </>
       )
     },
@@ -133,7 +160,7 @@ function pasos(nombre) {
       texto: (
         <>
           <b>Construye la Constitución</b>: escribe con qué artículo empieza y termina cada parte, y vuelve a levantar el edificio
-          planta a planta.
+          planta a planta. Tu personaje te echa una mano: si una planta se te resiste tres veces, te ofrece pistas.
         </>
       )
     },
@@ -203,8 +230,8 @@ function pasos(nombre) {
       guia: "carrera",
       texto: (
         <>
-          <b>Carrera por la Plaza</b>: compite con 2 a 4 personas, en un solo móvil o cada persona desde el suyo, a ver quién llega
-          antes a la meta.
+          <b>Carrera por la Plaza</b>: compite con 2 a 4 personas, en un solo móvil o cada persona desde el suyo. Para jugar online,
+          alguien crea la sala y comparte el código con el resto. ¡A ver quién llega antes a la meta!
         </>
       )
     },
@@ -239,8 +266,8 @@ function pasos(nombre) {
       anim: "calendario",
       texto: (
         <>
-          <b>Calendario</b>: planificar te quita la duda de qué toca cada día. Marca cada día con su letra, y se marcará como hecho
-          solo cuando completes tu ración.
+          <b>Calendario</b>: organizarte es clave para estudiar. Planificar te ayuda a repartir el temario, repasar a tiempo y llegar
+          al examen sin agobios. Marca cada día con su letra y se marcará como hecho solo cuando completes tu ración.
         </>
       )
     },
@@ -270,13 +297,25 @@ function pasos(nombre) {
       seccion: "Tu personaje",
       pantalla: "expediente",
       guia: "personaje",
-      texto: <>Y a mí me encontrarás siempre aquí: tócame para que te cuente algo y arrástrame donde no te moleste.</>
+      accion: "tocar",
+      texto: <>Y a mí me encontrarás siempre aquí. Tócame (con cariño, ¿eh?, que no hace falta romper la pantalla) y te cuento algo.</>
+    },
+    {
+      seccion: "Tu personaje",
+      pantalla: "expediente",
+      guia: "personaje",
+      accion: "arrastrar",
+      texto: <>¿Ves? Siempre tengo algo que contarte. Y si te molesto, arrástrame a otro sitio de la pantalla. ¡Prueba!</>
     },
     { seccion: "¡Al lío!", pantalla: "inicio", texto: <>¡Ya lo tienes todo! Un poquito cada día: insistentes, pero sin agobios.</> }
   ];
 }
 
 const cssGuia = `
+  @keyframes guiaPlop { 0% { transform: scale(0.4); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+  @keyframes guiaTiembla { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  @keyframes guiaSube { 0% { transform: translate(-50%, 130%); } 70% { transform: translate(-50%, -6%); } 100% { transform: translate(-50%, 0); } }
+  @keyframes guiaBocadillo { 0% { opacity: 0; transform: scale(0.6); } 70% { opacity: 1; transform: scale(1.04); } 100% { opacity: 1; transform: scale(1); } }
   @keyframes guiaAparece { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @keyframes guiaLatido { 0%, 100% { box-shadow: 0 0 0 9999px rgba(52,44,36,0.55), 0 0 0 0 rgba(242,203,143,0.9); } 50% { box-shadow: 0 0 0 9999px rgba(52,44,36,0.55), 0 0 0 8px rgba(242,203,143,0.45); } }
 `;
@@ -287,6 +326,17 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
   const p = lista[Math.min(paso, lista.length - 1)];
   const ultimo = paso >= lista.length - 1;
   const [rect, setRect] = useState(null);
+  const [alturaBocadillo, setAlturaBocadillo] = useState(220);
+  const [modoMary, setModoMary] = useState("entrada"); // "entrada" (sube y saluda) | "trepar" (se mete en el bocadillo)
+  const [deEntrada, setDeEntrada] = useState(false); // el bocadillo viaja de su sitio junto a Mary a su sitio normal
+  const [recienLlegada, setRecienLlegada] = useState(false); // «¡plop!» al aparecer en el círculo
+  const bocadilloRef = useRef(null);
+  const avatarRef = useRef(null);
+
+  // Mary sale de cuerpo entero (marioneta); con otro personaje, su foto
+  const esMary = (personaje.nombre || "").includes("Mary");
+  const fotoCirculo = esMary ? maryCara : personaje.foto;
+  const estiloFotoCirculo = { width: "100%", height: "100%", objectFit: "cover" };
 
   // 🧭 llevar a la pantalla del paso (o avanzar si la persona ha pulsado donde tocaba)
   useEffect(() => {
@@ -296,6 +346,13 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
     }
     if (pantalla !== p.pantalla) irA(p.pantalla);
   }, [paso, pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // al volver a la presentación, Mary vuelve a empezar
+  useEffect(() => {
+    if (p.presentacion) {
+      setModoMary("entrada");
+    }
+  }, [paso]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 🔦 medir lo que se ilumina
   useLayoutEffect(() => {
@@ -329,17 +386,104 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
     };
   }, [paso, pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 📏 altura real del bocadillo (para que nunca se salga de la pantalla)
+  useLayoutEffect(() => {
+    if (bocadilloRef.current) setAlturaBocadillo(bocadilloRef.current.offsetHeight);
+  });
+
+  // 👆 pasos en los que hay que tocar o arrastrar al personaje
+  useEffect(() => {
+    if (!p.accion) return;
+    let inicio = null;
+    let temporizador = null;
+    const enPersonaje = (e) => e.target.closest && e.target.closest('[data-guia="personaje"]');
+    function abajo(e) {
+      if (enPersonaje(e)) inicio = { x: e.clientX, y: e.clientY };
+    }
+    function mover() {
+      if (!inicio) return;
+      const el = document.querySelector('[data-guia="personaje"]');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setRect({ top: r.top - 6, left: r.left - 6, width: r.width + 12, height: r.height + 12 });
+    }
+    function arriba(e) {
+      if (!inicio) return;
+      const distancia = Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y);
+      inicio = null;
+      if (p.accion === "tocar" && distancia < 10) temporizador = setTimeout(() => setPaso(paso + 1), 1800);
+      if (p.accion === "arrastrar" && distancia > 40) temporizador = setTimeout(() => setPaso(paso + 1), 600);
+    }
+    window.addEventListener("pointerdown", abajo, true);
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", arriba, true);
+    return () => {
+      clearTimeout(temporizador);
+      window.removeEventListener("pointerdown", abajo, true);
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", arriba, true);
+    };
+  }, [paso]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 🎎 Mary ya está dentro del bocadillo: aparece en el círculo y el bocadillo se va a su sitio
+  function maryDentro() {
+    setRecienLlegada(true);
+    setDeEntrada(true);
+    setTimeout(() => setRecienLlegada(false), 700);
+    setTimeout(() => setDeEntrada(false), 900);
+    setPaso(paso + 1);
+  }
+
+  function pincharPersonaje() {
+    if (!p.presentacion) return;
+    if (esMary) {
+      if (modoMary === "entrada") setModoMary("trepar");
+    } else {
+      maryDentro();
+    }
+  }
+
+  function siguiente() {
+    if (ultimo) return onFin();
+    setPaso(paso + 1);
+  }
+
   const Anim = p.anim ? ANIMACIONES[p.anim] : null;
+  const ancho = window.innerWidth;
   const alto = window.innerHeight;
-  const arriba = rect && rect.top + rect.height / 2 > alto * 0.5; // el bocadillo va al otro lado de lo iluminado
-  const posicionBocadillo = !rect
-    ? { top: "50%", transform: "translate(-50%, -50%)" }
-    : arriba
-    ? { bottom: Math.max(12, alto - rect.top + 12) }
-    : { top: Math.min(alto - 220, rect.top + rect.height + 12) };
+
+  // 📐 escena de la presentación: dónde está Mary y dónde su bocadillo
+  const margen = Math.max(0, (ancho - 420) / 2);
+  const sMary = Math.min(1, (alto * 0.4) / ALTO_POSE);
+  const L = { H: alto, s: sMary, wx: margen + 70 * Math.min(1, ancho / 390), suelo: alto - 22 };
+  // el bocadillo, justo a su alcance cuando se estira (sus manos llegan al borde)
+  L.bx = L.wx + 83 * sMary - 16;
+  L.by = L.suelo - 296.5 * sMary + 6;
+  L.bw = Math.min(ancho - L.bx - 12, 250);
+  L.bh = alturaBocadillo;
+  L.hr = 18; // el agujero: el círculo de la foto, dentro del bocadillo
+  L.hx = L.bx + 16 + 20;
+  L.hy = L.by + 14 + 20;
+
+  let estiloSitio;
+  if (p.presentacion) {
+    estiloSitio = esMary
+      ? { left: L.bx, top: L.by, width: L.bw, transform: "none" }
+      : { left: "50%", top: Math.max(12, alto - 170 - 50 - alturaBocadillo), width: "min(350px, calc(100vw - 28px))", transform: "translateX(-50%)" };
+  } else {
+    let top;
+    if (!rect) {
+      top = (alto - alturaBocadillo) / 2;
+    } else {
+      const encima = rect.top + rect.height / 2 > alto * 0.5; // el bocadillo va al otro lado de lo iluminado
+      top = encima ? rect.top - 12 - alturaBocadillo : rect.top + rect.height + 12;
+    }
+    top = Math.max(12, Math.min(alto - alturaBocadillo - 12, top));
+    estiloSitio = { left: "50%", top, width: "min(350px, calc(100vw - 28px))", transform: "translateX(-50%)" };
+  }
 
   // zonas que bloquean los toques (dejan libre lo iluminado cuando hay que pulsarlo)
-  const bloqueos = rect && p.toque
+  const bloqueos = rect && (p.toque || p.accion)
     ? [
         { top: 0, left: 0, right: 0, height: Math.max(0, rect.top) },
         { top: rect.top + rect.height, left: 0, right: 0, bottom: 0 },
@@ -348,9 +492,12 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
       ]
     : [{ inset: 0 }];
 
+  const comic = p.presentacion && esMary; // en la presentación, el bocadillo sale de Mary
+
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 80, pointerEvents: "none", fontFamily: "Arial, Helvetica, sans-serif" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 80, pointerEvents: "none", userSelect: "none", WebkitUserSelect: "none", fontFamily: "Arial, Helvetica, sans-serif" }}>
       <style>{cssGuia}</style>
+      {p.accion && <style>{'[data-guia="personaje"] { z-index: 90 !important; }'}</style>}
 
       {/* fondo oscurecido con el hueco de lo que se explica */}
       {rect ? (
@@ -371,103 +518,188 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
         <div key={i} style={{ position: "fixed", ...b, pointerEvents: "auto" }} />
       ))}
 
+      {/* 🎎 presentación: Mary de cuerpo entero (delante del bocadillo hasta que se mete dentro) */}
+      {p.presentacion && esMary && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 6, pointerEvents: "none" }}>
+          <MaryPoses L={L} modo={modoMary} onFin={maryDentro} />
+          {modoMary === "entrada" && (
+            <div
+              onClick={pincharPersonaje}
+              role="button"
+              aria-label={`${personaje.nombre}: pínchame para empezar`}
+              style={{
+                position: "absolute",
+                left: L.wx - 62 * L.s,
+                top: L.suelo - ALTO_POSE * L.s,
+                width: 124 * L.s,
+                height: ALTO_POSE * L.s,
+                cursor: "pointer",
+                pointerEvents: "auto"
+              }}
+            />
+          )}
+        </div>
+      )}
+      {p.presentacion && !esMary && (
+        <div
+          onClick={pincharPersonaje}
+          role="button"
+          aria-label={`${personaje.nombre}: pínchame para empezar`}
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: 28,
+            width: 170,
+            height: 170,
+            borderRadius: "50%",
+            overflow: "hidden",
+            border: "5px solid #fdfaf4",
+            boxSizing: "border-box",
+            background: "#e9dff3",
+            zIndex: 6,
+            cursor: "pointer",
+            pointerEvents: "auto",
+            animation: "guiaSube 0.9s cubic-bezier(.3,1.2,.5,1) both"
+          }}
+        >
+          {personaje.foto && <img src={personaje.foto} alt={personaje.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+        </div>
+      )}
+
       {/* 💬 bocadillo del personaje */}
       <div
         style={{
           position: "fixed",
-          left: "50%",
-          width: "min(350px, calc(100vw - 28px))",
-          ...posicionBocadillo,
-          ...(posicionBocadillo.transform ? {} : { transform: "translateX(-50%)" }),
-          pointerEvents: "auto"
+          zIndex: 5,
+          ...estiloSitio,
+          pointerEvents: modoMary === "trepar" && p.presentacion ? "none" : "auto",
+          transition: deEntrada ? "top 0.7s ease, left 0.7s ease, width 0.7s ease, transform 0.7s ease" : "none"
         }}
       >
-      <div
-        key={paso}
-        style={{
-          background: "#fdfaf4",
-          borderRadius: 24,
-          padding: "14px 16px 12px",
-          boxSizing: "border-box",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.14)",
-          color: "#4a463f",
-          animation: "guiaAparece 0.35s ease both"
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          {personaje.foto ? (
-            <img src={personaje.foto} alt="" style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-          ) : (
-            <span style={{ width: 40, height: 40, borderRadius: "50%", background: "#e9dff3", flexShrink: 0 }} />
+        <div
+          key={paso <= 1 ? "entrada" : paso}
+          ref={bocadilloRef}
+          style={{
+            position: "relative",
+            background: "#fdfaf4",
+            borderRadius: comic ? 30 : 24,
+            padding: "14px 16px 12px",
+            boxSizing: "border-box",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.14)",
+            color: "#4a463f",
+            transformOrigin: comic ? "0% 30%" : "50% 50%",
+            animation: comic ? "guiaBocadillo 0.45s ease 1.1s both" : paso <= 1 ? undefined : "guiaAparece 0.35s ease both"
+          }}
+        >
+          {/* piquito del bocadillo, apuntando a la cara de Mary */}
+          {comic && (
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                left: -9,
+                top: 46,
+                width: 22,
+                height: 22,
+                background: "#fdfaf4",
+                transform: "rotate(45deg) skew(8deg, 8deg)",
+                borderRadius: 4
+              }}
+            />
           )}
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", ...MANO, fontSize: 22, lineHeight: 1, color: "#5b4a3a" }}>{p.seccion}</span>
-            <span style={{ display: "block", fontSize: 11, color: "#8a8070" }}>
-              {paso + 1} de {lista.length}
+          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            {/* el hueco de la foto (en la presentación está vacío: Mary se mete en él) */}
+            <span
+              ref={avatarRef}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                overflow: "hidden",
+                background: p.presentacion ? "radial-gradient(circle at 50% 40%, #6e5f73 0%, #9b8aa0 55%, #d9cde3 100%)" : "#e9dff3",
+                boxShadow: p.presentacion ? "inset 0 4px 8px rgba(0,0,0,0.35)" : "none",
+                flexShrink: 0,
+                border: p.presentacion ? "2px solid #cdbfae" : "none",
+                boxSizing: "border-box",
+                animation: recienLlegada ? "guiaPlop 0.6s cubic-bezier(.3,1.6,.5,1) both" : undefined
+              }}
+            >
+              {!p.presentacion && fotoCirculo && <img src={fotoCirculo} alt="" style={estiloFotoCirculo} />}
             </span>
-          </span>
-          {!ultimo && (
-            <button
-              onClick={onFin}
-              style={{ border: "none", background: "transparent", color: "#8a7d6f", fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}
-            >
-              Saltar
-            </button>
-          )}
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: "block", ...MANO, fontSize: 22, lineHeight: 1, color: "#5b4a3a" }}>{p.seccion}</span>
+              <span style={{ display: "block", fontSize: 11, color: "#8a8070" }}>
+                {paso + 1} de {lista.length}
+              </span>
+            </span>
+            {!ultimo && (
+              <button
+                onClick={onFin}
+                style={{ border: "none", background: "transparent", color: "#8a7d6f", fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Saltar
+              </button>
+            )}
+          </div>
+
+          {/* barrita de progreso */}
+          <div style={{ position: "relative", height: 4, borderRadius: 4, background: "#efe6d8", marginBottom: 10, overflow: "hidden" }}>
+            <div style={{ width: `${((paso + 1) / lista.length) * 100}%`, height: "100%", background: "linear-gradient(90deg, #d9cdf0, #f3cdd2)", transition: "width 0.3s ease" }} />
+          </div>
+
+          {Anim && <Anim />}
+
+          <p style={{ position: "relative", margin: "0 0 12px", fontSize: comic ? 13.5 : 14, lineHeight: 1.5 }}>{p.texto}</p>
+
+          <div style={{ position: "relative", display: "flex", gap: 8, alignItems: "center" }}>
+            {paso > 0 && (
+              <button
+                onClick={() => setPaso(paso - 1 - (lista[paso - 1].toque ? 1 : 0))}
+                style={{
+                  flex: 1,
+                  border: "none",
+                  borderRadius: 16,
+                  padding: "10px",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  fontFamily: "inherit",
+                  color: "#5b4a3a",
+                  background: "#f3ede3",
+                  cursor: "pointer"
+                }}
+              >
+                Anterior
+              </button>
+            )}
+            {p.presentacion ? (
+              <span style={{ flex: 2, textAlign: "center", fontSize: 12.5, color: "#8a6a4f" }}>
+                Pincha a {(personaje.nombre || "tu personaje").split(" ")[0]} ✨
+              </span>
+            ) : p.toque || p.accion ? (
+              <span style={{ flex: 2, textAlign: "center", fontSize: 12.5, color: "#8a6a4f" }}>
+                {p.accion === "tocar" ? "Toca al personaje ✨" : p.accion === "arrastrar" ? "Arrástralo ✨" : "Pulsa donde brilla ✨"}
+              </span>
+            ) : (
+              <button
+                onClick={siguiente}
+                style={{
+                  flex: 2,
+                  border: "none",
+                  borderRadius: 16,
+                  padding: "10px",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  fontFamily: "inherit",
+                  color: "#5a4636",
+                  background: "linear-gradient(135deg, #f2cb8f, #eeb9bd)",
+                  cursor: "pointer"
+                }}
+              >
+                {ultimo ? "¡Vamos al lío!" : "Siguiente"}
+              </button>
+            )}
+          </div>
         </div>
-
-        {/* barrita de progreso */}
-        <div style={{ height: 4, borderRadius: 4, background: "#efe6d8", marginBottom: 10, overflow: "hidden" }}>
-          <div style={{ width: `${((paso + 1) / lista.length) * 100}%`, height: "100%", background: "linear-gradient(90deg, #d9cdf0, #f3cdd2)", transition: "width 0.3s ease" }} />
-        </div>
-
-        {Anim && <Anim />}
-
-        <p style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.5 }}>{p.texto}</p>
-
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {paso > 0 && (
-            <button
-              onClick={() => setPaso(paso - 1 - (lista[paso - 1].toque ? 1 : 0))}
-              style={{
-                flex: 1,
-                border: "none",
-                borderRadius: 16,
-                padding: "10px",
-                fontSize: 14,
-                fontWeight: 700,
-                fontFamily: "inherit",
-                color: "#5b4a3a",
-                background: "#f3ede3",
-                cursor: "pointer"
-              }}
-            >
-              Anterior
-            </button>
-          )}
-          {p.toque ? (
-            <span style={{ flex: 2, textAlign: "center", fontSize: 12.5, color: "#8a6a4f" }}>Pulsa donde brilla ✨</span>
-          ) : (
-            <button
-              onClick={() => (ultimo ? onFin() : setPaso(paso + 1))}
-              style={{
-                flex: 2,
-                border: "none",
-                borderRadius: 16,
-                padding: "10px",
-                fontSize: 14,
-                fontWeight: 700,
-                fontFamily: "inherit",
-                color: "#5a4636",
-                background: "linear-gradient(135deg, #f2cb8f, #eeb9bd)",
-                cursor: "pointer"
-              }}
-            >
-              {ultimo ? "¡Vamos al lío!" : "Siguiente"}
-            </button>
-          )}
-        </div>
-      </div>
       </div>
     </div>
   );
