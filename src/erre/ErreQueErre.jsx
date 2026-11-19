@@ -55,6 +55,8 @@ export default function ErreQueErre({ articulo, onVolver }) {
   const [niveles, setNiveles] = useState(() => obtenerNivelesErre());
   const [resultados, setResultados] = useState({}); // id → "perfecta" | "reintento" | "fallo"
   const [subidas, setSubidas] = useState(0); // cuántas fichas han subido de nivel en esta ronda
+  // 📌 el nivel de cada ficha al empezar la ronda (para saber si ya estaba en «De memoria»)
+  const [nivelesRonda, setNivelesRonda] = useState(() => obtenerNivelesErre());
 
   // ⏳ cuenta atrás para memorizar
   useEffect(() => {
@@ -86,6 +88,7 @@ export default function ErreQueErre({ articulo, onVolver }) {
   }
 
   function repetir() {
+    setNivelesRonda(niveles);
     setResultados({});
     setSubidas(0);
     setIndice(0);
@@ -173,6 +176,21 @@ export default function ErreQueErre({ articulo, onVolver }) {
   // 🌱 FASE 3: FIN
   const perfectas = fichas.filter((f) => resultados[f.id] === "perfecta").length;
   const buenaRonda = perfectas >= Math.ceil(fichas.length / 2);
+  // 🏁 lo has escrito todo de memoria y a la primera: ya no hay nivel que subir
+  const dominado = perfectas === fichas.length && fichas.every((f) => (nivelesRonda[f.id] || 1) === 3);
+
+  function empezarDeCero() {
+    const nuevos = { ...niveles };
+    fichas.forEach((f) => (nuevos[f.id] = 1));
+    setNiveles(nuevos);
+    guardarNivelesErre(nuevos);
+    setNivelesRonda(nuevos);
+    setResultados({});
+    setSubidas(0);
+    setIndice(0);
+    setSegundos(segundosMemorizar(apartados.length));
+    setFase("memorizar");
+  }
   return (
     <div style={styles.menuContainer}>
       {cabecera}
@@ -196,13 +214,24 @@ export default function ErreQueErre({ articulo, onVolver }) {
           );
         })}
       </div>
-      <button onClick={repetir} style={styles.ctaButton}>
-        {perfectas === fichas.length
-          ? subidas > 0
-            ? "⬆️ Sube de nivel"
-            : "🌿 Repasar otra vez"
+      {dominado ? (
+        <>
+          <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 0 }}>
+            ¡Te lo sabes de memoria! Ya has superado los tres niveles.
+          </p>
+          <button onClick={empezarDeCero} style={styles.ctaButton}>
+            🔄 Volver a empezar desde el nivel 1
+          </button>
+        </>
+      ) : (
+        <button onClick={repetir} style={styles.ctaButton}>
+          {perfectas === fichas.length
+            ? subidas > 0
+              ? "⬆️ Sube de nivel"
+              : "🌿 Repasar otra vez"
             : "🔁 Erre que erre: otra vez"}
-            </button>
+        </button>
+      )}
             {perfectas < fichas.length && (
               <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 8 }}>
                 Cada ficha sube de nivel cuando la aciertas a la primera. Las demás se quedan en su nivel

@@ -34,8 +34,8 @@ function pasos(nombre) {
       guia: "barra",
       texto: (
         <>
-          Abajo tienes la barra con las cinco secciones. Dentro de un test, un juego o un examen se esconde: para volver a Inicio,
-          pulsa la <b>casita</b>.
+          Abajo tienes la barra para moverte entre las cinco secciones. Mientras haces un test, un juego o un simulacro, la barra
+          desaparece para que no te distraigas. Para volver a Inicio, pulsa la <b>casita</b> de arriba.
         </>
       )
     },
@@ -46,8 +46,8 @@ function pasos(nombre) {
       guia: "hoy",
       texto: (
         <>
-          Aquí ves <b>qué toca hoy</b> según tu calendario. La llamita cuenta los días seguidos que llevas, y los días libres o de
-          vacaciones que tengas marcados no la rompen.
+          Aquí ves <b>qué toca hoy</b> según tu calendario. La llamita cuenta los días seguidos que llevas cumpliendo. Los días libres
+          o de vacaciones que tengas marcados no rompen la racha.
         </>
       )
     },
@@ -68,8 +68,8 @@ function pasos(nombre) {
       guia: "personalizar",
       texto: (
         <>
-          Con <b>Personalizar</b> añades o quitas tareas para hacerla a tu gusto. Cada tarea terminada se sella con HECHO y, al
-          completarla, el día se marca solo en tu calendario.
+          Con <b>Personalizar</b> añades o quitas tareas de tu ración. Cada tarea que terminas se sella con HECHO. Cuando completas la
+          ración entera, ese día se marca automáticamente en tu calendario.
         </>
       )
     },
@@ -102,8 +102,8 @@ function pasos(nombre) {
       pantalla: "estudiar",
       texto: (
         <>
-          <b>Estudiar</b> son diferentes métodos para memorizar y recordar el temario: para que se te quede de verdad, no solo para
-          reconocerlo en un test.
+          La sección <b>Estudiar</b> recoge diferentes métodos de estudio para memorizar y recordar el temario: para que se te quede
+          de verdad, no solo para reconocerlo en un test.
         </>
       )
     },
@@ -125,8 +125,8 @@ function pasos(nombre) {
       anim: "llave",
       texto: (
         <>
-          Una vez al día, cada sala está <b>cerrada con llave</b>: para abrirla, escribe de qué artículo a qué artículo va y pulsa
-          Comprobar. Si fallas, al segundo intento te da una pista y al tercero puedes ver la respuesta.
+          Cada día, la primera vez que entras en una sala, está <b>cerrada con llave</b>. Para abrirla, escribe de qué artículo a qué
+          artículo va y pulsa Comprobar. Si fallas, en el segundo intento te da una pista y en el tercero puedes ver la respuesta.
         </>
       )
     },
@@ -136,8 +136,8 @@ function pasos(nombre) {
       guia: "explora",
       texto: (
         <>
-          Cuando llegas a un artículo, lo lees y, con <b>Practicar este artículo</b>, lo memorizas en Erre que erre para comprobar si
-          te lo has aprendido.
+          Cuando llegas a un artículo, puedes leerlo. Con <b>Practicar este artículo</b> pasas a Erre que erre para comprobar si te lo
+          sabes y repasarlo.
         </>
       )
     },
@@ -148,8 +148,9 @@ function pasos(nombre) {
       anim: "erre",
       texto: (
         <>
-          <b>Erre que erre</b>: memoriza un artículo y rellena lo que falta. Cada ficha tiene tres niveles y sube cuando la aciertas
-          a la primera.
+          <b>Erre que erre</b>: lee un artículo, memorízalo y después rellena las palabras que faltan. Cada ficha tiene tres niveles y
+          sube de nivel cuando la aciertas a la primera. Si el artículo tiene varios apartados, cada uno va a su ritmo: unos pueden
+          subir de nivel y otros no.
         </>
       )
     },
@@ -159,8 +160,8 @@ function pasos(nombre) {
       guia: "construye",
       texto: (
         <>
-          <b>Construye la Constitución</b>: escribe con qué artículo empieza y termina cada parte, y vuelve a levantar el edificio
-          planta a planta. Tu personaje te echa una mano: si una planta se te resiste tres veces, te ofrece pistas.
+          <b>Construye la Constitución</b>: escribe con qué artículo empieza y termina cada parte y vuelve a levantar el edificio
+          planta a planta. Si una planta se te resiste tres veces, tu personaje te ofrece pistas.
         </>
       )
     },
@@ -183,8 +184,8 @@ function pasos(nombre) {
       guia: "repaso",
       texto: (
         <>
-          <b>Repaso</b>: por bloques o general, con las preguntas que quieras. Te salen primero las que menos te han salido, así que
-          acabas recorriendo todo el banco. Si lo dejas a medias, lo guardas y sigues otro día.
+          <b>Repaso</b>: test por bloques o general, con el número de preguntas que quieras. Primero te salen las preguntas que has
+          hecho menos veces. Así, poco a poco, pasas por todas. Si lo dejas a medias, puedes salir: la partida se queda guardada.
         </>
       )
     },
@@ -206,8 +207,8 @@ function pasos(nombre) {
       anim: "carpetas",
       texto: (
         <>
-          Cada pregunta que fallas va a <b>Repasar errores</b>: primero es prioritaria, con un acierto pasa a seguimiento y con otro
-          queda resuelta. Si la vuelves a fallar, vuelve al principio.
+          Cada pregunta que fallas va a <b>Repasar errores</b>, a la carpeta de prioritarias. Si la aciertas, pasa a seguimiento. Si
+          la vuelves a acertar, queda resuelta. Y si la fallas otra vez, vuelve a prioritarias.
         </>
       )
     },
@@ -217,8 +218,8 @@ function pasos(nombre) {
       guia: "favoritas",
       texto: (
         <>
-          <b>Favoritas</b>: las preguntas que guardas durante un test. Y si ves que alguna pregunta está mal, <b>impúgnala</b> desde
-          la propia pregunta: la respuesta te saldrá en Mi expediente.
+          <b>Favoritas</b>: las preguntas que guardas mientras haces un test. Y si crees que una pregunta está mal, puedes{" "}
+          <b>impugnarla</b> desde la propia pregunta. La respuesta te llegará a Mi expediente.
         </>
       )
     },
@@ -267,7 +268,8 @@ function pasos(nombre) {
       texto: (
         <>
           <b>Calendario</b>: organizarte es clave para estudiar. Planificar te ayuda a repartir el temario, repasar a tiempo y llegar
-          al examen sin agobios. Marca cada día con su letra y se marcará como hecho solo cuando completes tu ración.
+          al examen sin agobios. Marca cada día con su letra. Cuando completes tu ración, ese día se marcará como hecho
+          automáticamente.
         </>
       )
     },
@@ -277,7 +279,7 @@ function pasos(nombre) {
       guia: "compis",
       texto: (
         <>
-          <b>Mis compis</b>: una parte importante es nuestra comunidad. Lanza hechizos mágicos a tus compis y, cuando necesites
+          <b>Mis compis</b>: aquí está tu comunidad de estudio. Lanza hechizos a tus compis para darles ánimo. Y cuando necesites
           apoyo, pide un empujón con «¿Hoy te cuesta?».
         </>
       )
@@ -298,14 +300,19 @@ function pasos(nombre) {
       pantalla: "expediente",
       guia: "personaje",
       accion: "tocar",
-      texto: <>Y a mí me encontrarás siempre aquí. Tócame (con cariño, ¿eh?, que no hace falta romper la pantalla) y te cuento algo.</>
+      texto: <>Y a mí me encontrarás aquí. Tócame y te cuento algo.</>
     },
     {
       seccion: "Tu personaje",
       pantalla: "expediente",
       guia: "personaje",
       accion: "arrastrar",
-      texto: <>¿Ves? Siempre tengo algo que contarte. Y si te molesto, arrástrame a otro sitio de la pantalla. ¡Prueba!</>
+      texto: (
+        <>
+          ¡Con cariño, ¿eh?, que no hace falta romper la pantalla! Siempre tengo algo que contarte, y también te ayudaré en otros
+          momentos. Si te molesto, puedes arrastrarme a otro sitio de la pantalla. ¡Prueba!
+        </>
+      )
     },
     { seccion: "¡Al lío!", pantalla: "inicio", texto: <>¡Ya lo tienes todo! Un poquito cada día: insistentes, pero sin agobios.</> }
   ];
@@ -356,8 +363,10 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
 
   // 🔦 medir lo que se ilumina
   useLayoutEffect(() => {
-    setRect(null);
-    if (!p.guia || pantalla !== p.pantalla) return;
+    if (!p.guia || pantalla !== p.pantalla) {
+      setRect(null);
+      return;
+    }
     let vivo = true;
     let intentos = 0;
     function medir() {
@@ -384,7 +393,7 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
       vivo = false;
       window.removeEventListener("resize", alCambiar);
     };
-  }, [paso, pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [p.guia, p.pantalla, pantalla]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 📏 altura real del bocadillo (para que nunca se salga de la pantalla)
   useLayoutEffect(() => {
