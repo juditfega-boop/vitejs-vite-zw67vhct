@@ -67,7 +67,7 @@ export function Rejilla({ children }) {
 }
 
 // tarjeta grande: icono, nombre, explicación y una rayita de color
-export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1, bloqueado, onClick, etiqueta, guia, tamIcono, fundirIcono }) {
+export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1, bloqueado, onClick, etiqueta, guia, tamIcono, fundirIcono, escalaIcono }) {
   const lado = tamIcono || (ancho === 2 ? 92 : 68);
   return (
     <button
@@ -106,6 +106,8 @@ export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1
           width: lado,
           height: lado,
           objectFit: "contain",
+          // dibujos con mucho aire alrededor: se agrandan sin mover el texto
+          ...(escalaIcono ? { transform: `scale(${escalaIcono})`, transformOrigin: "40% 55%" } : {}),
           // si la imagen trae fondo blanco, se funde con el color de la tarjeta
           ...(fundirIcono ? { mixBlendMode: "multiply" } : {})
         }}

@@ -408,6 +408,7 @@ if (pantalla === "test") {
         <Tile
           icono={iconoRepaso}
           guia="repaso"
+          escalaIcono={1.3}
           nombre="Repaso"
           texto="Por bloques o general, a tu ritmo"
           fondo={c.fondo}
@@ -432,6 +433,8 @@ if (pantalla === "test") {
         <Tile
           icono={iconoRepasarErrores}
           guia="errores"
+          tamIcono={92}
+          escalaIcono={1.45}
           nombre="Repasar errores"
           texto="Las que has fallado"
           etiqueta={pendientes > 0 ? `${pendientes} ${pendientes === 1 ? "pendiente" : "pendientes"}` : null}

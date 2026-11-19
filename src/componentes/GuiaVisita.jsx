@@ -300,7 +300,7 @@ function pasos(nombre) {
       pantalla: "expediente",
       guia: "personaje",
       accion: "tocar",
-      texto: <>Y a mí me encontrarás aquí. Tócame y te cuento algo.</>
+      texto: <>Y a mí me encontrarás aquí. Tócame y te cuento algo.Si me pinchas otra vez, el mensaje desaparece.</>
     },
     {
       seccion: "Tu personaje",
@@ -421,7 +421,7 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
       const distancia = Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y);
       inicio = null;
       if (p.accion === "tocar" && distancia < 10) temporizador = setTimeout(() => setPaso(paso + 1), 1800);
-      if (p.accion === "arrastrar" && distancia > 40) temporizador = setTimeout(() => setPaso(paso + 1), 600);
+
     }
     window.addEventListener("pointerdown", abajo, true);
     window.addEventListener("pointermove", mover);
@@ -684,7 +684,7 @@ export default function GuiaVisita({ paso, setPaso, pantalla, irA, onFin }) {
               <span style={{ flex: 2, textAlign: "center", fontSize: 12.5, color: "#8a6a4f" }}>
                 Pincha a {(personaje.nombre || "tu personaje").split(" ")[0]} ✨
               </span>
-            ) : p.toque || p.accion ? (
+            ) : p.toque || p.accion === "tocar" ? (
               <span style={{ flex: 2, textAlign: "center", fontSize: 12.5, color: "#8a6a4f" }}>
                 {p.accion === "tocar" ? "Toca al personaje ✨" : p.accion === "arrastrar" ? "Arrástralo ✨" : "Pulsa donde brilla ✨"}
               </span>
