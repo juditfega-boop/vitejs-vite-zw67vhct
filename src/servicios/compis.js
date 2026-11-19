@@ -160,3 +160,9 @@ export async function pedirEmpujon(deUid, deNombre, elegidos) {
   await Promise.all(elegidos.map((c) => mandarAviso(c.uid, { tipo: "empujon", de: deUid, nombre: deNombre })));
   localStorage.setItem(CLAVE_EMPUJON, hoy());
 }
+// 🪄 quitar a alguien de MI lista (en la suya sigo estando yo)
+import { deleteField as borrarCampo } from "firebase/firestore";
+
+export function quitarCompi(uid, compiUid) {
+  return updateDoc(doc(db, "gente", uid), { [`compis.${compiUid}`]: borrarCampo() });
+}

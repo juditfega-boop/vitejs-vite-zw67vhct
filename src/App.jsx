@@ -27,6 +27,7 @@ import { leerBanco } from "./servicios/banco";
 import Tarjetero from "./componentes/Tarjetero";
 import Buzon from "./componentes/Buzon";
 import MisCompis from "./componentes/MisCompis";
+import MiIdentidad from "./componentes/MiIdentidad";
 import IntroAnimada from "./componentes/IntroAnimada";
 import BarraInferior, { PANTALLAS_CON_BARRA } from "./componentes/BarraInferior";
 import InicioHoy from "./componentes/InicioHoy";
@@ -308,7 +309,6 @@ if (pantalla === "inicio") {
         irA={setPantalla}
         buzon={aprobada && usuario ? <Buzon usuario={usuario} irACarrera={abrirCarreraOnline} /> : null}
       />
-      <p style={{ ...styles.inicioFraseFinal, marginTop: 22 }}>"{frase}"</p>
       <GuiaRapida />
     </>
   );
@@ -319,7 +319,7 @@ if (pantalla === "estudiar") {
   const c = COLOR_SECCION.estudiar;
   return conBarra(
     <>
-      <TituloHub titulo="Estudiar" subtitulo="Memoriza la ley a tu manera" color={c.linea} />
+      <TituloHub titulo="Estudiar" subtitulo="Diferentes formas de estudiar el temario" color={c.linea} />
       <Rejilla>
         <Tile
           icono={iconoExplora}
@@ -593,7 +593,12 @@ if (pantalla === "muerte") {
   // 💌 MIS COMPIS
   if (pantalla === "compis") {
     return conPersonaje(
-      <MisCompis usuario={usuario} volver={() => setPantalla("expediente")} irACarrera={abrirCarreraOnline} />
+      <MisCompis
+        usuario={usuario}
+        volver={() => setPantalla("expediente")}
+        irACarrera={abrirCarreraOnline}
+        irAPerfil={() => setPantalla("ajustes")}
+      />
     );
   }
 
@@ -646,6 +651,9 @@ if (pantalla === "muerte") {
         )}
 
 <CuentaUsuario usuario={usuario} estadoAcceso={estadoAcceso} />
+
+{usuario && aprobada && <MiIdentidad usuario={usuario} />}
+
 
         <div style={styles.perfilNotaCard}>
           <span style={{ fontSize: 22 }}>🌸</span>

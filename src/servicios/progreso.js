@@ -242,3 +242,42 @@ export function preguntasResueltasJardin() {
   }
   return maximo;
 }
+// 🌱 días cumplidos (el día que completas la ración): la planta de la semana crece con ellos
+export const CLAVE_DIAS_CUMPLIDOS = "opo_dias_cumplidos_v1";
+
+export function diasCumplidos() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_DIAS_CUMPLIDOS)) || {};
+  } catch {
+    return {};
+  }
+}
+
+export function marcarDiaCumplido(clave) {
+  const dias = diasCumplidos();
+  if (dias[clave]) return;
+  dias[clave] = true;
+  // solo hace falta guardar las últimas semanas
+  const limite = new Date();
+  limite.setDate(limite.getDate() - 60);
+  const minimo = limite.toISOString().slice(0, 10);
+  Object.keys(dias).forEach((k) => {
+    if (k < minimo) delete dias[k];
+  });
+  localStorage.setItem(CLAVE_DIAS_CUMPLIDOS, JSON.stringify(dias));
+}
+
+// 🍲 lo que cada persona añade a su ración (de momento, una ficha de Erre que erre)
+export const CLAVE_RACION_EXTRAS = "opo_racion_extras_v1";
+
+export function obtenerExtrasRacion() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_RACION_EXTRAS)) || {};
+  } catch {
+    return {};
+  }
+}
+
+export function guardarExtrasRacion(extras) {
+  localStorage.setItem(CLAVE_RACION_EXTRAS, JSON.stringify(extras));
+}

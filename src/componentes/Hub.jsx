@@ -96,22 +96,13 @@ export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1
       {bloqueado && (
         <img src={iconoCandado} alt="Bloqueado" style={{ position: "absolute", top: 10, right: 10, width: 26 }} />
       )}
-      <span
-        style={{
-          flexShrink: 0,
-          width: ancho === 2 ? 76 : 60,
-          height: ancho === 2 ? 76 : 60,
-          borderRadius: 18,
-          background: "rgba(255,255,255,0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}
-      >
-        <img src={icono} alt="" style={{ width: "82%", height: "82%", objectFit: "contain" }} />
-      </span>
+      <img
+        src={icono}
+        alt=""
+        style={{ flexShrink: 0, width: ancho === 2 ? 92 : 68, height: ancho === 2 ? 92 : 68, objectFit: "contain" }}
+      />
       <span style={{ display: "flex", flexDirection: "column", flex: 1, alignSelf: "stretch", justifyContent: ancho === 2 ? "center" : "flex-start" }}>
-        <span style={{ fontSize: 15, fontWeight: 700, marginTop: ancho === 2 ? 0 : 10 }}>{nombre}</span>
+        <span style={{ fontSize: 15, fontWeight: 700, marginTop: ancho === 2 ? 0 : 8 }}>{nombre}</span>
         <span style={{ fontSize: 12.5, color: "#5c5850", lineHeight: 1.4, marginTop: 3 }}>{texto}</span>
         {etiqueta && (
           <span
@@ -121,7 +112,7 @@ export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1
               fontSize: 11.5,
               fontWeight: 700,
               color: "#6e5a4a",
-              background: "rgba(255,255,255,0.75)",
+              background: `${linea}38`,
               borderRadius: 999,
               padding: "2px 9px"
             }}
@@ -145,7 +136,7 @@ export function Tile({ icono, nombre, texto, fondo, linea, alto = 150, ancho = 1
 }
 
 // fila de Mi expediente: icono, nombre y explicación
-export function Fila({ icono, nombre, texto, color, bloqueado, onClick }) {
+export function Fila({ icono, nombre, texto, bloqueado, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -170,20 +161,7 @@ export function Fila({ icono, nombre, texto, color, bloqueado, onClick }) {
         ...(bloqueado ? { opacity: 0.55, filter: "grayscale(35%)" } : {})
       }}
     >
-      <span
-        style={{
-          flexShrink: 0,
-          width: 52,
-          height: 52,
-          borderRadius: 16,
-          background: color,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}
-      >
-        <img src={icono} alt="" style={{ width: "80%", height: "80%", objectFit: "contain" }} />
-      </span>
+      <img src={icono} alt="" style={{ flexShrink: 0, width: 52, height: 52, objectFit: "contain" }} />
       <span style={{ flex: 1 }}>
         <span style={{ display: "block", fontSize: 15, fontWeight: 700 }}>{nombre}</span>
         <span style={{ display: "block", fontSize: 12.5, color: "#5c5850", marginTop: 2 }}>{texto}</span>
