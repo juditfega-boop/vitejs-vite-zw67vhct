@@ -408,7 +408,8 @@ if (pantalla === "test") {
         <Tile
           icono={iconoRepaso}
           guia="repaso"
-          escalaIcono={1.3}
+          tamIcono={72}
+          escalaIcono={1.15}
           nombre="Repaso"
           texto="Por bloques o general, a tu ritmo"
           fondo={c.fondo}
@@ -419,6 +420,7 @@ if (pantalla === "test") {
         <Tile
           icono={iconoReloj}
           guia="simulacro"
+          tamIcono={72}
           nombre="Simulacro oficial"
           texto="Examen completo de 100 preguntas"
           fondo={c.fondo}
@@ -433,8 +435,8 @@ if (pantalla === "test") {
         <Tile
           icono={iconoRepasarErrores}
           guia="errores"
-          tamIcono={92}
-          escalaIcono={1.45}
+          tamIcono={72}
+          escalaIcono={1.3}
           nombre="Repasar errores"
           texto="Las que has fallado"
           etiqueta={pendientes > 0 ? `${pendientes} ${pendientes === 1 ? "pendiente" : "pendientes"}` : null}
@@ -446,6 +448,7 @@ if (pantalla === "test") {
         <Tile
           icono={iconoFavoritas}
           guia="favoritas"
+          tamIcono={72}
           nombre="Favoritas"
           texto="Las que has guardado"
           etiqueta={favoritas > 0 ? `${favoritas} ${favoritas === 1 ? "guardada" : "guardadas"}` : null}
