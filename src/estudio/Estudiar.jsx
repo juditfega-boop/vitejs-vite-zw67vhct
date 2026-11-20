@@ -451,7 +451,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   function responderRepaso(i) {
     if (repasoSeleccion !== null || !repasoPregunta) return;
     const esCorrecta = i === repasoPregunta.correcta;
-    const cambio = registrarRespuesta(repasoPregunta, esCorrecta);
+    const cambio = registrarRespuesta(repasoPregunta, esCorrecta, repasoCategoria === "mantenimiento");
     if (inicioPregunta) registrarTiempoPregunta(Math.round((Date.now() - inicioPregunta) / 1000));
 
     setRepasoSeleccion(i);
@@ -1078,7 +1078,9 @@ if (vista === "repaso" && repasoPregunta) {
         repasoCambio.antes === ESCALON.PRIORITARIO
           ? "Se queda en prioritarios. La próxima vez saldrá mejor."
           : "Vuelve a prioritarios. Le daremos otra vuelta.";
-    } else if (repasoCambio.despues === ESCALON.SEGUIMIENTO) {
+        } else if (repasoCambio.despues === ESCALON.DOMINADA) {
+          mensajeCambio = "✨ ¡Dominada! Sale de casos resueltos";
+        } else if (repasoCambio.despues === ESCALON.SEGUIMIENTO) {
       mensajeCambio = "🌱 Sube a seguimiento";
     } else if (repasoCambio.antes === ESCALON.SEGUIMIENTO) {
       mensajeCambio = "🌿 ¡Resuelta! Ya forma parte de tu jardín";

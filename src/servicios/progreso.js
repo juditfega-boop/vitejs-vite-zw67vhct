@@ -23,7 +23,8 @@ export function guardarStats(stats) {
 
 // 🗂️ escalón de cada pregunta en "Repasar errores"
 // 0 = nunca fallada · 1 = 🔴 prioritaria · 2 = 🟡 en seguimiento · 3 = 🟢 resuelta
-export const ESCALON = { NINGUNO: 0, PRIORITARIO: 1, SEGUIMIENTO: 2, RESUELTO: 3 };
+// 4 = ✨ dominada: estaba resuelta y la has vuelto a acertar en el repaso de mantenimiento (sale de la carpeta)
+export const ESCALON = { NINGUNO: 0, PRIORITARIO: 1, SEGUIMIENTO: 2, RESUELTO: 3, DOMINADA: 4 };
 
 export function escalonDe(s) {
   if (!s) return ESCALON.NINGUNO;
@@ -35,7 +36,8 @@ export function escalonDe(s) {
 }
 
 // devuelve en qué escalón estaba y en cuál queda, por si la pantalla quiere celebrarlo
-export function registrarRespuesta(pregunta, correcta) {
+// mantenimiento = true cuando respondes desde «Casos resueltos → Repaso de mantenimiento»
+export function registrarRespuesta(pregunta, correcta, mantenimiento = false) {
   const stats = obtenerStats();
   const id = String(pregunta.id);
 
@@ -57,6 +59,8 @@ export function registrarRespuesta(pregunta, correcta) {
     stats[id].aciertos += 1;
     // un acierto sube un escalón: 🔴 → 🟡 → 🟢
     if (antes === ESCALON.PRIORITARIO || antes === ESCALON.SEGUIMIENTO) despues = antes + 1;
+    // acertada otra vez en el repaso de mantenimiento: sale de casos resueltos
+    else if (antes === ESCALON.RESUELTO && mantenimiento) despues = ESCALON.DOMINADA;
   } else {
     stats[id].errores += 1;
     // un fallo, esté donde esté, la devuelve a 🔴
