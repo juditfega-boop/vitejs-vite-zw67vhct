@@ -6,6 +6,7 @@ import plantaFeliz from "../assets/kit/planta-resultado-feliz.png";
 import plantaTriste from "../assets/kit/planta-resultado-triste.png";
 import { separarApartados, trocear, normalizar, segundosMemorizar } from "./fichas";
 import { obtenerNivelesErre, guardarNivelesErre } from "../servicios/progreso";
+import { entrarEnCurva } from "../servicios/curva";
 
 // 🎨 colores del cuaderno para acierto / fallo
 const VERDE = "#e3ecd9";
@@ -33,7 +34,7 @@ function TextoConNegritas({ texto }) {
 
 // 🔁 "Erre que erre" — practica UN artículo: memorizar → huecos → corregir y reintentar.
 // Recibe el nodo del artículo tal cual viene del JSON del Explorador.
-export default function ErreQueErre({ articulo, onVolver }) {
+export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, numeroTanda, onRepasoTerminado }) {
   // cada apartado con palabras clave es una ficha
   const apartados = useMemo(() => separarApartados(articulo.contenido), [articulo]);
   const fichas = useMemo(
@@ -49,7 +50,7 @@ export default function ErreQueErre({ articulo, onVolver }) {
     [apartados, articulo]
   );
 
-  const [fase, setFase] = useState("memorizar"); // memorizar | recordar | fin
+  const [fase, setFase] = useState(modoRepaso ? "recordar" : "memorizar"); // memorizar | recordar | fin
   const [segundos, setSegundos] = useState(() => segundosMemorizar(apartados.length));
   const [indice, setIndice] = useState(0);
   const [niveles, setNiveles] = useState(() => obtenerNivelesErre());
@@ -73,15 +74,25 @@ export default function ErreQueErre({ articulo, onVolver }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [fase, indice]);
 
+  // 🌿 si lo has escrito todo de memoria y a la primera, entra en la curva del olvido
+  useEffect(() => {
+    if (fase !== "fin" || modoRepaso) return;
+    const todasALaPrimera = fichas.every((f) => resultados[f.id] === "perfecta");
+    const yaEnNivel3 = fichas.every((f) => (nivelesRonda[f.id] || 1) === 3);
+    if (todasALaPrimera && yaEnNivel3) entrarEnCurva("erre", articulo.id).catch((e) => console.error(e));
+  }, [fase]);
+
   function terminarFicha(ficha, resultado) {
-    const actual = niveles[ficha.id] || 1;
-    const nuevo =
-      resultado === "perfecta" ? Math.min(3, actual + 1) : resultado === "fallo" ? Math.max(1, actual - 1) : actual;
-    const nuevos = { ...niveles, [ficha.id]: nuevo };
-    setNiveles(nuevos);
-    guardarNivelesErre(nuevos);
     setResultados((r) => ({ ...r, [ficha.id]: resultado }));
-    if (resultado === "perfecta" && actual < 3) setSubidas((s) => s + 1);
+    if (!modoRepaso) {
+      const actual = niveles[ficha.id] || 1;
+      const nuevo =
+        resultado === "perfecta" ? Math.min(3, actual + 1) : resultado === "fallo" ? Math.max(1, actual - 1) : actual;
+      const nuevos = { ...niveles, [ficha.id]: nuevo };
+      setNiveles(nuevos);
+      guardarNivelesErre(nuevos);
+      if (resultado === "perfecta" && actual < 3) setSubidas((s) => s + 1);
+    }
 
     if (indice + 1 < fichas.length) setIndice(indice + 1);
     else setFase("fin");
@@ -153,12 +164,12 @@ export default function ErreQueErre({ articulo, onVolver }) {
   // ✍️ FASE 2: RECORDAR (una ficha cada vez)
   if (fase === "recordar") {
     const ficha = fichas[indice];
-    const nivel = niveles[ficha.id] || 1;
+    const nivel = modoRepaso ? 3 : niveles[ficha.id] || 1;
     return (
       <div style={styles.menuContainer}>
         {cabecera}
         <p style={{ ...styles.configSubLabel, textAlign: "center" }}>
-          Ficha {indice + 1} de {fichas.length}
+        {modoRepaso ? `Repaso ${numeroTanda} · ` : ""}Ficha {indice + 1} de {fichas.length}
           {ficha.numero ? ` · Apartado ${ficha.numero}` : ""} · {NOMBRE_NIVEL[nivel]}
         </p>
         <Ficha
@@ -178,6 +189,36 @@ export default function ErreQueErre({ articulo, onVolver }) {
   const buenaRonda = perfectas >= Math.ceil(fichas.length / 2);
   // 🏁 lo has escrito todo de memoria y a la primera: ya no hay nivel que subir
   const dominado = perfectas === fichas.length && fichas.every((f) => (nivelesRonda[f.id] || 1) === 3);
+
+  // 🔁 final de un repaso de la curva del olvido
+  if (modoRepaso) {
+    const hayFallo = fichas.some((f) => resultados[f.id] === "fallo");
+    const resultadoCurva = perfectas === fichas.length ? "bien" : hayFallo ? "mal" : "casi";
+    const textos = {
+      bien: "Lo recuerdas. Volverá dentro de más tiempo.",
+      casi: "Casi. Volverá dentro del mismo tiempo.",
+      mal: "Se te estaba olvidando. Vuelve mañana, sin drama."
+    };
+    return (
+      <div style={styles.menuContainer}>
+        {cabecera}
+        <div style={{ ...styles.configCard, textAlign: "center" }}>
+          <img
+            src={resultadoCurva === "mal" ? plantaTriste : plantaFeliz}
+            alt=""
+            style={{ width: 90, height: 90, objectFit: "contain", display: "block", margin: "0 auto 8px" }}
+          />
+          <p style={styles.configCardTitle}>
+            {perfectas} de {fichas.length} {fichas.length === 1 ? "ficha" : "fichas"} a la primera
+          </p>
+          <p style={{ ...styles.configSubLabel, margin: 0 }}>{textos[resultadoCurva]}</p>
+        </div>
+        <button onClick={() => onRepasoTerminado(resultadoCurva)} style={styles.ctaButton}>
+          Siguiente →
+        </button>
+      </div>
+    );
+  }
 
   function empezarDeCero() {
     const nuevos = { ...niveles };
@@ -217,7 +258,7 @@ export default function ErreQueErre({ articulo, onVolver }) {
       {dominado ? (
         <>
           <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 0 }}>
-            ¡Te lo sabes de memoria! Ya has superado los tres niveles.
+          ¡Te lo sabes de memoria! Ya has superado los tres niveles y está en tu repaso para que no se te olvide.
           </p>
           <button onClick={empezarDeCero} style={styles.ctaButton}>
             🔄 Volver a empezar desde el nivel 1
