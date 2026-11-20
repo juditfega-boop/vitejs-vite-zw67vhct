@@ -951,26 +951,26 @@ if (vista === "errores") {
 
   return (
     <div style={styles.menuContainer}>
-      <img src={iconoRepasarHero} alt="" style={{ ...styles.repasarHeroImg, width: 120 }} />
+      <img src={iconoRepasarHero} alt="" style={{ ...styles.repasarHeroImg, width: 100 }} />
 
 <div style={styles.menuHeader}>
   <h1 style={styles.menuTitle}>Repasar errores</h1>
         <div style={styles.menuUnderline} />
       </div>
 
-      <div style={styles.repasarResumenCard}>
+      <div style={{ ...styles.repasarResumenCard, padding: "12px 10px", marginBottom: 14 }}>
         <div style={styles.repasarResumenItem}>
-          <img src={iconoCarpetitaPrioritarios} alt="" style={styles.repasarResumenIcono} />
+        <img src={iconoCarpetitaPrioritarios} alt="" style={{ ...styles.repasarResumenIcono, width: 30, height: 30 }} />
           <p style={styles.repasarResumenValor}>{muyOlvidadas.length}</p>
           <p style={styles.repasarResumenEtiqueta}>prioritarios</p>
         </div>
         <div style={styles.repasarResumenItem}>
-          <img src={iconoCarpetitaSeguimiento} alt="" style={styles.repasarResumenIcono} />
+        <img src={iconoCarpetitaSeguimiento} alt="" style={{ ...styles.repasarResumenIcono, width: 30, height: 30 }} />
           <p style={styles.repasarResumenValor}>{pendientes.length}</p>
           <p style={styles.repasarResumenEtiqueta}>en seguimiento</p>
         </div>
         <div style={styles.repasarResumenItem}>
-          <img src={iconoCarpetitaResueltos} alt="" style={styles.repasarResumenIcono} />
+        <img src={iconoCarpetitaResueltos} alt="" style={{ ...styles.repasarResumenIcono, width: 30, height: 30 }} />
           <p style={styles.repasarResumenValor}>{recuperadas.length}</p>
           <p style={styles.repasarResumenEtiqueta}>resueltos</p>
         </div>

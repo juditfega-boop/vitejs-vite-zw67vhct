@@ -116,6 +116,35 @@ function Hojita({ estado }) {
   );
 }
 
+// 🗓️ anillo pequeño del mes (verde salvia sobre papel)
+function AnilloMes({ hechos, total }) {
+  const r = 22;
+  const c = 2 * Math.PI * r;
+  const parte = total ? Math.min(1, hechos / total) : 0;
+  return (
+    <svg width="56" height="56" viewBox="0 0 56 56" style={{ flexShrink: 0 }} aria-hidden="true">
+      <circle cx="28" cy="28" r={r} fill="none" stroke="#efe6d8" strokeWidth="7" />
+      {parte > 0 && (
+        <circle
+          cx="28"
+          cy="28"
+          r={r}
+          fill="none"
+          stroke="#9fbf8f"
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={`${parte * c} ${c}`}
+          transform="rotate(-90 28 28)"
+          style={{ transition: "stroke-dasharray 0.6s ease" }}
+        />
+      )}
+      <text x="28" y="32" textAnchor="middle" fontSize="12" fontWeight="700" fill="#4a463f" fontFamily="Arial, Helvetica, sans-serif">
+        {total ? `${Math.round(parte * 100)}%` : "–"}
+      </text>
+    </svg>
+  );
+}
+
 function Washi({ color, rot = -4, left = "50%" }) {
   return (
     <span
@@ -191,6 +220,26 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
     });
   }, [calendario.dias, calendario.hechos, completa]); // eslint-disable-line react-hooks/exhaustive-deps
   const cumplidosSemana = semana.filter((d) => d.estado === "hecho").length;
+
+  // 🗓️ el mes: de los días planificados en el calendario (sin libres ni vacaciones), cuántos se han cumplido
+  const mes = useMemo(() => {
+    const hoy = new Date();
+    const cumplidos = diasCumplidos();
+    let planificados = 0;
+    let hechos = 0;
+    const d = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    while (d.getMonth() === hoy.getMonth()) {
+      const clave = claveFecha(d);
+      const marca = calendario.dias[clave];
+      if (marca && !esDiaDeDescanso(marca)) {
+        planificados++;
+        if (cumplidos[clave] || calendario.hechos[clave] || (clave === claveHoy && completa)) hechos++;
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    const nombre = hoy.toLocaleDateString("es-ES", { month: "long" });
+    return { planificados, hechos, nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1) };
+  }, [calendario.dias, calendario.hechos, completa]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 🌿 el bloque que flojea (peor porcentaje, con al menos 5 respuestas y por debajo del 60 %)
   const flojo = useMemo(() => {
@@ -474,6 +523,40 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
           </button>
         )}
       </div>
+
+      {/* 🗓️ EL MES: lo planificado y lo cumplido */}
+      {usuario && (
+        <button
+          data-guia="mes"
+          onClick={() => irA("calendario")}
+          style={{
+            ...tarjeta,
+            width: "100%",
+            marginTop: 12,
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            textAlign: "left",
+            fontFamily: "inherit",
+            color: "#4a463f",
+            cursor: "pointer"
+          }}
+        >
+          <AnilloMes hechos={mes.hechos} total={mes.planificados} />
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", ...MANO, fontSize: 23, lineHeight: 1, color: "#5b4a3a" }}>{mes.nombre}</span>
+            <span style={{ display: "block", fontSize: 12.5, color: "#5c5850", lineHeight: 1.4, marginTop: 3 }}>
+              {mes.planificados === 0
+                ? "Marca los días en el calendario."
+                : mes.hechos === mes.planificados
+                ? "¡Mes completo!"
+                : "Días cumplidos de los planificados"}
+            </span>
+          </span>
+          <span style={{ color: "#b8a993", fontSize: 16 }}>›</span>
+        </button>
+      )}
 
       {/* ⚙️ personalizar la ración */}
       {personalizando && (
