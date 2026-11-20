@@ -36,6 +36,18 @@ function claveFecha(anio, mes, dia) {
   return `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
 }
 
+function sumarDias(clave, n) {
+  const [a, m, d] = clave.split("-").map(Number);
+  const f = new Date(a, m - 1, d + n);
+  return claveFecha(f.getFullYear(), f.getMonth(), f.getDate());
+}
+
+const DIAS_LARGOS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+function nombreDia(clave) {
+  const [a, m, d] = clave.split("-").map(Number);
+  return `${DIAS_LARGOS[new Date(a, m - 1, d).getDay()]} ${d}`;
+}
+
 export default function MiCalendario({ volverMenu, irAPerfil }) {
   const hoy = new Date();
   const claveHoy = claveFecha(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
@@ -48,6 +60,8 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
   const [mes, setMes] = useState(hoy.getMonth());
   const [anio, setAnio] = useState(hoy.getFullYear());
   const [diaSeleccionado, setDiaSeleccionado] = useState(null);
+  const [omitidos, setOmitidos] = useState({});
+  const [moviendo, setMoviendo] = useState(null);
   const [leyendaAbierta, setLeyendaAbierta] = useState(() => {
     try {
       return localStorage.getItem("opo_calendario_leyenda") !== "cerrada";
@@ -86,6 +100,7 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
         });
         setDias(limpios);
         setHechos(snap.exists() ? snap.data().hechos || {} : {});
+        setOmitidos(snap.exists() ? snap.data().omitidos || {} : {});
       })
       .catch(() => setError("No se ha podido cargar tu calendario. Revisa tu conexión."))
       .finally(() => setCargando(false));
@@ -156,6 +171,49 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
       });
       setError("No se ha podido guardar el cambio. Inténtalo de nuevo.");
     }
+  }
+
+  async function moverDia(origen, destino) {
+    const letra = dias[origen];
+    if (!letra || origen === destino) return;
+    const diasAntes = dias;
+    const hechosAntes = hechos;
+    setDias((prev) => {
+      const copia = { ...prev };
+      delete copia[origen];
+      copia[destino] = letra;
+      return copia;
+    });
+    setHechos((prev) => {
+      const copia = { ...prev };
+      delete copia[destino];
+      return copia;
+    });
+    setMoviendo(null);
+    setDiaSeleccionado(null);
+    setError("");
+    try {
+      await setDoc(
+        doc(db, "calendarios", usuario.uid),
+        {
+          dias: { [origen]: deleteField(), [destino]: letra },
+          hechos: { [destino]: deleteField() },
+          actualizado: new Date().toISOString()
+        },
+        { merge: true }
+      );
+    } catch (e) {
+      setDias(diasAntes);
+      setHechos(hechosAntes);
+      setError("No se ha podido mover el día. Inténtalo de nuevo.");
+    }
+  }
+
+  async function dejarAsi(clave) {
+    setOmitidos((prev) => ({ ...prev, [clave]: true }));
+    try {
+      await setDoc(doc(db, "calendarios", usuario.uid), { omitidos: { [clave]: true } }, { merge: true });
+    } catch (e) {}
   }
 
   function mesAnterior() {
@@ -234,6 +292,27 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
   const totalHechos = Object.values(progresoMes).reduce((a, p) => a + p.hechos, 0);
   const porcentajeMes = totalPlanificados ? Math.round((totalHechos / totalPlanificados) * 100) : 0;
 
+  // Incumplimientos sin drama: el día pendiente más antiguo de la última semana
+  let diaPendiente = null;
+  for (let n = 7; n >= 1; n--) {
+    const c = sumarDias(claveHoy, -n);
+    if (TIPOS_CON_PROGRESO.includes(dias[c]) && !hechos[c] && !omitidos[c]) {
+      diaPendiente = c;
+      break;
+    }
+  }
+  let huecoSugerido = null;
+  if (diaPendiente) {
+    for (let n = 0; n <= 60; n++) {
+      const c = sumarDias(claveHoy, n);
+      if (!dias[c] || dias[c] === "L") {
+        huecoSugerido = c;
+        break;
+      }
+    }
+  }
+  const aDia = (c) => (c === claveHoy ? "a hoy" : c === sumarDias(claveHoy, 1) ? "a mañana" : `al ${nombreDia(c)}`);
+
   const flechaBtn = {
     width: 38,
     height: 38,
@@ -282,6 +361,37 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
   </div>
 )}
 
+{!cargando && (diaPendiente || moviendo) && (
+  <div style={{ ...styles.configCard, textAlign: "center" }}>
+    {moviendo ? (
+      <>
+        <p style={styles.configCardTitle}>Elige el nuevo día</p>
+        <p style={{ ...styles.configSubLabel, margin: 0 }}>
+          Toca en el calendario un día sin marcar o libre, a partir de hoy.
+        </p>
+        <button onClick={() => setMoviendo(null)} style={{ ...styles.linkVolver, marginTop: 8 }}>
+          Cancelar
+        </button>
+      </>
+    ) : (
+      <>
+        <p style={styles.configCardTitle}>El {nombreDia(diaPendiente)} no pudo ser</p>
+        <p style={{ ...styles.configSubLabel, margin: 0 }}>No pasa nada, se mueve y listo.</p>
+        {huecoSugerido && (
+          <button onClick={() => moverDia(diaPendiente, huecoSugerido)} style={{ ...styles.ctaButton, marginTop: 12 }}>
+            Moverlo {aDia(huecoSugerido)}
+          </button>
+        )}
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0 14px" }}>
+          <button onClick={() => setMoviendo(diaPendiente)} style={styles.linkVolver}>Elegir otro día</button>
+          <button onClick={() => alternarHecho(diaPendiente)} style={styles.linkVolver}>En realidad sí lo hice</button>
+          <button onClick={() => dejarAsi(diaPendiente)} style={styles.linkVolver}>Dejarlo así</button>
+        </div>
+      </>
+    )}
+  </div>
+)}
+
 <div style={styles.configCard}>
   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <button onClick={mesAnterior} style={flechaBtn} aria-label="Mes anterior">‹</button>
@@ -309,7 +419,13 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
             return (
               <button
                 key={clave}
-                onClick={() => setDiaSeleccionado(seleccionado ? null : clave)}
+                onClick={() => {
+                  if (moviendo) {
+                    if (clave >= claveHoy && (!letra || letra === "L")) moverDia(moviendo, clave);
+                    return;
+                  }
+                  setDiaSeleccionado(seleccionado ? null : clave);
+                }}
                 style={{
                   aspectRatio: "1",
                   borderRadius: 12,
@@ -324,7 +440,8 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  lineHeight: 1.1
+                  lineHeight: 1.1,
+                  opacity: moviendo && (clave < claveHoy || (letra && letra !== "L")) ? 0.35 : 1
                 }}
               >
                 <span style={{ fontSize: 12 }}>{dia}</span>

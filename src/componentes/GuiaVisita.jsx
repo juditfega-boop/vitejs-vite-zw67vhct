@@ -23,7 +23,13 @@ function pasos(nombre) {
           <b>Insistentes Sociales</b> es tu herramienta para preparar la oposición de Trabajo Social: maneras diferentes de estudiar,
           de hacer test como los del examen y de repasar jugando.
           <span style={{ display: "block", marginTop: 10 }}>
-            Está hecha por una Insistente Trabajadora Social para más Insistentes Sociales, para que estudiar sea ameno y divertido.
+          Está hecha por una Insistente Trabajadora Social para más Insistentes Sociales, para que estudiar sea ameno y divertido.
+          </span>
+          <span style={{ display: "block", marginTop: 10 }}>
+            Se apoya en cuatro principios: <b>recuperación activa</b> (sacar de memoria en lugar de releer),{" "}
+            <b>repaso espaciado</b> (volver a cada cosa justo antes de olvidarla), <b>estudio por estructura</b>{" "}
+            (primero el esqueleto, después el detalle) y <b>constancia sin culpa</b> (pequeñas raciones, y los
+            días de descanso también cuentan).
           </span>
         </>
       )

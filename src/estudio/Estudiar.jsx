@@ -951,10 +951,10 @@ if (vista === "errores") {
 
   return (
     <div style={styles.menuContainer}>
-      <img src={iconoRepasarHero} alt="" style={styles.repasarHeroImg} />
+      <img src={iconoRepasarHero} alt="" style={{ ...styles.repasarHeroImg, width: 120 }} />
 
-      <div style={styles.menuHeader}>
-        <h1 style={styles.menuTitle}>Repasar errores</h1>
+<div style={styles.menuHeader}>
+  <h1 style={styles.menuTitle}>Repasar errores</h1>
         <div style={styles.menuUnderline} />
       </div>
 
