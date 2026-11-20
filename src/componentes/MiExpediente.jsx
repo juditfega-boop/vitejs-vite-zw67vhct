@@ -19,7 +19,7 @@ export default function MiExpediente({ usuario, aprobada, mostrarBloqueo, calend
 
   return (
     <>
-      <TituloHub titulo="Mi expediente" subtitulo="Tu progreso, tu plan y tu gente" color={c.linea} />
+      <TituloHub titulo="Mi expediente" color={c.linea} />
 
       <SubtituloMano style={{ marginTop: 6 }}>Mi estudio</SubtituloMano>
       <Fila guia="evolucion" icono={iconoGrafico} nombre="Evolución" texto="Tus estadísticas, en general y por bloques" onClick={() => irA("estudiar-progreso")} />
