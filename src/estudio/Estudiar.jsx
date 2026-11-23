@@ -179,11 +179,19 @@ function renderizarTextoConNegrita(texto) {
 // 📖 "Estudiar" + Quiz + Mi progreso — componente independiente y autocontenido.
 // vistaInicial permite entrar directamente en "config" (botón Estudiar del menú)
 // o en "progreso" (botón Mi evolución del menú), compartiendo todo lo demás.
-export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube, vistaInicial = "config" }) {
-  const [vista, setVista] = useState(vistaInicial);
+export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube, vistaInicial = "config", bloqueRefuerzo }) {
+  // 🌿 "refuerzo" = test directo de 10 preguntas del bloque que flojea (desde Inicio)
+  const [vista, setVista] = useState(vistaInicial === "refuerzo" ? "quiz" : vistaInicial);
   // config|quiz|resultado|progreso|estadisticas|errores|favoritos
 
-  const [preguntas, setPreguntas] = useState([]);
+  const [preguntas, setPreguntas] = useState(() =>
+    vistaInicial === "refuerzo"
+      ? elegirEquilibradas(
+          preguntasBase.filter((p) => (p.bloque || "Sin bloque") === bloqueRefuerzo),
+          10
+        ).map(prepararPregunta)
+      : []
+  );
   const [indice, setIndice] = useState(0);
   const [mensaje, setMensaje] = useState("");
   const [mostrar, setMostrar] = useState(false);
@@ -218,6 +226,11 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [repasoResumen, setRepasoResumen] = useState({ respondidas: 0, suben: 0, resueltas: 0, vuelven: 0 });
   const [repasoDescanso, setRepasoDescanso] = useState(false);
   const pregunta = preguntas[indice];
+
+  // 🔥 el test de refuerzo también cuenta para la racha
+  useEffect(() => {
+    if (vistaInicial === "refuerzo") actualizarRacha();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const boton = document.getElementById("boton-panico");

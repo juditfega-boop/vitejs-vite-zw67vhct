@@ -101,6 +101,8 @@ export default function App() {
 
   // 🏁 abrir la carrera directamente en el modo online (desde el buzón o un reto)
   const [carreraOnline, setCarreraOnline] = useState(false);
+  // 🌿 "Para reforzar" de Inicio: el bloque del test directo
+  const [bloqueRefuerzo, setBloqueRefuerzo] = useState(null);
   function abrirCarreraOnline() {
     setCarreraOnline(true);
     setPantalla("carrera");
@@ -327,6 +329,10 @@ if (pantalla === "inicio") {
         bloquesDe={preguntasBase}
         calendario={calendario}
         irA={setPantalla}
+        reforzar={(bloque) => {
+          setBloqueRefuerzo(bloque);
+          setPantalla("estudiar-refuerzo");
+        }}
         buzon={aprobada && usuario ? <Buzon usuario={usuario} irACarrera={abrirCarreraOnline} /> : null}
       />
 
@@ -555,6 +561,20 @@ if (pantalla === "muerte") {
         volverMenu={() => volverA("test")}
         sincronizarConNube={sincronizarConNube}
         vistaInicial="errores"
+      />
+    );
+  }
+
+  // 🌿 INICIO → PARA REFORZAR (test directo de 10 preguntas del bloque que flojea)
+  if (pantalla === "estudiar-refuerzo") {
+    return conPersonaje(
+      <Estudiar
+        key={pantalla + bloqueRefuerzo}
+        preguntasBase={preguntasVisibles}
+        volverMenu={() => volverA("inicio")}
+        sincronizarConNube={sincronizarConNube}
+        vistaInicial="refuerzo"
+        bloqueRefuerzo={bloqueRefuerzo}
       />
     );
   }

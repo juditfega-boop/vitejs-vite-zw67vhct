@@ -164,7 +164,7 @@ function Washi({ color, rot = -4, left = "50%" }) {
   );
 }
 
-export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, irA, buzon }) {
+export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, irA, buzon, reforzar }) {
   const tipo = usuario ? calendario.tipoHoy : null;
   const datosTipo = tipo ? TIPOS_DIA[tipo] : null;
   const descanso = esDiaDeDescanso(tipo);
@@ -498,7 +498,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
 
         {flojo && (
           <button
-            onClick={() => irA("estudiar-progreso")}
+          onClick={() => (reforzar ? reforzar(flojo.nombre) : irA("estudiar-progreso"))}
             style={{
               display: "flex",
               alignItems: "center",
@@ -519,7 +519,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
             <span style={{ flex: 1, minWidth: 0 }}>
               <b>Para reforzar:</b> <span style={{ color: "#8a6a3a" }}>{flojo.nombre}</span>
             </span>
-            <span style={{ color: "#b8a993", fontSize: 16 }}>›</span>
+            <span style={{ color: "#8a6a4f", fontSize: 12, whiteSpace: "nowrap" }}>Test de 10 ›</span>
           </button>
         )}
       </div>
