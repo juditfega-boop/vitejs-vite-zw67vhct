@@ -279,7 +279,7 @@ if (vista === "detalle") {
     <div style={styles.menuContainer}>
       <div style={styles.quizHeaderRow}>
         <button onClick={() => setPantalla("minijuegos")} style={styles.quizVolverBtn}>
-          ⬅
+          <span className="hoja-volver"></span>
         </button>
       </div>
 
@@ -315,7 +315,7 @@ if (vista === "detalle") {
       </button>
 
       <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-        🍃 Volver
+        <span className="hoja-volver"></span> Volver
       </button>
     </div>
   );
@@ -490,7 +490,7 @@ if (vista === "detalle") {
         </button>
 
         <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
-          ⬅ Volver
+          <span className="hoja-volver"></span> Volver
         </button>
       </div>
     );
@@ -756,11 +756,11 @@ if (vista === "derrota") {
           )}
 
         <button onClick={() => setPantalla("minijuegos")} style={styles.derrotaLinkVolver}>
-          ⬅ Volver a minijuegos
+          <span className="hoja-volver"></span> Volver a minijuegos
         </button>
 
         <button onClick={volverMenu} style={styles.derrotaLinkVolver}>
-          ⬅ Volver al menú
+          <span className="hoja-volver"></span> Volver al menú
         </button>
       </div>
     </div>
@@ -792,11 +792,11 @@ if (vista === "victoria") {
         </button>
 
         <button onClick={() => setPantalla("minijuegos")} style={styles.linkVolver}>
-          ⬅ Volver a minijuegos
+          <span className="hoja-volver"></span> Volver a minijuegos
         </button>
 
         <button onClick={volverMenu} style={styles.linkVolver}>
-          ⬅ Volver al menú
+          <span className="hoja-volver"></span> Volver al menú
         </button>
       </div>
     );

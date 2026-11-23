@@ -31,7 +31,7 @@ export default function PantallaBloqueada({ estado, irAPerfil, volverMenu }) {
         )}
       </div>
       <button onClick={volverMenu} style={styles.linkVolver}>
-        ⬅ Volver al menú
+        <span className="hoja-volver"></span> Volver al menú
       </button>
     </div>
   );

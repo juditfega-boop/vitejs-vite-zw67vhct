@@ -192,7 +192,7 @@ if (vista === "detalle") {
     <div style={styles.menuContainer}>
       <div style={styles.quizHeaderRow}>
       <button onClick={volver} style={styles.quizVolverBtn}>
-          ⬅
+          <span className="hoja-volver"></span>
         </button>
       </div>
 
@@ -236,7 +236,7 @@ if (vista === "detalle") {
       </button>
 
       <button onClick={volver} style={styles.linkVolver}>
-        🍃 Volver
+        <span className="hoja-volver"></span> Volver
       </button>
     </div>
   );
@@ -257,7 +257,7 @@ if (vista === "explorar" || vista === "erre") {
         }}
       >
         <button onClick={() => (vistaInicial === "explorar" ? volver() : setVista("detalle"))} style={styles.linkVolver}>
-          ⬅ Volver
+          <span className="hoja-volver"></span> Volver
         </button>
         <LawExplorer
           data={dataConstitucion}
@@ -314,7 +314,7 @@ if (vista === "config") {
         ))}
 
         <button onClick={() => setVista("detalle")} style={styles.linkVolver}>
-          ⬅ Volver
+          <span className="hoja-volver"></span> Volver
         </button>
       </div>
     );
@@ -419,11 +419,11 @@ if (vista === "config") {
         />
 
         <button onClick={() => setVista("config")} style={styles.linkVolver}>
-          ⬅ Elegir otra vez qué construir
+          <span className="hoja-volver"></span> Elegir otra vez qué construir
         </button>
 
         <button onClick={volver} style={styles.linkVolver}>
-          ⬅ Volver a Estudiar
+          <span className="hoja-volver"></span> Volver a Estudiar
         </button>
       </div>
     );

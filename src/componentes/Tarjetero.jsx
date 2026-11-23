@@ -331,7 +331,7 @@ export default function Tarjetero({ volver }) {
 
         {mensaje && <p style={{ ...styles.configSubLabel, textAlign: "center" }}>{mensaje}</p>}
 
-        <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
+        <button onClick={volver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
       </div>
     );
   }
@@ -340,7 +340,7 @@ export default function Tarjetero({ volver }) {
   if (vista === "carpeta") {
     return (
       <div style={styles.menuContainer}>
-        <button onClick={() => setVista("carpetas")} style={styles.linkVolver}>⬅ Mi tarjetero</button>
+        <button onClick={() => setVista("carpetas")} style={styles.linkVolver}><span className="hoja-volver"></span> Mi tarjetero</button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "4px 0 14px" }}>
           <h1 style={{ ...styles.menuTitle, margin: 0, flex: 1 }}>{carpeta.nombre}</h1>
@@ -460,7 +460,7 @@ export default function Tarjetero({ volver }) {
     const tarjeta = tarjetas && tarjetas[i];
     return (
       <div style={styles.menuContainer}>
-        <button onClick={() => setVista("carpeta")} style={styles.linkVolver}>⬅ {carpeta.nombre}</button>
+        <button onClick={() => setVista("carpeta")} style={styles.linkVolver}><span className="hoja-volver"></span> {carpeta.nombre}</button>
         <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "0 0 10px" }}>
           Tarjeta {i + 1} · {cola.length === 1 ? "queda 1" : `quedan ${cola.length}`}
         </p>
@@ -524,7 +524,7 @@ export default function Tarjetero({ volver }) {
   const actual = tarjetas && tarjetas[indice];
   return (
     <div style={styles.menuContainer}>
-      <button onClick={() => setVista("carpeta")} style={styles.linkVolver}>⬅ {carpeta.nombre}</button>
+      <button onClick={() => setVista("carpeta")} style={styles.linkVolver}><span className="hoja-volver"></span> {carpeta.nombre}</button>
 
       {actual && (
         <div

@@ -127,7 +127,7 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
         <div style={styles.configCard}>
           <p style={styles.configSubLabel}>Este artículo todavía no tiene fichas preparadas.</p>
         </div>
-        <button onClick={onVolver} style={styles.linkVolver}>⬅ Volver al artículo</button>
+        <button onClick={onVolver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver al artículo</button>
       </div>
     );
   }
@@ -156,7 +156,7 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
         <button onClick={() => setFase("recordar")} style={styles.ctaButton}>
           Ya lo tengo
         </button>
-        <button onClick={onVolver} style={styles.linkVolver}>⬅ Volver al artículo</button>
+        <button onClick={onVolver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver al artículo</button>
       </div>
     );
   }
@@ -179,7 +179,7 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
           articulo={articulo}
           onTerminar={(r) => terminarFicha(ficha, r)}
         />
-        <button onClick={onVolver} style={styles.linkVolver}>⬅ Salir</button>
+        <button onClick={onVolver} style={styles.linkVolver}><span className="hoja-volver"></span> Salir</button>
       </div>
     );
   }
@@ -279,7 +279,7 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
                 (o bajan si no las aciertas ni al segundo intento). ¡Erre que erre hasta acertarlas todas!
               </p>
             )}
-      <button onClick={onVolver} style={styles.linkVolver}>⬅ Volver al artículo</button>
+      <button onClick={onVolver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver al artículo</button>
     </div>
   );
 }

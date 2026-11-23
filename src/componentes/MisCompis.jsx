@@ -199,7 +199,7 @@ export default function MisCompis({ usuario, volver, irACarrera, irAPerfil }) {
         <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 40 }}>
           {error || "Cargando…"}
         </p>
-        <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
+        <button onClick={volver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
       </div>
     );
   }
@@ -309,7 +309,7 @@ export default function MisCompis({ usuario, volver, irACarrera, irAPerfil }) {
 
       {error && !compiElegida && !anadiendo && !paraQuitar && <p style={est.error}>{error}</p>}
 
-      <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
+      <button onClick={volver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
 
       {anadiendo && (
         <div className="aviso-fondo" style={estHechizos.avisoFondo} onClick={() => setAnadiendo(false)}>

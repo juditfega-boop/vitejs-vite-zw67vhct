@@ -726,7 +726,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
         </button>
 
         <button onClick={volverMenu} style={styles.linkVolver}>
-          ⬅ Volver al menú
+          <span className="hoja-volver"></span> Volver al menú
         </button>
       </div>
     );
@@ -760,7 +760,7 @@ if (vista === "progreso") {
       </button>
 
       <button onClick={volverMenu} style={styles.linkVolver}>
-        ⬅ Volver al menú
+        <span className="hoja-volver"></span> Volver al menú
       </button>
     </div>
   );
@@ -916,7 +916,7 @@ if (vista === "estadisticas") {
       )}
 
       <button onClick={volverMenu} style={styles.linkVolver}>
-        ⬅ Volver al menú
+        <span className="hoja-volver"></span> Volver al menú
       </button>
     </div>
   );
@@ -952,7 +952,7 @@ if (vista === "estadisticas") {
         )}
 
         <button onClick={volverAProgreso} style={styles.linkVolver}>
-          ⬅ Volver
+          <span className="hoja-volver"></span> Volver
         </button>
       </div>
     );
@@ -1044,7 +1044,7 @@ if (vista === "errores") {
       </div>
 
       <button onClick={volverAProgreso} style={styles.linkVolver}>
-        ⬅ Volver
+        <span className="hoja-volver"></span> Volver
       </button>
     </div>
   );
@@ -1107,7 +1107,7 @@ if (vista === "repaso" && repasoPregunta) {
       <style>{estudiarEstilosLocales}</style>
       <div style={styles.quizHeaderRow}>
         <button onClick={terminarRepaso} style={styles.quizVolverBtn}>
-          ⬅ Salir
+          <span className="hoja-volver"></span> Salir
         </button>
         <span style={{ ...styles.configSubLabel, fontWeight: 600 }}>{nombresCategoria[repasoCategoria]}</span>
       </div>
@@ -1205,7 +1205,7 @@ if (vista === "repaso-fin") {
       </button>
 
       <button onClick={volverAProgreso} style={styles.linkVolver}>
-        ⬅ Volver a Mi evolución
+        <span className="hoja-volver"></span> Volver a Mi evolución
       </button>
     </div>
   );
@@ -1229,7 +1229,7 @@ if (vista === "errores-vacio") {
     <div style={styles.menuContainer}>
       <div style={styles.quizHeaderRow}>
         <button onClick={volverAErrores} style={styles.quizVolverBtn}>
-          ⬅ Repasar errores
+          <span className="hoja-volver"></span> Repasar errores
         </button>
       </div>
 
@@ -1291,7 +1291,7 @@ if (vista === "quiz" && pregunta) {
       <style>{estudiarEstilosLocales}</style>
       <div style={styles.quizHeaderRow}>
         <button onClick={salirGuardando} style={styles.quizVolverBtn}>
-          ⬅ Guardar y salir
+          <span className="hoja-volver"></span> Guardar y salir
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {tiempoRestante !== null && (
@@ -1353,7 +1353,7 @@ if (vista === "quiz" && pregunta) {
 
       {indice > 0 && (
         <button onClick={anterior} style={styles.linkVolver}>
-          ⬅ Pregunta anterior
+          <span className="hoja-volver"></span> Pregunta anterior
         </button>
       )}
 

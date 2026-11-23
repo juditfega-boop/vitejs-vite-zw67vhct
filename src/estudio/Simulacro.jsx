@@ -323,7 +323,7 @@ export default function Simulacro({ preguntasBase, volverMenu }) {
         </button>
 
         <button onClick={volverMenu} style={styles.linkVolver}>
-          ⬅ Volver al menú
+          <span className="hoja-volver"></span> Volver al menú
         </button>
       </div>
     );
@@ -609,7 +609,7 @@ if (vista === "resultado" && resultadoSimulacro) {
       <div style={styles.menuContainer}>
         <div style={styles.quizHeaderRow}>
           <button onClick={() => setVista("resultado")} style={styles.quizVolverBtn}>
-            ⬅ Resultado
+            <span className="hoja-volver"></span> Resultado
           </button>
         </div>
 
@@ -720,7 +720,7 @@ if (vista === "historial") {
       )}
 
       <button onClick={() => setVista("resultado")} style={styles.linkVolver}>
-        ⬅ Volver al resultado
+        <span className="hoja-volver"></span> Volver al resultado
       </button>
     </div>
   );

@@ -191,7 +191,7 @@ export default function ErreDelDia({ volver, irAExplorar }) {
         Elegir el artículo en Explora la Constitución
       </button>
       <button onClick={volver} style={styles.linkVolver}>
-        ⬅ Volver
+        <span className="hoja-volver"></span> Volver
       </button>
     </div>
   );

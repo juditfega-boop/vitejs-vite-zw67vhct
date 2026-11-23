@@ -184,7 +184,7 @@ export default function App() {
     sincronizarConNube();
   }
 
-  // ⬅ volver a una de las pantallas principales (guardando el progreso en la nube)
+  // <span className="hoja-volver"></span> volver a una de las pantallas principales (guardando el progreso en la nube)
   function volverA(destino) {
     setPantalla(destino);
     sincronizarConNube();
@@ -218,6 +218,18 @@ export default function App() {
     enlace.rel = "stylesheet";
     enlace.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap";
     document.head.appendChild(enlace);
+  }, []);
+
+  // 🍃 la hojita de los botones de volver (sustituye a la flecha en toda la app)
+  useEffect(() => {
+    if (document.getElementById("estilo-hoja-volver")) return;
+    const hoja = encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g transform="rotate(-55 12 12)" fill="none" stroke="#4a463f" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 C17 6 18.5 12 12 21 C5.5 12 7 6 12 3 Z" fill="#9fbf8f"/><path d="M12 7 V18"/></g></svg>`
+    );
+    const estilo = document.createElement("style");
+    estilo.id = "estilo-hoja-volver";
+    estilo.textContent = `.hoja-volver{display:inline-block;width:1.35em;height:1.35em;vertical-align:-0.35em;margin-right:0.1em;background:url("data:image/svg+xml,${hoja}") center/contain no-repeat}`;
+    document.head.appendChild(estilo);
   }, []);
 
   // al cambiar de pantalla, empezar arriba
@@ -678,7 +690,7 @@ if (pantalla === "muerte") {
         </div>
         <MisImpugnaciones />
         <button onClick={() => setPantalla("expediente")} style={styles.linkVolver}>
-          ⬅ Volver a Mi expediente
+          <span className="hoja-volver"></span> Volver a Mi expediente
         </button>
       </div>
     );
@@ -724,7 +736,7 @@ if (pantalla === "muerte") {
         </div>
 
         <button onClick={() => volverA("expediente")} style={styles.linkVolver}>
-          ⬅ Volver a Mi expediente
+          <span className="hoja-volver"></span> Volver a Mi expediente
         </button>
       </div>
     );
@@ -734,7 +746,7 @@ if (pantalla === "muerte") {
     <div style={styles.menuContainer}>
       <p style={styles.configSubLabel}>Pantalla no encontrada.</p>
       <button onClick={volverMenu} style={styles.linkVolver}>
-        ⬅ Volver al menú
+        <span className="hoja-volver"></span> Volver al menú
       </button>
     </div>
   );

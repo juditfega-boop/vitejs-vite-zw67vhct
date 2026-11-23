@@ -257,7 +257,7 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
           </button>
         </div>
         <button onClick={volverMenu} style={styles.linkVolver}>
-          ⬅ Volver al menú
+          <span className="hoja-volver"></span> Volver al menú
         </button>
       </div>
     );
@@ -600,7 +600,7 @@ export default function MiCalendario({ volverMenu, irAPerfil }) {
       </div>
 
       <button onClick={volverMenu} style={styles.linkVolver}>
-        ⬅ Volver al menú
+        <span className="hoja-volver"></span> Volver al menú
       </button>
     </div>
   );

@@ -563,7 +563,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
         <div style={{ ...styles.configCard, textAlign: "center" }}>
           <p style={styles.configCardTitle}>Para jugar online tienes que entrar con tu cuenta.</p>
         </div>
-        <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
+        <button onClick={volver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
       </div>
     );
   }
@@ -618,7 +618,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
               </button>
             </div>
 
-            <button onClick={volver} style={styles.linkVolver}>⬅ Volver</button>
+            <button onClick={volver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
           </>
         )}
 
@@ -652,7 +652,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
               Unirme
             </button>
             {error && <p style={est.error}>{error}</p>}
-            <button onClick={() => setPaso("elegir")} style={styles.linkVolver}>⬅ Volver</button>
+            <button onClick={() => setPaso("elegir")} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
           </>
         )}
 
@@ -677,7 +677,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
               Crear partida
             </button>
             {error && <p style={est.error}>{error}</p>}
-            <button onClick={() => setPaso("elegir")} style={styles.linkVolver}>⬅ Volver</button>
+            <button onClick={() => setPaso("elegir")} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
           </>
         )}
 
@@ -693,7 +693,7 @@ export default function CarreraOnline({ preguntasBase, volver, alTerminar, codig
         <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 40 }}>
           Entrando en la partida<span className="puntos-espera" />
         </p>
-        <button onClick={() => setCodigo(null)} style={styles.linkVolver}>⬅ Volver</button>
+        <button onClick={() => setCodigo(null)} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
       </div>
     );
   }
