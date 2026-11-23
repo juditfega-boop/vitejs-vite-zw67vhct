@@ -74,6 +74,9 @@ function imagenMuerteSubita(aciertos) {
   return [muerteImg0, muerteImg1, muerteImg2, muerteImg3][etapa];
 }
 
+// las tres píldoras de vidas caben en una línea
+const PILDORA_VIDAS = { flex: 1, padding: "8px 6px", fontSize: 13, whiteSpace: "nowrap", textAlign: "center" };
+
 // ☠️ "Salva a tu trabajadora social" — componente independiente y autocontenido.
 export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, volverMenu }) {
   const [vista, setVista] = useState("detalle"); // detalle|config|jugando|derrota|victoria
@@ -402,12 +405,12 @@ if (vista === "detalle") {
         </div>
 
         <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Vidas</p>
-          <div style={styles.pillGroup}>
+        <p style={styles.configCardTitle}>Vidas</p>
+          <div style={{ ...styles.pillGroup, flexWrap: "nowrap" }}>
             <button
               className="pill"
               onClick={() => setModoVidas("subita")}
-              style={{ ...styles.pillBtn, ...(modoVidas === "subita" ? styles.pillBtnActiva : {}) }}
+              style={{ ...styles.pillBtn, ...(modoVidas === "subita" ? styles.pillBtnActiva : {}), ...PILDORA_VIDAS }}
             >
               Muerte súbita
             </button>
@@ -416,21 +419,24 @@ if (vista === "detalle") {
               onClick={() => setModoVidas("1vida")}
               style={{ ...styles.pillBtn, ...(modoVidas === "1vida" ? styles.pillBtnActiva : {}) }}
             >
-              1 vida extra
+              1 vida 
             </button>
             <button
               className="pill"
               onClick={() => setModoVidas("2vidas")}
               style={{ ...styles.pillBtn, ...(modoVidas === "2vidas" ? styles.pillBtnActiva : {}) }}
             >
-              2 vidas extra
+              2 vidas 
             </button>
           </div>
         </div>
 
         <div style={styles.configCard}>
           <div style={styles.configRow}>
-            <p style={styles.configCardTitle}>Ayuda de {personajeActivo.nombre} (1 por partida)</p>
+          <p style={{ ...styles.configCardTitle, marginBottom: 0 }}>
+              Ayuda de {(personajeActivo.nombre || "").split(" ")[0]}{" "}
+              <span style={{ fontWeight: 400, fontSize: 12.5, color: "#8a7d6f" }}>· 1 por partida</span>
+            </p>
             <label className="switch">
               <input
                 type="checkbox"
@@ -444,7 +450,7 @@ if (vista === "detalle") {
 
         <div style={styles.configCard}>
           <div style={styles.configRow}>
-            <p style={styles.configCardTitle}>Mostrar explicación al responder</p>
+          <p style={{ ...styles.configCardTitle, marginBottom: 0 }}>Mostrar explicación</p>
             <label className="switch">
               <input
                 type="checkbox"
@@ -458,7 +464,9 @@ if (vista === "detalle") {
 
         <div style={styles.configCard}>
           <div style={styles.configRow}>
-            <p style={styles.configCardTitle}>Activar cronómetro (1 min / pregunta)</p>
+          <p style={{ ...styles.configCardTitle, marginBottom: 0 }}>
+              Cronómetro <span style={{ fontWeight: 400, fontSize: 12.5, color: "#8a7d6f" }}>· 1 min por pregunta</span>
+            </p>
             <label className="switch">
               <input
                 type="checkbox"
