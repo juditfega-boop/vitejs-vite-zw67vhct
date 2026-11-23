@@ -66,7 +66,7 @@ export default function Tarjetero({ volver }) {
   // 🌿 sellar: tarjetas pendientes, si la actual está destapada y la primera nota de cada una
   const [curva, setCurva] = useState(null); // { idCarpeta: { paso, proxima } }
   const [cola, setCola] = useState([]);
-  const [destapada, setDestapada] = useState(false);
+  const [fase, setFase] = useState("mirar"); // mirar | tapada | destapada
   const [notas, setNotas] = useState({});
   const [finSellado, setFinSellado] = useState(null);
 
@@ -108,7 +108,7 @@ export default function Tarjetero({ volver }) {
   function empezarSellado() {
     setCola(tarjetas.map((_, i) => i));
     setNotas({});
-    setDestapada(false);
+    setFase(curva && curva[carpeta.id] ? "tapada" : "mirar");
     setFinSellado(null);
     setVista("sellar");
   }
@@ -118,10 +118,13 @@ export default function Tarjetero({ volver }) {
     const [i, ...resto] = cola;
     const primeras = notas[i] ? notas : { ...notas, [i]: nota };
     setNotas(primeras);
-    setDestapada(false);
     const nuevaCola = nota === "sellada" ? resto : [...resto, i];
-    if (nuevaCola.length > 0) setCola(nuevaCola);
-    else terminarSellado(primeras);
+    if (nuevaCola.length > 0) {
+      setCola(nuevaCola);
+      // la primera vez que sellas la carpeta, cada tarjeta nueva se mira antes; las que vuelven, ya tapadas
+      const primeraVez = !(curva && curva[carpeta.id]);
+      setFase(primeraVez && !primeras[nuevaCola[0]] ? "mirar" : "tapada");
+    } else terminarSellado(primeras);
   }
 
   async function terminarSellado(primeras) {
@@ -471,21 +474,33 @@ export default function Tarjetero({ volver }) {
                 width: "100%",
                 display: "block",
                 borderRadius: 14,
-                filter: destapada ? "none" : "blur(9px)",
-                transform: destapada ? "none" : "scale(1.04)",
+                filter: fase === "tapada" ? "blur(9px)" : "none",
+                transform: fase === "tapada" ? "scale(1.04)" : "none",
                 transition: "filter 0.5s ease, transform 0.5s ease"
               }}
             />
           </div>
         )}
 
-        {!destapada ? (
+{fase === "mirar" ? (
+          <>
+            <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "14px 0 10px" }}>
+              Mírala con calma. Cuando la tengas, tápala y recítala sin mirar.
+            </p>
+            <button onClick={() => setFase("tapada")} style={styles.ctaButton}>
+              Tapar y recitar
+            </button>
+          </>
+        ) : fase === "tapada" ? (
           <>
             <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "14px 0 10px" }}>
               Recita en voz alta lo que recuerdes de esta tarjeta. Después, destápala.
             </p>
-            <button onClick={() => setDestapada(true)} style={styles.ctaButton}>
+            <button onClick={() => setFase("destapada")} style={styles.ctaButton}>
               Destapar
+            </button>
+            <button onClick={() => setFase("mirar")} style={styles.linkVolver}>
+              Verla otra vez antes
             </button>
           </>
         ) : (
