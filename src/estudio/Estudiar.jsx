@@ -427,7 +427,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   function empezarRepaso(categoria) {
     const { prioritarios, seguimiento, resueltos } = clasificarErrores(preguntasBase);
     let lista = [];
-    if (categoria === "prioritarios") lista = prioritarios;
+    if (categoria === "prioritarios") lista = mezclar(prioritarios); // cada vez en un orden distinto, para no contestar de memoria
     else if (categoria === "seguimiento") lista = mezclar(seguimiento);
     else lista = mezclar(resueltos).slice(0, 10); // mantenimiento: unas pocas al azar
 

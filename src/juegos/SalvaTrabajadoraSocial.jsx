@@ -11,7 +11,6 @@ import iconoAciertoCheck from "../assets/kit/icono-fin-aciertos.png";
 import iconoPregunta from "../assets/bookbrand/icono-brand-pregunta.png";
 import iconoErrorX from "../assets/kit/icono-sim-errores.png";
 import iconoTrofeo from "../assets/bookbrand/icono-brand-trofeo.png";
-import PersonajeFlotante from "../personajes/PersonajeFlotante";
 import registroPersonajes from "../personajes/registroPersonajes";
 import { obtenerPersonajeActivo } from "../personajes/personajeActivo";
 import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
@@ -99,6 +98,8 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
   const [vidasRestantes, setVidasRestantes] = useState(0);
   const [ayudaDisponible, setAyudaDisponible] = useState(false);
   const [respuestaDescartada, setRespuestaDescartada] = useState(null);
+  const [conExplicacion, setConExplicacion] = useState(true); // mostrar la explicación al responder
+  const [rescate, setRescate] = useState(null); // sin vidas: la respuesta fallada mientras Mary ofrece su ayuda
   const [buscarBloqueMuerte, setBuscarBloqueMuerte] = useState("");
   const [enPausa, setEnPausa] = useState(false);
   const [derrumbando, setDerrumbando] = useState(false); // la pila se está cayendo (animación de derrota)
@@ -164,6 +165,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     setVidasRestantes(fallosPermitidos(modoVidas));
     setAyudaDisponible(ayudaActiva);
     setRespuestaDescartada(null);
+    setRescate(null);
     setEnPausa(false);
     setDerrumbando(false);
     setEventoEscena(null);
@@ -210,7 +212,25 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
       return;
     }
 
+    // 🤝 sin vidas, pero con la ayuda sin usar: Mary te ofrece quitar esa opción y volver a intentarlo
+    if (ayudaDisponible) {
+      setRescate(i);
+      return;
+    }
+
     perderMuerte(pregunta, i);
+  }
+
+  function aceptarRescate() {
+    setRespuestaDescartada(rescate);
+    setAyudaDisponible(false);
+    setRescate(null);
+  }
+
+  function rechazarRescate() {
+    const fallada = rescate;
+    setRescate(null);
+    perderMuerte(muertePreguntas[muerteIndice], fallada);
   }
 
   function siguienteMuerte() {
@@ -236,7 +256,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
 
   // ⏱️ cuenta atrás (si el cronómetro está activo)
   useEffect(() => {
-    if (vista !== "jugando" || !muerteCronometroActivo || muerteTiempoRestante === null || enPausa || derrumbando) return;
+    if (vista !== "jugando" || !muerteCronometroActivo || muerteTiempoRestante === null || enPausa || derrumbando || rescate !== null) return;
 
     if (muerteTiempoRestante <= 0) {
       perderMuerte();
@@ -248,7 +268,7 @@ export default function SalvaTrabajadoraSocial({ preguntasBase, setPantalla, vol
     }, 1000);
 
     return () => clearTimeout(id);
-  }, [vista, muerteTiempoRestante, muerteCronometroActivo, enPausa, derrumbando]);
+  }, [vista, muerteTiempoRestante, muerteCronometroActivo, enPausa, derrumbando, rescate]);
 
 // ☠️ DETALLE
 if (vista === "detalle") {
@@ -424,6 +444,20 @@ if (vista === "detalle") {
 
         <div style={styles.configCard}>
           <div style={styles.configRow}>
+            <p style={styles.configCardTitle}>Mostrar explicación al responder</p>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={conExplicacion}
+                onChange={() => setConExplicacion((v) => !v)}
+              />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div style={styles.configCard}>
+          <div style={styles.configRow}>
             <p style={styles.configCardTitle}>Activar cronómetro (1 min / pregunta)</p>
             <label className="switch">
               <input
@@ -528,11 +562,67 @@ if (vista === "detalle") {
               ...(pantallaEstrecha ? { width: "100%", maxWidth: "100%", flex: "none" } : {})
             }}
           >
-            {ayudaActiva && (
+            {rescate !== null && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  background: "#fbf3e6",
+                  borderRadius: 20,
+                  padding: "12px 14px",
+                  marginBottom: 12,
+                  boxShadow: "0 3px 10px rgba(0,0,0,0.04)"
+                }}
+              >
+                {personajeActivo.foto && (
+                  <img src={personajeActivo.foto} alt="" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: "0 0 8px", fontSize: 14, color: "#4a463f", lineHeight: 1.4 }}>
+                    ¡Uy! ¿Te echo una mano? Quito esa opción y lo vuelves a intentar.
+                  </p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={aceptarRescate} style={{ ...styles.ctaButton, margin: 0, flex: 2, padding: "10px 12px" }}>
+                      Sí, ayúdame
+                    </button>
+                    <button onClick={rechazarRescate} style={{ ...styles.linkVolver, margin: 0, flex: 1 }}>
+                      No, gracias
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {ayudaActiva && rescate === null && (
               <div style={{ marginBottom: 10 }}>
                 {ayudaDisponible ? (
-                  <button onClick={pedirAyuda} style={styles.linkVolver}>
-                    🧑‍🤝‍🧑 Pedir ayuda a {personajeActivo.nombre}
+                  <button
+                    onClick={pedirAyuda}
+                    disabled={muerteMostrar || derrumbando}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      border: "1.5px dashed #d9c6a8",
+                      borderRadius: 18,
+                      background: "#fffaf2",
+                      padding: "8px 12px",
+                      fontFamily: "inherit",
+                      fontSize: 14,
+                      color: "#5b4a3a",
+                      textAlign: "left",
+                      cursor: "pointer"
+                    }}
+                  >
+                    {personajeActivo.foto && (
+                      <img src={personajeActivo.foto} alt="" style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }} />
+                    )}
+                    <span>
+                      <b>Pedir ayuda a {personajeActivo.nombre}</b>
+                      <span style={{ display: "block", fontSize: 12, color: "#8a7d6f" }}>Quita una opción incorrecta (1 por partida)</span>
+                    </span>
                   </button>
                 ) : respuestaDescartada !== null ? (
                   <p style={styles.configSubLabel}>
@@ -555,7 +645,7 @@ if (vista === "detalle") {
                 <button
                   key={i}
                   onClick={() => comprobarMuerte(i)}
-                  disabled={muerteMostrar || descartada || derrumbando}
+                  disabled={muerteMostrar || descartada || derrumbando || rescate !== null}
                   style={{
                     ...styles.button,
                     background: bg,
@@ -578,12 +668,14 @@ if (vista === "detalle") {
                   <p style={styles.quizFeedbackTexto}>{muerteMensaje}</p>
                 </div>
 
-                <div style={styles.explicacionCaja}>
-                  <p style={{ margin: 0 }}>
-                    <b>Explicación:</b>
-                  </p>
-                  {renderizarTextoConNegrita(preguntaMuerte.explicacion)}
-                </div>
+                {conExplicacion && (
+                  <div style={styles.explicacionCaja}>
+                    <p style={{ margin: 0 }}>
+                      <b>Explicación:</b>
+                    </p>
+                    {renderizarTextoConNegrita(preguntaMuerte.explicacion)}
+                  </div>
+                )}
 
                 <ImpugnarPregunta pregunta={preguntaMuerte} origen="salva-ts" />
 
@@ -594,9 +686,7 @@ if (vista === "detalle") {
             )}
 </div>
         </div>
-
-        <PersonajeFlotante />
-      </div>
+        </div>
     );
   }
 
