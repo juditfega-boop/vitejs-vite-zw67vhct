@@ -45,6 +45,17 @@ import iconoFolderVacio from "../assets/kit/icono-favoritos-corazon-carpeta.png"
 import iconoRachaLlama from "../assets/bookbrand/icono-brand-racha-llama.png";
 import ImpugnarPregunta from "../componentes/ImpugnarPregunta";
 import BuscadorBloques, { filtrarBloques } from "../componentes/BuscadorBloques";
+import { TituloHub, COLOR_SECCION } from "../componentes/Hub";
+
+// tarjeta de cuaderno (Favoritas y Test terminado)
+const tarjetaCuaderno = {
+  background: "#fdfaf4",
+  borderRadius: 24,
+  padding: 16,
+  boxShadow: "0 3px 14px rgba(0,0,0,0.04)",
+  marginBottom: 14,
+  position: "relative"
+};
 
 // CSS del interruptor tipo "pastilla" (encendido/apagado), igual al que ya usa el resto de la app
 const estudiarEstilosLocales = `
@@ -197,6 +208,7 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
   const [mostrar, setMostrar] = useState(false);
   const [aciertos, setAciertos] = useState(0);
   const [cantidad, setCantidad] = useState(20);
+  const [cantidadFavoritas, setCantidadFavoritas] = useState(20); // 10 | 20 | "todas"
 
   const [tipoEstudio, setTipoEstudio] = useState("general");
   const [bloquesSeleccionados, setBloquesSeleccionados] = useState([]);
@@ -418,8 +430,8 @@ export default function Estudiar({ preguntasBase, volverMenu, sincronizarConNube
     );
   }
 
-  function iniciarBloque(lista) {
-    const base = mezclar(lista).slice(0, cantidad).map(prepararPregunta);
+  function iniciarBloque(lista, numero = cantidad) {
+    const base = mezclar(lista).slice(0, numero).map(prepararPregunta);
 
     setPreguntas(base);
     setIndice(0);
@@ -925,29 +937,55 @@ if (vista === "estadisticas") {
   // ❤️ FAVORITAS
   if (vista === "favoritos") {
     const listaFavoritas = preguntasBase.filter((p) => favoritos.includes(String(p.id)));
+    const total = listaFavoritas.length;
+    const opciones = [10, 20].filter((n) => n < total); // solo tiene sentido elegir si hay más
+    const elegida = cantidadFavoritas === "todas" || cantidadFavoritas >= total ? "todas" : cantidadFavoritas;
+    const textoGuardar =
+      "Para guardar una pregunta, toca la estrella que aparece arriba de cada pregunta durante un test.";
 
     return (
       <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <h1 style={styles.menuTitle}>❤️ Favoritas</h1>
-          <div style={styles.menuUnderline} />
-        </div>
+        <TituloHub titulo="Favoritas" subtitulo="Las preguntas que has guardado" color={COLOR_SECCION.test.linea} />
 
-        {listaFavoritas.length === 0 ? (
-          <p style={styles.configSubLabel}>
-            Aún no has marcado ninguna pregunta con ⭐. Puedes hacerlo desde cualquier
-            pregunta durante el estudio.
-          </p>
+        {total === 0 ? (
+          <div style={tarjetaCuaderno}>
+            <p style={{ margin: "0 0 4px", fontWeight: 700, fontSize: 15 }}>Aún no hay preguntas guardadas</p>
+            <p style={{ margin: 0, fontSize: 13, color: "#5c5850", lineHeight: 1.45 }}>{textoGuardar}</p>
+          </div>
         ) : (
           <>
-            <p style={styles.configSubLabel}>
-              Tienes {listaFavoritas.length} pregunta{listaFavoritas.length === 1 ? "" : "s"}{" "}
-              guardada{listaFavoritas.length === 1 ? "" : "s"}.
-            </p>
+            <div style={tarjetaCuaderno}>
+              <p style={{ margin: "0 0 2px", fontWeight: 700, fontSize: 15 }}>
+                Tienes {total} pregunta{total === 1 ? "" : "s"} guardada{total === 1 ? "" : "s"}
+              </p>
+              {opciones.length > 0 && (
+                <>
+                  <p style={{ margin: 0, fontSize: 12.5, color: "#5c5850" }}>¿Cuántas quieres repasar?</p>
+                  <div style={{ ...styles.pillGroup, marginTop: 10 }}>
+                    {[...opciones, "todas"].map((n) => (
+                      <button
+                        key={n}
+                        className="pill"
+                        onClick={() => setCantidadFavoritas(n)}
+                        style={{ ...styles.pillBtn, ...(elegida === n ? styles.pillBtnActiva : {}) }}
+                      >
+                        {n === "todas" ? "Todas" : n}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              <button
+                onClick={() => iniciarBloque(listaFavoritas, elegida === "todas" ? total : elegida)}
+                style={{ ...styles.ctaButton, marginTop: 14 }}
+              >
+                Repasar favoritas
+              </button>
+            </div>
 
-            <button onClick={() => iniciarBloque(listaFavoritas)} style={styles.ctaButton}>
-              Repasar favoritas
-            </button>
+            <p style={{ margin: "0 8px", fontSize: 12, color: "#8a8578", textAlign: "center", lineHeight: 1.45 }}>
+              {textoGuardar}
+            </p>
           </>
         )}
 
@@ -1433,47 +1471,79 @@ if (vista === "quiz" && pregunta) {
   );
 }
 
-// 🌸 Fin del bloque (resultado final)
+// 🌸 Test terminado (resultado final)
 const rachaFinal = obtenerRacha().racha;
+const porcentajeFin = preguntas.length ? Math.round((aciertos / preguntas.length) * 100) : 0;
+const mensajeFin =
+  porcentajeFin >= 90 ? "¡Excelente!" :
+  porcentajeFin >= 70 ? "¡Muy bien!" :
+  porcentajeFin >= 50 ? "Vas por buen camino." :
+  "Cada repaso cuenta. ¡A por el siguiente!";
+const radioFin = 30;
+const circunferenciaFin = 2 * Math.PI * radioFin;
 
 return (
   <div style={styles.menuContainer}>
-    <div style={styles.menuHeader}>
-      <h1 style={styles.menuTitle}>Fin del bloque</h1>
-      <div style={styles.menuUnderline} />
-    </div>
-
-    <p style={styles.finBloqueSubtitulo}>¡Buen trabajo, sigue así!</p>
-    <p style={styles.finBloqueCorazon}>💗</p>
+    <TituloHub titulo="¡Test terminado!" subtitulo="Buen trabajo, sigue así." color={COLOR_SECCION.test.linea} />
 
     <img src={iconoFinBloqueHero} alt="" style={styles.finBloqueHeroImg} />
 
-    <div style={styles.resultCard}>
-      <div style={styles.resultRow}>
-        <span style={styles.resultRowLabel}>
-          <img src={iconoFinAciertos} alt="" style={styles.resultRowIcono} />
-          Aciertos
-        </span>
-        <span style={styles.resultRowValor}>{aciertos} de {preguntas.length}</span>
+    <div style={{ ...tarjetaCuaderno, display: "flex", alignItems: "center", gap: 14 }}>
+      <svg width="74" height="74" viewBox="0 0 74 74" style={{ flexShrink: 0 }}>
+        <circle cx="37" cy="37" r={radioFin} fill="none" stroke="#efe6d8" strokeWidth="8" />
+        <circle
+          cx="37"
+          cy="37"
+          r={radioFin}
+          fill="none"
+          stroke="#9fbf8f"
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={`${(porcentajeFin / 100) * circunferenciaFin} ${circunferenciaFin}`}
+          transform="rotate(-90 37 37)"
+        />
+        <text x="37" y="42" textAnchor="middle" fontSize="15" fontWeight="700" fill="#4a463f">
+          {porcentajeFin}%
+        </text>
+      </svg>
+      <div>
+        <p style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
+          {aciertos} de {preguntas.length}
+        </p>
+        <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "#5c5850" }}>aciertos. {mensajeFin}</p>
       </div>
+    </div>
+
+    <div style={{ ...tarjetaCuaderno, padding: "4px 16px" }}>
       <div style={styles.resultRow}>
         <span style={styles.resultRowLabel}>
           <img src={iconoFinExpedientes} alt="" style={styles.resultRowIcono} />
           Expedientes resueltos
         </span>
-        <span style={styles.resultRowValor}>{expedientesResueltos}</span>   
-           </div>
+        <span style={styles.resultRowValor}>{expedientesResueltos}</span>
+      </div>
       <div style={{ ...styles.resultRow, borderBottom: "none" }}>
         <span style={styles.resultRowLabel}>
           <img src={iconoFinRacha} alt="" style={styles.resultRowIcono} />
           Racha activa
         </span>
-        <span style={styles.resultRowValor}>{rachaFinal} días</span>
+        <span style={styles.resultRowValor}>{rachaFinal} {rachaFinal === 1 ? "día" : "días"}</span>
       </div>
     </div>
 
-    <button onClick={volverMenu} style={styles.ctaButton}>
-      Volver al menú
+    <button onClick={() => setVista("config")} style={styles.ctaButton}>
+      Hacer otro test
+    </button>
+
+    <button
+      onClick={() => setVista("errores")}
+      style={{ ...styles.ctaButton, background: COLOR_SECCION.test.fondoClaro, color: "#8c5560", marginTop: 10 }}
+    >
+      Repasar mis errores
+    </button>
+
+    <button onClick={volverMenu} style={styles.linkVolver}>
+      <span className="hoja-volver"></span> Volver al menú
     </button>
   </div>
 );
