@@ -31,7 +31,8 @@ export function esDiaDeDescanso(letra) {
 }
 
 // 🪝 calendario de la cuenta: { dias, hechos, cargado }
-export function useCalendario(usuario) {
+// recarga: cambia de valor cuando conviene volver a leerlo (al salir de Mi calendario)
+export function useCalendario(usuario, recarga) {
   const [datos, setDatos] = useState(() => ({ ...copiaCalendario(), cargado: false }));
 
   useEffect(() => {
@@ -49,8 +50,9 @@ export function useCalendario(usuario) {
           dias[k] = v === "O" ? "L" : v;
         });
         const hechos = snap.exists() ? snap.data().hechos || {} : {};
+        const omitidos = snap.exists() ? snap.data().omitidos || {} : {};
         guardarCopia({ dias, hechos });
-        setDatos({ dias, hechos, cargado: true });
+        setDatos({ dias, hechos, omitidos, cargado: true });
       })
       .catch(() => {
         if (!cancelado) setDatos((d) => ({ ...d, cargado: true }));
@@ -58,7 +60,7 @@ export function useCalendario(usuario) {
     return () => {
       cancelado = true;
     };
-  }, [usuario?.uid]);
+  }, [usuario?.uid, recarga]);
 
   // marca hoy como hecho en el calendario (cuando completas la ración)
   async function marcarHoyHecho() {

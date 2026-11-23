@@ -208,7 +208,7 @@ export default function App() {
   }
 
   // 🗓️ calendario de la cuenta (para "Hoy toca…", la ración y la semana)
-  const calendario = useCalendario(aprobada ? usuario : null);
+  const calendario = useCalendario(aprobada ? usuario : null, pantalla === "calendario");
 
   // ✍️ letra manuscrita de los títulos (Caveat), una sola vez
   useEffect(() => {

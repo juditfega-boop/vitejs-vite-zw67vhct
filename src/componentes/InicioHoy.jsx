@@ -183,6 +183,24 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
   const completa = tareas.length > 0 && tareas.every((t) => racion[t.id]);
   const claveHoy = claveFecha();
 
+  // 🗓️ un día planificado de la última semana que se quedó sin hacer (sin drama: se puede mover)
+  const diaSinHacer = useMemo(() => {
+    if (!usuario) return null;
+    const cumplidos = diasCumplidos();
+    const omitidos = calendario.omitidos || {};
+    for (let n = 7; n >= 1; n--) {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      const clave = claveFecha(d);
+      const marca = calendario.dias[clave];
+      if (marca && !esDiaDeDescanso(marca) && !calendario.hechos[clave] && !cumplidos[clave] && !omitidos[clave]) {
+        return ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][d.getDay()] + " " + d.getDate();
+      }
+    }
+    return null;
+  }, [usuario, calendario.dias, calendario.hechos, calendario.omitidos]);
+
+
   // ✅ al completar la ración: el día cuenta para la planta y se marca solo en el calendario
   useEffect(() => {
     if (!completa) return;
@@ -342,6 +360,34 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
           </span>
         )}
       </button>
+
+      {/* 🗓️ aviso sin drama: un día que no pudo ser */}
+      {diaSinHacer && (
+        <button
+          onClick={() => irA("calendario")}
+          style={{
+            ...tarjeta,
+            width: "100%",
+            border: "1.5px dashed #e6c9a0",
+            background: "#fffaf2",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 16,
+            textAlign: "left",
+            fontFamily: "inherit",
+            color: "#4a463f",
+            cursor: "pointer"
+          }}
+        >
+          <img src={iconoTaza} alt="" style={{ width: 34, height: 34, objectFit: "contain", flexShrink: 0 }} />
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>
+            <b>El {diaSinHacer} no pudo ser.</b>
+            <span style={{ display: "block", fontSize: 12, color: "#5c5850" }}>No pasa nada: puedes moverlo a otro día.</span>
+          </span>
+          <span style={{ color: "#8a6a4f", fontSize: 12, whiteSpace: "nowrap" }}>Ver opciones ›</span>
+        </button>
+      )}
 
       {/* 🍲 TU RACIÓN DE HOY */}
       <div data-guia="racion" style={{ marginBottom: 16 }}>

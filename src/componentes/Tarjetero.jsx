@@ -12,6 +12,26 @@ import {
   intercambiarOrden
 } from "../servicios/tarjetero";
 import { comprimirImagen } from "../servicios/comprimirImagen";
+import { leerCurva, entrarEnCurva, apuntarRepaso, claveDia } from "../servicios/curva";
+
+// "2026-11-26" → "jueves 26 de noviembre"
+function fechaBonita(clave) {
+  if (!clave) return "";
+  const [a, m, d] = clave.split("-").map(Number);
+  return new Date(a, m - 1, d).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+}
+
+const botonNota = {
+  flex: 1,
+  border: "none",
+  borderRadius: 16,
+  padding: "12px 6px",
+  fontFamily: "inherit",
+  fontSize: 14,
+  fontWeight: 700,
+  color: "#4a4038",
+  cursor: "pointer"
+};
 
 const tarjetaBase = {
   background: "#fffcf7",
@@ -43,6 +63,12 @@ export default function Tarjetero({ volver }) {
   const [ocupado, setOcupado] = useState(false);
   const [ampliada, setAmpliada] = useState(false);
   const toqueInicio = useRef(null);
+  // 🌿 sellar: tarjetas pendientes, si la actual está destapada y la primera nota de cada una
+  const [curva, setCurva] = useState(null); // { idCarpeta: { paso, proxima } }
+  const [cola, setCola] = useState([]);
+  const [destapada, setDestapada] = useState(false);
+  const [notas, setNotas] = useState({});
+  const [finSellado, setFinSellado] = useState(null);
 
   async function cargarCarpetas() {
     try {
@@ -67,7 +93,54 @@ export default function Tarjetero({ volver }) {
 
   useEffect(() => {
     cargarCarpetas();
+    cargarCurva();
   }, []);
+
+  function cargarCurva() {
+    leerCurva()
+      .then((c) => setCurva(c.tarjetero || {}))
+      .catch((e) => {
+        console.error(e);
+        setCurva({});
+      });
+  }
+
+  function empezarSellado() {
+    setCola(tarjetas.map((_, i) => i));
+    setNotas({});
+    setDestapada(false);
+    setFinSellado(null);
+    setVista("sellar");
+  }
+
+  // sellada → fuera · casi / no → vuelve al final de la tanda
+  function marcar(nota) {
+    const [i, ...resto] = cola;
+    const primeras = notas[i] ? notas : { ...notas, [i]: nota };
+    setNotas(primeras);
+    setDestapada(false);
+    const nuevaCola = nota === "sellada" ? resto : [...resto, i];
+    if (nuevaCola.length > 0) setCola(nuevaCola);
+    else terminarSellado(primeras);
+  }
+
+  async function terminarSellado(primeras) {
+    const valores = Object.values(primeras);
+    const resultado = valores.includes("no") ? "mal" : valores.includes("casi") ? "casi" : "bien";
+    const yaEstaba = !!(curva && curva[carpeta.id]);
+    let proxima = null;
+    try {
+      if (yaEstaba) await apuntarRepaso("tarjetero", carpeta.id, resultado);
+      else await entrarEnCurva("tarjetero", carpeta.id);
+      const c = await leerCurva();
+      setCurva(c.tarjetero || {});
+      proxima = (c.tarjetero || {})[carpeta.id]?.proxima || null;
+    } catch (e) {
+      console.error(e);
+    }
+    setCola([]);
+    setFinSellado({ resultado, yaEstaba, proxima });
+  }
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -228,6 +301,7 @@ export default function Tarjetero({ volver }) {
                 <span style={{ display: "block", fontWeight: 700, fontSize: 16 }}>{c.nombre}</span>
                 <span style={{ display: "block", fontSize: 13, color: "#6e6256" }}>
                   {c.total || 0} {c.total === 1 ? "tarjeta" : "tarjetas"}
+                  {curva && curva[c.id] && (curva[c.id].proxima <= claveDia() ? " · 🌿 toca repasarla hoy" : " · sellada")}
                 </span>
               </span>
               <span style={{ color: "#8a7d6f", fontSize: 18 }}>→</span>
@@ -315,6 +389,22 @@ export default function Tarjetero({ volver }) {
           </div>
         )}
 
+{tarjetas && tarjetas.length > 0 && !editando && (
+          <div style={{ ...tarjetaBase, padding: "14px 16px", marginBottom: 14, background: "#f3f7ee" }}>
+            <p style={{ margin: "0 0 4px", fontWeight: 700, color: "#4a4038" }}>Sellar esta carpeta</p>
+            <p style={{ ...styles.configSubLabel, margin: "0 0 10px" }}>
+              {!curva || !curva[carpeta.id]
+                ? "Cada tarjeta sale difuminada: recita lo que recuerdes, destápala y comprueba."
+                : curva[carpeta.id].proxima <= claveDia()
+                ? "🌿 Hoy te toca repasarla."
+                : `Sellada. Vuelve el ${fechaBonita(curva[carpeta.id].proxima)}.`}
+            </p>
+            <button onClick={empezarSellado} style={{ ...styles.ctaButton, margin: 0 }}>
+              {curva && curva[carpeta.id] ? "Repasar ahora" : "Empezar a sellar"}
+            </button>
+          </div>
+        )}
+
         <label
           style={{
             ...styles.ctaButton,
@@ -334,6 +424,83 @@ export default function Tarjetero({ volver }) {
         </p>
 
         {mensaje && <p style={{ ...styles.configSubLabel, textAlign: "center" }}>{mensaje}</p>}
+      </div>
+    );
+  }
+
+  // 🌿 SELLAR UNA CARPETA
+  if (vista === "sellar") {
+    if (finSellado) {
+      const textos = {
+        bien: "Lo recuerdas todo.",
+        casi: "Casi. Algunas se resistieron un poco.",
+        mal: "Alguna se te estaba olvidando. Sin drama: vuelve pronto."
+      };
+      return (
+        <div style={styles.menuContainer}>
+          <div style={{ ...tarjetaBase, padding: 20, textAlign: "center", marginTop: 20 }}>
+            <p style={{ fontSize: 34, margin: "0 0 6px" }}>🌿</p>
+            <h2 style={{ ...styles.menuTitle, fontSize: 26, margin: "0 0 8px" }}>¡Carpeta sellada!</h2>
+            <p style={{ ...styles.configSubLabel, margin: 0 }}>
+              {finSellado.yaEstaba ? textos[finSellado.resultado] + " " : ""}
+              {finSellado.proxima ? `Te la vuelvo a pedir el ${fechaBonita(finSellado.proxima)}.` : ""}
+            </p>
+          </div>
+          <button onClick={() => setVista("carpeta")} style={styles.ctaButton}>
+            Volver a {carpeta.nombre}
+          </button>
+        </div>
+      );
+    }
+
+    const i = cola[0];
+    const tarjeta = tarjetas && tarjetas[i];
+    return (
+      <div style={styles.menuContainer}>
+        <button onClick={() => setVista("carpeta")} style={styles.linkVolver}>⬅ {carpeta.nombre}</button>
+        <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "0 0 10px" }}>
+          Tarjeta {i + 1} · {cola.length === 1 ? "queda 1" : `quedan ${cola.length}`}
+        </p>
+
+        {tarjeta && (
+          <div style={{ ...tarjetaBase, padding: 8, overflow: "hidden" }}>
+            <img
+              src={tarjeta.imagen}
+              alt={`Tarjeta ${i + 1}`}
+              style={{
+                width: "100%",
+                display: "block",
+                borderRadius: 14,
+                filter: destapada ? "none" : "blur(9px)",
+                transform: destapada ? "none" : "scale(1.04)",
+                transition: "filter 0.5s ease, transform 0.5s ease"
+              }}
+            />
+          </div>
+        )}
+
+        {!destapada ? (
+          <>
+            <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "14px 0 10px" }}>
+              Recita en voz alta lo que recuerdes de esta tarjeta. Después, destápala.
+            </p>
+            <button onClick={() => setDestapada(true)} style={styles.ctaButton}>
+              Destapar
+            </button>
+          </>
+        ) : (
+          <>
+            <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "14px 0 10px" }}>¿Cómo ha ido?</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => marcar("sellada")} style={{ ...botonNota, background: "#e3ecd9" }}>Sellada</button>
+              <button onClick={() => marcar("casi")} style={{ ...botonNota, background: "#f7e9d2" }}>Casi</button>
+              <button onClick={() => marcar("no")} style={{ ...botonNota, background: "#f9e3e3" }}>No</button>
+            </div>
+            <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 8 }}>
+              «Casi» y «No» vuelven al final, hasta que las selles todas.
+            </p>
+          </>
+        )}
       </div>
     );
   }
