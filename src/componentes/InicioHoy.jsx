@@ -347,7 +347,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
           display: "flex",
           alignItems: "center",
           gap: 12,
-          marginBottom: 16,
+          marginBottom: 12,
           overflow: "hidden"
         }}
       >
@@ -421,7 +421,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
       )}
 
       {/* 🍲 TU RACIÓN DE HOY */}
-      <div data-guia="racion" style={{ marginBottom: 16 }}>
+      <div data-guia="racion" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "0 0 4px" }}>
           <p style={{ ...MANO, margin: 0, fontSize: 25, lineHeight: 1, color: "#5b4a3a" }}>Tu ración de hoy</p>
           {!descanso && (
@@ -462,7 +462,6 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
                     onClick={() => irA(t.destino)}
                     style={{
                       position: "relative",
-                      gridColumn: tareas.length % 2 === 1 && tareas.length >= 4 && i === tareas.length - 1 ? "span 2" : undefined,
                       minWidth: 0,
                       display: "flex",
                       flexDirection: tareas.length >= 4 ? "row" : "column",
@@ -545,17 +544,16 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
       {/* 🌿 TU JARDÍN: la planta de tu semana */}
       <div data-guia="jardin" style={tarjeta}>
         <Washi color="#c9dcb5" rot={3} left="84%" />
-        <p style={{ ...MANO, margin: "0 0 2px", fontSize: 25, lineHeight: 1, color: "#5b4a3a" }}>Tu jardín</p>
-
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img
             key={cumplidosSemana}
             src={PLANTA_SEMANA[cumplidosSemana]}
             alt={`Planta de la semana: ${cumplidosSemana} de 7 días`}
-            style={{ width: 62, height: 112, objectFit: "contain", flexShrink: 0, animation: "hojaAparece 0.6s ease both" }}
+            style={{ width: 56, height: 96, objectFit: "contain", flexShrink: 0, animation: "hojaAparece 0.6s ease both" }}
           />
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontSize: 12.5, color: "#5c5850", lineHeight: 1.4, marginBottom: 8 }}>{textoSemana}</span>
+          <span style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+            <span style={{ display: "block", ...MANO, fontSize: 24, lineHeight: 1, color: "#5b4a3a" }}>Tu jardín</span>
+            <span style={{ display: "block", fontSize: 12, color: "#5c5850", lineHeight: 1.35, margin: "3px 0 6px" }}>{textoSemana}</span>
             <span style={{ display: "flex", justifyContent: "space-between" }}>
               {semana.map((d) => (
                 <span
@@ -594,10 +592,10 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
               cursor: "pointer"
             }}
           >
-            <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", width: "100%", lineHeight: 1.4 }}>
               <b>Para reforzar:</b> <span style={{ color: "#8a6a3a" }}>{flojo.nombre}</span>
+              <span style={{ float: "right", marginLeft: 8, color: "#8a6a4f", fontSize: 12, whiteSpace: "nowrap" }}>Test de 10 ›</span>
             </span>
-            <span style={{ color: "#8a6a4f", fontSize: 12, whiteSpace: "nowrap" }}>Test de 10 ›</span>
           </button>
         )}
       </div>
@@ -610,7 +608,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
           style={{
             ...tarjeta,
             width: "100%",
-            marginTop: 12,
+            marginTop: 10,
             border: "none",
             display: "flex",
             alignItems: "center",
