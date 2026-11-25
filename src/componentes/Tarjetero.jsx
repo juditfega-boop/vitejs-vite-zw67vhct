@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { styles } from "../estilos";
-import iconoTarjetero from "../assets/kit/icono-hub-erre-que-erre.png";
+import { TituloHub, COLOR_SECCION } from "./Hub";
+import { marcarRacion } from "../servicios/progreso";
 import {
   listarCarpetas,
   crearCarpeta,
@@ -9,7 +10,8 @@ import {
   listarTarjetas,
   anadirTarjeta,
   borrarTarjeta,
-  intercambiarOrden
+  intercambiarOrden,
+  cambiarTitulo
 } from "../servicios/tarjetero";
 import { comprimirImagen } from "../servicios/comprimirImagen";
 import { leerCurva, entrarEnCurva, apuntarRepaso, claveDia } from "../servicios/curva";
@@ -19,6 +21,23 @@ function fechaBonita(clave) {
   if (!clave) return "";
   const [a, m, d] = clave.split("-").map(Number);
   return new Date(a, m - 1, d).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+}
+
+// "3 - Órganos colegiados.png" → "Órganos colegiados"
+function tituloDesdeArchivo(nombre) {
+  return (nombre || "")
+    .replace(/\.[^.]+$/, "")
+    .replace(/^\s*\d+\s*[-_.)·]*\s*/, "")
+    .replace(/_+/g, " ")
+    .trim();
+}
+
+// días desde hoy hasta una fecha "2026-12-03" (0 = hoy o ya pasada)
+function diasHasta(clave) {
+  const [a, m, d] = clave.split("-").map(Number);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((new Date(a, m - 1, d) - hoy) / 86400000));
 }
 
 const botonNota = {
@@ -58,6 +77,7 @@ export default function Tarjetero({ volver }) {
   const [tarjetas, setTarjetas] = useState(null);
   const [indice, setIndice] = useState(0);
   const [nuevoNombre, setNuevoNombre] = useState("");
+  const [creando, setCreando] = useState(false); // ventanita de «Nueva carpeta»
   const [editando, setEditando] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -141,6 +161,7 @@ export default function Tarjetero({ volver }) {
     } catch (e) {
       console.error(e);
     }
+    marcarRacion("tarjetero"); // 🍲 cuenta para la ración de hoy
     setCola([]);
     setFinSellado({ resultado, yaEstaba, proxima });
   }
@@ -164,6 +185,7 @@ export default function Tarjetero({ volver }) {
     try {
       await crearCarpeta(nombre);
       setNuevoNombre("");
+      setCreando(false);
       await cargarCarpetas();
     } catch (e) {
       console.error(e);
@@ -185,7 +207,7 @@ export default function Tarjetero({ volver }) {
       for (let i = 0; i < archivos.length; i++) {
         setMensaje(`Subiendo ${i + 1} de ${archivos.length}…`);
         const imagen = await comprimirImagen(archivos[i]);
-        await anadirTarjeta(carpeta.id, imagen, orden);
+        await anadirTarjeta(carpeta.id, imagen, orden, tituloDesdeArchivo(archivos[i].name));
         orden += 1;
       }
       setMensaje(`🌿 ${archivos.length === 1 ? "Tarjeta añadida" : `${archivos.length} tarjetas añadidas`}.`);
@@ -208,6 +230,18 @@ export default function Tarjetero({ volver }) {
       setMensaje("No se pudo borrar la tarjeta.");
     }
     setOcupado(false);
+  }
+
+  async function ponerTitulo(t) {
+    const titulo = window.prompt("Título de la tarjeta:", t.titulo || "");
+    if (titulo === null) return;
+    try {
+      await cambiarTitulo(carpeta.id, t.id, titulo.trim());
+      await cargarTarjetas(carpeta);
+    } catch (e) {
+      console.error(e);
+      setMensaje("No se pudo cambiar el título.");
+    }
   }
 
   async function mover(i, direccion) {
@@ -266,21 +300,67 @@ export default function Tarjetero({ volver }) {
 
   // 📁 LISTA DE CARPETAS
   if (vista === "carpetas") {
+    // etiqueta de cada carpeta: hoy · en X días · sin sellar (las de hoy, primero; luego por fecha)
+    const hoy = claveDia();
+    const lista = (carpetas || [])
+      .map((c) => {
+        const fecha = curva && curva[c.id] ? curva[c.id].proxima : null;
+        const dias = fecha ? (fecha <= hoy ? 0 : diasHasta(fecha)) : null;
+        return { ...c, dias };
+      })
+      .sort((a, b) => (a.dias === null ? 9999 : a.dias) - (b.dias === null ? 9999 : b.dias));
+    const paraHoy = lista.filter((c) => c.dias === 0).length;
+
+    function etiqueta(dias) {
+      if (dias === null) return { texto: "sin sellar", fondo: "#f8e6e8", color: "#8c5560" };
+      if (dias === 0) return { texto: "🌿 Hoy", fondo: "#e3ecd9", color: "#3f5a3a", negrita: true };
+      return { texto: dias === 1 ? "mañana" : `en ${dias} días`, fondo: "#f3ede3", color: "#7d7468" };
+    }
+
     return (
       <div style={styles.menuContainer}>
-        <div style={{ textAlign: "center", marginBottom: 8 }}>
-          <img src={iconoTarjetero} alt="" style={{ width: 110, display: "block", margin: "0 auto 6px" }} />
-          <h1 style={{ ...styles.menuTitle, marginBottom: 4 }}>Mi tarjetero</h1>
-          <p style={{ ...styles.configSubLabel, marginTop: 0 }}>Tus resúmenes, ordenados en carpetas.</p>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+          <TituloHub
+            titulo="Mi tarjetero"
+            subtitulo={
+              paraHoy > 0
+                ? `${paraHoy} ${paraHoy === 1 ? "carpeta para repasar hoy" : "carpetas para repasar hoy"}.`
+                : "Tus resúmenes, ordenados en carpetas."
+            }
+            color={COLOR_SECCION.expediente.linea}
+          />
+          <button
+            onClick={() => setCreando(true)}
+            aria-label="Nueva carpeta"
+            title="Nueva carpeta"
+            style={{
+              flexShrink: 0,
+              width: 40,
+              height: 40,
+              marginTop: 6,
+              borderRadius: "50%",
+              border: "none",
+              background: "linear-gradient(135deg, #f2cb8f, #eeb9bd)",
+              color: "#5a4636",
+              fontSize: 24,
+              fontWeight: 700,
+              lineHeight: 1,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+            }}
+          >
+            +
+          </button>
         </div>
 
         {carpetas === null && <p style={styles.configSubLabel}>Cargando…</p>}
         {carpetas && carpetas.length === 0 && (
-          <p style={{ ...styles.configSubLabel, textAlign: "center" }}>Todavía no tienes carpetas. Crea la primera aquí abajo.</p>
+          <p style={{ ...styles.configSubLabel, textAlign: "center" }}>Todavía no tienes carpetas. Crea la primera con el +.</p>
         )}
 
-        {carpetas &&
-          carpetas.map((c) => (
+        {lista.map((c) => {
+          const e = etiqueta(c.dias);
+          return (
             <button
               key={c.id}
               onClick={() => abrirCarpeta(c)}
@@ -289,52 +369,102 @@ export default function Tarjetero({ volver }) {
                 width: "100%",
                 boxSizing: "border-box",
                 border: "none",
+                borderLeft: c.dias === 0 ? "5px solid #9fbf8f" : "none",
                 cursor: "pointer",
                 fontFamily: "inherit",
                 textAlign: "left",
-                padding: "16px 18px",
-                marginBottom: 12,
+                padding: "12px 16px",
+                marginBottom: 10,
                 display: "flex",
                 alignItems: "center",
                 gap: 12,
                 color: "#4a4038"
               }}
             >
-              <span style={{ flex: 1 }}>
-                <span style={{ display: "block", fontWeight: 700, fontSize: 16 }}>{c.nombre}</span>
-                <span style={{ display: "block", fontSize: 13, color: "#6e6256" }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 11.5,
+                    padding: "2px 9px",
+                    borderRadius: 999,
+                    background: e.fondo,
+                    color: e.color,
+                    fontWeight: e.negrita ? 700 : 400,
+                    marginBottom: 5
+                  }}
+                >
+                  {e.texto}
+                </span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: 15, lineHeight: 1.3 }}>{c.nombre}</span>
+                <span style={{ display: "block", fontSize: 12.5, color: "#6e6256", marginTop: 2 }}>
                   {c.total || 0} {c.total === 1 ? "tarjeta" : "tarjetas"}
-                  {curva && curva[c.id] && (curva[c.id].proxima <= claveDia() ? " · 🌿 toca repasarla hoy" : " · sellada")}
                 </span>
               </span>
-              <span style={{ color: "#8a7d6f", fontSize: 18 }}>→</span>
+              <span style={{ color: "#b8a993", fontSize: 18 }}>›</span>
             </button>
-          ))}
-
-        <div style={{ ...styles.configCard }}>
-          <p style={styles.configCardTitle}>Nueva carpeta</p>
-          <input
-            type="text"
-            value={nuevoNombre}
-            onChange={(e) => setNuevoNombre(e.target.value)}
-            placeholder="Ej: Ley 39/2015"
-            style={styles.nombreInput}
-          />
-          <button
-            onClick={nuevaCarpeta}
-            disabled={ocupado || !nuevoNombre.trim()}
-            style={{ ...styles.ctaButton, ...(ocupado || !nuevoNombre.trim() ? styles.ctaButtonDisabled : {}) }}
-          >
-            Crear carpeta
-          </button>
-        </div>
+          );
+        })}
 
         {mensaje && <p style={{ ...styles.configSubLabel, textAlign: "center" }}>{mensaje}</p>}
 
         <button onClick={volver} style={styles.linkVolver}><span className="hoja-volver"></span> Volver</button>
+
+        {/* ➕ ventanita para crear una carpeta */}
+        {creando && (
+          <div
+            onClick={() => setCreando(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 60,
+              background: "rgba(74,70,63,0.28)",
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center"
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "100%",
+                maxWidth: 480,
+                background: "#fdfaf4",
+                borderRadius: "26px 26px 0 0",
+                padding: "20px 20px 28px",
+                boxSizing: "border-box",
+                color: "#4a463f"
+              }}
+            >
+              <p style={{ fontFamily: "'Caveat', cursive", fontWeight: 700, margin: "0 0 10px", fontSize: 28, lineHeight: 1, color: "#5b4a3a" }}>
+                Nueva carpeta
+              </p>
+              <input
+                type="text"
+                value={nuevoNombre}
+                onChange={(e) => setNuevoNombre(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && nuevaCarpeta()}
+                placeholder="Ej: Ley 39/2015"
+                autoFocus
+                style={{ ...styles.nombreInput, width: "100%", boxSizing: "border-box" }}
+              />
+              <button
+                onClick={nuevaCarpeta}
+                disabled={ocupado || !nuevoNombre.trim()}
+                style={{ ...styles.ctaButton, ...(ocupado || !nuevoNombre.trim() ? styles.ctaButtonDisabled : {}) }}
+              >
+                Crear carpeta
+              </button>
+              <button onClick={() => setCreando(false)} style={styles.linkVolver}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
+
 
   // 🗂️ DENTRO DE UNA CARPETA
   if (vista === "carpeta") {
@@ -380,6 +510,14 @@ export default function Tarjetero({ volver }) {
                     style={{ width: "100%", height: 120, objectFit: "cover", objectPosition: "top", borderRadius: 14, display: "block" }}
                   />
                 </button>
+                <span style={{ fontSize: 12, color: t.titulo ? "#4a4038" : "#a99c8c", lineHeight: 1.3, padding: "0 2px" }}>
+                  {t.titulo || "Sin título"}
+                </span>
+                {editando && (
+                  <button onClick={() => ponerTitulo(t)} disabled={ocupado} style={{ ...botonPequeno, padding: "4px 8px" }}>
+                    {t.titulo ? "Cambiar título" : "Poner título"}
+                  </button>
+                )}
                 {editando && (
                   <div style={{ display: "flex", gap: 4, justifyContent: "space-between" }}>
                     <button onClick={() => mover(i, -1)} disabled={ocupado || i === 0} style={{ ...botonPequeno, padding: "4px 8px" }} aria-label="Mover antes">‹</button>
@@ -461,9 +599,15 @@ export default function Tarjetero({ volver }) {
     return (
       <div style={styles.menuContainer}>
         <button onClick={() => setVista("carpeta")} style={styles.linkVolver}><span className="hoja-volver"></span> {carpeta.nombre}</button>
-        <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "0 0 10px" }}>
+        <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "0 0 4px" }}>
           Tarjeta {i + 1} · {cola.length === 1 ? "queda 1" : `quedan ${cola.length}`}
         </p>
+        {tarjeta && tarjeta.titulo && (
+          <p style={{ fontFamily: "'Caveat', cursive", fontWeight: 700, fontSize: 26, lineHeight: 1.1, color: "#5b4a3a", textAlign: "center", margin: "0 0 10px" }}>
+            {tarjeta.titulo}
+          </p>
+        )}
+
 
         {tarjeta && (
           <div style={{ ...tarjetaBase, padding: 8, overflow: "hidden" }}>

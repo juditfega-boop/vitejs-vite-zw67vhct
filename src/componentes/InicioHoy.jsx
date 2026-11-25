@@ -21,6 +21,9 @@ import iconoReloj from "../assets/kit/icono-reloj-simulacro.png";
 import iconoTaza from "../assets/kit/icono-taza-perfil.png";
 import iconoDados from "../assets/kit/icono-dados-minijuegos.png";
 import iconoExplora from "../assets/kit/icono-explora.png";
+import iconoTarjetero from "../assets/kit/icono-tarjetero.png";
+import { listarCarpetas } from "../servicios/tarjetero";
+import { leerCurva, claveDia } from "../servicios/curva";
 import semana0 from "../assets/kit/jardin-semana-0.png";
 import semana1 from "../assets/kit/jardin-semana-1.png";
 import semana2 from "../assets/kit/jardin-semana-2.png";
@@ -38,7 +41,8 @@ const COLOR_TAREA = {
   errores: "#fbf0f1",
   erre: "#ebe4f7",
   explora: "#f1ecfa",
-  simulacro: "#f8e6e8"
+  simulacro: "#f8e6e8",
+  tarjetero: "#fbf3e6"
 };
 
 // 🧩 las tareas que puede llevar la ración
@@ -47,7 +51,8 @@ const TAREAS = {
   explora: { id: "explora", titulo: "Explora", texto: "1 artículo", icono: iconoExplora, destino: "explora" },
   test: { id: "test", titulo: "Test de 10", texto: "De lo que estudias", icono: iconoTest, destino: "estudiar-estudio" },
   errores: { id: "errores", titulo: "Errores", texto: "Tus pendientes", icono: iconoErrores, destino: "estudiar-errores" },
-  simulacro: { id: "simulacro", titulo: "Simulacro", texto: "Con calma", icono: iconoReloj, destino: "simulacro" }
+  simulacro: { id: "simulacro", titulo: "Simulacro", texto: "Con calma", icono: iconoReloj, destino: "simulacro" },
+  tarjetero: { id: "tarjetero", titulo: "Tarjetero", texto: "Sellar una carpeta", icono: iconoTarjetero, destino: "tarjetero" }
 };
 
 // las que se pueden añadir o quitar en "Personalizar"
@@ -55,7 +60,8 @@ const PERSONALIZABLES = [
   { id: "erre", nombre: "Erre que erre", detalle: "Memorizar un artículo" },
   { id: "explora", nombre: "Explora la Constitución", detalle: "Abrir un artículo" },
   { id: "test", nombre: "Test de 10", detalle: "Preguntas de lo que estudias" },
-  { id: "errores", nombre: "Repasar errores", detalle: "Solo si tienes pendientes" }
+  { id: "errores", nombre: "Repasar errores", detalle: "Solo si tienes pendientes" },
+  { id: "tarjetero", nombre: "Tarjetero", detalle: "Según el día: cuando toca repasar alguna carpeta" }
 ];
 
 const cssInicio = `
@@ -67,13 +73,19 @@ const cssInicio = `
 
 // 📝 qué toca hoy, según el día del calendario (y lo que hayas añadido o quitado tú)
 // extras: { erre: "siempre" | "nunca", … } — lo que no está, va "según el día"
-function tareasDeHoy(tipo, pendientes, extras) {
+// tarjetero: { activo, hoy (carpetas que tocan hoy), hecho (ya has sellado una hoy) }
+function tareasDeHoy(tipo, pendientes, extras, tarjetero) {
   let ids;
   if (tipo === "E") ids = ["erre", "explora"]; // estudio: memorizar
   else if (tipo === "R") ids = ["test", "errores"]; // repaso
   else if (tipo === "M") ids = ["test"]; // repaso mensual
   else if (tipo === "F") ids = ["simulacro"]; // repaso final
   else ids = ["test", "errores"]; // día sin marcar: a tu ritmo
+
+  // 🗂️ tarjetero «según el día»: cuando alguna carpeta toca por la curva del olvido
+  // (y se queda en la ración cuando ya la has sellado, para que se vea el HECHO)
+  if (tarjetero.activo && (tarjetero.hoy > 0 || tarjetero.hecho)) ids.push("tarjetero");
+
 
   PERSONALIZABLES.forEach(({ id }) => {
     const modo = extras[id] === true ? "siempre" : extras[id];
@@ -82,10 +94,12 @@ function tareasDeHoy(tipo, pendientes, extras) {
   });
 
   return ids
-    .filter((id) => id !== "errores" || pendientes > 0) // quien empieza no tiene errores que repasar
-    .map((id) => {
-      const t = { ...TAREAS[id] };
-      if (id === "errores") t.texto = `${Math.min(10, pendientes)} pendientes`;
+  .filter((id) => id !== "errores" || pendientes > 0) // quien empieza no tiene errores que repasar
+  .filter((id) => id !== "tarjetero" || tarjetero.activo) // solo con el tarjetero activo
+  .map((id) => {
+    const t = { ...TAREAS[id] };
+    if (id === "errores") t.texto = `${Math.min(10, pendientes)} pendientes`;
+    if (id === "tarjetero" && tarjetero.hoy > 0) t.texto = `${tarjetero.hoy} ${tarjetero.hoy === 1 ? "carpeta" : "carpetas"} hoy`;
       if (id === "test" && tipo === "M") {
         t.titulo = "Test por bloques";
         t.texto = "De lo que estudias";
@@ -179,7 +193,24 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
     return prioritarios.length + seguimiento.length;
   }, [preguntas]);
 
-  const tareas = descanso ? [] : tareasDeHoy(tipo, pendientes, extras);
+  // 🗂️ tarjetero: ¿lo tiene activo esta cuenta y cuántas carpetas tocan hoy?
+  const [tarjetero, setTarjetero] = useState({ activo: false, hoy: 0 });
+  useEffect(() => {
+    if (!usuario) return;
+    let vivo = true;
+    Promise.all([listarCarpetas(), leerCurva()])
+      .then(([carpetas, curva]) => {
+        const fechas = curva.tarjetero || {};
+        const hoy = carpetas.filter((c) => fechas[c.id] && fechas[c.id].proxima <= claveDia()).length;
+        if (vivo) setTarjetero({ activo: true, hoy });
+      })
+      .catch(() => vivo && setTarjetero({ activo: false, hoy: 0 })); // sin tarjetero en esta cuenta
+    return () => {
+      vivo = false;
+    };
+  }, [usuario?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const tareas = descanso ? [] : tareasDeHoy(tipo, pendientes, extras, { ...tarjetero, hecho: !!racion.tarjetero });
   const completa = tareas.length > 0 && tareas.every((t) => racion[t.id]);
   const claveHoy = claveFecha();
 
@@ -417,7 +448,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${tareas.length === 4 ? 2 : Math.max(1, tareas.length)}, minmax(0, 1fr))`,
+                gridTemplateColumns: `repeat(${tareas.length >= 4 ? 2 : Math.max(1, tareas.length)}, minmax(0, 1fr))`,
                 gap: 10,
                 paddingTop: 8
               }}
@@ -431,11 +462,12 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
                     onClick={() => irA(t.destino)}
                     style={{
                       position: "relative",
+                      gridColumn: tareas.length % 2 === 1 && tareas.length >= 4 && i === tareas.length - 1 ? "span 2" : undefined,
                       minWidth: 0,
                       display: "flex",
-                      flexDirection: tareas.length === 4 ? "row" : "column",
-                      alignItems: tareas.length === 4 ? "center" : "flex-start",
-                      gap: tareas.length === 4 ? 8 : 3,
+                      flexDirection: tareas.length >= 4 ? "row" : "column",
+                      alignItems: tareas.length >= 4 ? "center" : "flex-start",
+                      gap: tareas.length >= 4 ? 8 : 3,
                       background: COLOR_TAREA[t.id],
                       border: "none",
                       borderRadius: 18,
@@ -469,7 +501,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
                         HECHO
                       </span>
                     )}
-                    <img src={t.icono} alt="" style={{ width: tareas.length === 4 ? 38 : 44, height: tareas.length === 4 ? 38 : 44, objectFit: "contain", flexShrink: 0 }} />
+                    <img src={t.icono} alt="" style={{ width: tareas.length >= 4 ? 38 : 44, height: tareas.length >= 4 ? 38 : 44, objectFit: "contain", flexShrink: 0 }} />
                     <span style={{ minWidth: 0 }}>
                       <span style={{ display: "block", fontSize: 13.5, fontWeight: 700, opacity: hecho ? 0.6 : 1 }}>{t.titulo}</span>
                       <span style={{ display: "block", fontSize: 11, color: "#5c5850", lineHeight: 1.3 }}>{t.texto}</span>
@@ -635,7 +667,7 @@ export default function InicioHoy({ usuario, preguntas, bloquesDe, calendario, i
             <p style={{ margin: "0 0 14px", fontSize: 12.5, color: "#5c5850", lineHeight: 1.45 }}>
               Elige qué quieres hacer cada día. «Según el día» sigue lo que toca en tu calendario. En los días de descanso no se añade nada.
             </p>
-            {PERSONALIZABLES.map((p) => {
+            {PERSONALIZABLES.filter((p) => p.id !== "tarjetero" || tarjetero.activo).map((p) => {
               const modo = extras[p.id] === true ? "siempre" : extras[p.id] || "dia";
               return (
                 <div key={p.id} style={{ padding: "9px 0", borderTop: "1px solid #efe6d8" }}>

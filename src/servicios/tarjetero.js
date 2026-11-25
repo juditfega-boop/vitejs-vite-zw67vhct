@@ -47,8 +47,8 @@ import {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
   
-  export async function anadirTarjeta(carpetaId, imagen, orden) {
-    await addDoc(tarjetasRef(carpetaId), { imagen, orden, creado: serverTimestamp() });
+  export async function anadirTarjeta(carpetaId, imagen, orden, titulo = "") {
+    await addDoc(tarjetasRef(carpetaId), { imagen, orden, titulo, creado: serverTimestamp() });
     await updateDoc(doc(carpetasRef(), carpetaId), { total: increment(1) });
   }
   
@@ -64,3 +64,7 @@ import {
     lote.update(doc(tarjetasRef(carpetaId), b.id), { orden: a.orden });
     await lote.commit();
   }
+  // cambia el título de una tarjeta
+export function cambiarTitulo(carpetaId, tarjetaId, titulo) {
+  return updateDoc(doc(tarjetasRef(carpetaId), tarjetaId), { titulo });
+}
