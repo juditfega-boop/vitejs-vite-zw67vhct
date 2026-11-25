@@ -4,7 +4,7 @@ import imagenCabecera from "../assets/kit/erre-que-erre-cabecera.png";
 import iconoReloj from "../assets/kit/icono-cronometro-reloj.png";
 import plantaFeliz from "../assets/kit/planta-resultado-feliz.png";
 import plantaTriste from "../assets/kit/planta-resultado-triste.png";
-import { separarApartados, trocear, normalizar, segundosMemorizar } from "./fichas";
+import { separarApartados, trocear, normalizar, segundosMemorizar, trocearClave, palabrasClave } from "./fichas";
 import { obtenerNivelesErre, guardarNivelesErre } from "../servicios/progreso";
 import { entrarEnCurva } from "../servicios/curva";
 
@@ -59,6 +59,11 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
   // 📌 el nivel de cada ficha al empezar la ronda (para saber si ya estaba en «De memoria»)
   const [nivelesRonda, setNivelesRonda] = useState(() => obtenerNivelesErre());
 
+  // ✍️ las fichas que aún no están en «De memoria» salen una a una;
+  // las que ya lo están se escriben juntas al final, de memoria (en el repaso, todas)
+  const unaAUna = modoRepaso ? [] : fichas.filter((f) => (nivelesRonda[f.id] || 1) < 3);
+  const deMemoria = modoRepaso ? fichas : fichas.filter((f) => (nivelesRonda[f.id] || 1) === 3);
+
   // ⏳ cuenta atrás para memorizar
   useEffect(() => {
     if (fase !== "memorizar") return;
@@ -82,21 +87,39 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
     if (todasALaPrimera && yaEnNivel3) entrarEnCurva("erre", articulo.id).catch((e) => console.error(e));
   }, [fase]);
 
-  function terminarFicha(ficha, resultado) {
-    setResultados((r) => ({ ...r, [ficha.id]: resultado }));
-    if (!modoRepaso) {
-      const actual = niveles[ficha.id] || 1;
-      const nuevo =
+  // apunta el resultado de una o varias fichas y les sube o baja el nivel
+  function anotar(lista) {
+    setResultados((r) => {
+      const copia = { ...r };
+      lista.forEach(({ ficha, resultado }) => (copia[ficha.id] = resultado));
+      return copia;
+    });
+    if (modoRepaso) return;
+    const nuevos = { ...niveles };
+    let suben = 0;
+    lista.forEach(({ ficha, resultado }) => {
+      const actual = nuevos[ficha.id] || 1;
+      nuevos[ficha.id] =
         resultado === "perfecta" ? Math.min(3, actual + 1) : resultado === "fallo" ? Math.max(1, actual - 1) : actual;
-      const nuevos = { ...niveles, [ficha.id]: nuevo };
-      setNiveles(nuevos);
-      guardarNivelesErre(nuevos);
-      if (resultado === "perfecta" && actual < 3) setSubidas((s) => s + 1);
-    }
+      if (resultado === "perfecta" && actual < 3) suben += 1;
+    });
+    setNiveles(nuevos);
+    guardarNivelesErre(nuevos);
+    if (suben > 0) setSubidas((s) => s + suben);
+  }
 
-    if (indice + 1 < fichas.length) setIndice(indice + 1);
+  function terminarFicha(ficha, resultado) {
+    anotar([{ ficha, resultado }]);
+    if (indice + 1 < unaAUna.length) setIndice(indice + 1);
+    else if (deMemoria.length > 0) setIndice(unaAUna.length); // toca escribir de memoria
     else setFase("fin");
   }
+
+  function terminarMemoria(lista) {
+    anotar(lista);
+    setFase("fin");
+  }
+
 
   function repetir() {
     setNivelesRonda(niveles);
@@ -161,28 +184,48 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
     );
   }
 
-  // ✍️ FASE 2: RECORDAR (una ficha cada vez)
+  // ✍️ FASE 2: RECORDAR (primero una ficha cada vez; después, lo que va de memoria)
   if (fase === "recordar") {
-    const ficha = fichas[indice];
-    const nivel = modoRepaso ? 3 : niveles[ficha.id] || 1;
+    if (indice >= unaAUna.length) {
+      const todas = deMemoria.length === fichas.length;
+      const numeros = deMemoria.map((f) => f.numero).filter(Boolean);
+      const queEscribir = todas
+        ? "todo el artículo"
+        : numeros.length === 1
+        ? `el apartado ${numeros[0]}`
+        : `los apartados ${numeros.slice(0, -1).join(", ")} y ${numeros[numeros.length - 1]}`;
+      return (
+        <div style={styles.menuContainer}>
+          {cabecera}
+          <p style={{ ...styles.configSubLabel, textAlign: "center" }}>
+            {modoRepaso ? `Repaso ${numeroTanda} · ` : ""}De memoria · {queEscribir}
+          </p>
+          <Memoria
+            key={`memoria-${deMemoria.map((f) => f.id).join("-")}`}
+            fichas={deMemoria}
+            queEscribir={queEscribir}
+            onTerminar={terminarMemoria}
+          />
+          <button onClick={onVolver} style={styles.linkVolver}><span className="hoja-volver"></span> Salir</button>
+        </div>
+      );
+    }
+
+    const ficha = unaAUna[indice];
+    const nivel = niveles[ficha.id] || 1;
     return (
       <div style={styles.menuContainer}>
         {cabecera}
         <p style={{ ...styles.configSubLabel, textAlign: "center" }}>
-        {modoRepaso ? `Repaso ${numeroTanda} · ` : ""}Ficha {indice + 1} de {fichas.length}
+          Ficha {indice + 1} de {unaAUna.length}
           {ficha.numero ? ` · Apartado ${ficha.numero}` : ""} · {NOMBRE_NIVEL[nivel]}
         </p>
-        <Ficha
-          key={ficha.id}
-          ficha={ficha}
-          nivel={nivel}
-          articulo={articulo}
-          onTerminar={(r) => terminarFicha(ficha, r)}
-        />
+        <Ficha key={ficha.id} ficha={ficha} nivel={nivel} onTerminar={(r) => terminarFicha(ficha, r)} />
         <button onClick={onVolver} style={styles.linkVolver}><span className="hoja-volver"></span> Salir</button>
       </div>
     );
   }
+
 
   // 🌱 FASE 3: FIN
   const perfectas = fichas.filter((f) => resultados[f.id] === "perfecta").length;
@@ -284,78 +327,82 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
   );
 }
 
-// 🗂️ Una ficha: huecos (niveles 1 y 2) o escribir de memoria (nivel 3)
-function Ficha({ ficha, nivel, articulo, onTerminar }) {
-  const huecos = useMemo(
-    () => ficha.partes.map((p, i) => (p.clave ? i : null)).filter((i) => i !== null),
-    [ficha]
-  );
-  const banco = useMemo(() => mezclar(huecos.map((i) => ({ i, valor: ficha.partes[i].valor }))), [huecos, ficha]);
+// 🗂️ Una ficha con huecos: nivel 1 (eliges las palabras) o nivel 2 (las escribes, palabra a palabra)
+function Ficha({ ficha, nivel, onTerminar }) {
+  // piezas en orden: texto que ya viene puesto y huecos.
+  // Nivel 1: un hueco por palabra clave. Nivel 2: un hueco por palabra ("y", "de", "la"… ya vienen puestas).
+  const piezas = useMemo(() => {
+    const lista = [];
+    ficha.partes.forEach((p, i) => {
+      if (!p.clave) {
+        lista.push({ texto: p.valor });
+      } else if (nivel === 1) {
+        lista.push({ id: String(i), valor: p.valor });
+      } else {
+        trocearClave(p.valor).forEach((t, k) =>
+          lista.push(t.escribir ? { id: `${i}.${k}`, valor: t.valor } : { texto: t.valor })
+        );
+      }
+    });
+    return lista;
+  }, [ficha, nivel]);
+  const huecos = useMemo(() => piezas.filter((p) => p.id !== undefined), [piezas]);
+  const banco = useMemo(() => mezclar(huecos.map((h) => ({ id: h.id, valor: h.valor }))), [huecos]);
 
-  const [respuestas, setRespuestas] = useState({}); // índice de la parte → texto
-  const [asignados, setAsignados] = useState({}); // nivel 1: índice de la parte → posición en el banco
-  const [textoLibre, setTextoLibre] = useState(""); // nivel 3
+  const [respuestas, setRespuestas] = useState({}); // id del hueco → texto
+  const [asignados, setAsignados] = useState({}); // nivel 1: id del hueco → posición en el banco
   const [intento, setIntento] = useState(1);
-  const [corregido, setCorregido] = useState(null); // índice → true/false
+  const [corregido, setCorregido] = useState(null); // id → true/false
   const [bloqueados, setBloqueados] = useState({}); // aciertos que ya no se tocan
 
   const comprobado = corregido !== null;
-  const fallos = comprobado ? huecos.filter((i) => !corregido[i]) : [];
+  const fallos = comprobado ? huecos.filter((h) => !corregido[h.id]) : [];
   const todoBien = comprobado && fallos.length === 0;
   const terminado = comprobado && (todoBien || intento === 2);
 
   // nivel 1: al pulsar una palabra del banco se coloca en el primer hueco vacío
   function elegirDelBanco(posicion) {
-    const libre = huecos.find((i) => !respuestas[i] && !bloqueados[i]);
-    if (libre === undefined) return;
-    setRespuestas((r) => ({ ...r, [libre]: banco[posicion].valor }));
-    setAsignados((a) => ({ ...a, [libre]: posicion }));
+    const libre = huecos.find((h) => !respuestas[h.id] && !bloqueados[h.id]);
+    if (!libre) return;
+    setRespuestas((r) => ({ ...r, [libre.id]: banco[posicion].valor }));
+    setAsignados((a) => ({ ...a, [libre.id]: posicion }));
   }
 
   // nivel 1: al pulsar un hueco relleno, la palabra vuelve al banco
-  function vaciarHueco(i) {
-    if (comprobado || bloqueados[i]) return;
-    setRespuestas((r) => ({ ...r, [i]: "" }));
+  function vaciarHueco(id) {
+    if (comprobado || bloqueados[id]) return;
+    setRespuestas((r) => ({ ...r, [id]: "" }));
     setAsignados((a) => {
       const copia = { ...a };
-      delete copia[i];
+      delete copia[id];
       return copia;
     });
   }
 
   function comprobar() {
     const resultado = {};
-    if (nivel === 3) {
-      const escrito = normalizar(textoLibre);
-      huecos.forEach((i) => {
-        resultado[i] = escrito.includes(normalizar(ficha.partes[i].valor));
-      });
-    } else {
-      huecos.forEach((i) => {
-        resultado[i] = bloqueados[i] || normalizar(respuestas[i]) === normalizar(ficha.partes[i].valor);
-      });
-    }
+    huecos.forEach((h) => {
+      resultado[h.id] = bloqueados[h.id] || normalizar(respuestas[h.id]) === normalizar(h.valor);
+    });
     setCorregido(resultado);
   }
 
   function reintentar() {
     const nuevosBloqueados = { ...bloqueados };
-    huecos.forEach((i) => {
-      if (corregido[i]) nuevosBloqueados[i] = true;
+    huecos.forEach((h) => {
+      if (corregido[h.id]) nuevosBloqueados[h.id] = true;
     });
     setBloqueados(nuevosBloqueados);
-    if (nivel !== 3) {
-      setRespuestas((r) => {
-        const copia = { ...r };
-        fallos.forEach((i) => (copia[i] = ""));
-        return copia;
-      });
-      setAsignados((a) => {
-        const copia = { ...a };
-        fallos.forEach((i) => delete copia[i]);
-        return copia;
-      });
-    }
+    setRespuestas((r) => {
+      const copia = { ...r };
+      fallos.forEach((h) => (copia[h.id] = ""));
+      return copia;
+    });
+    setAsignados((a) => {
+      const copia = { ...a };
+      fallos.forEach((h) => delete copia[h.id]);
+      return copia;
+    });
     setIntento(2);
     setCorregido(null);
   }
@@ -365,10 +412,10 @@ function Ficha({ ficha, nivel, articulo, onTerminar }) {
   }
 
   // estilo de cada hueco según el momento
-  function estiloHueco(i) {
+  function estiloHueco(id) {
     const base = {
       display: "inline-block",
-      minWidth: 70,
+      minWidth: nivel === 1 ? 70 : 0,
       padding: "2px 8px",
       margin: "2px 2px",
       borderRadius: 10,
@@ -378,96 +425,54 @@ function Ficha({ ficha, nivel, articulo, onTerminar }) {
       color: "#4a4038",
       verticalAlign: "baseline"
     };
-    if (bloqueados[i] || (comprobado && corregido[i])) {
+    if (bloqueados[id] || (comprobado && corregido[id])) {
       return { ...base, border: `1.5px solid ${VERDE_BORDE}`, background: VERDE };
     }
-    if (comprobado && !corregido[i]) {
+    if (comprobado && !corregido[id]) {
       return { ...base, border: `1.5px solid ${ROSA_BORDE}`, background: ROSA };
     }
     return base;
   }
 
   // la palabra correcta, al lado de un fallo
-  function solucion(i) {
-    if (!comprobado || corregido[i]) return null;
-    return (
-      <span style={{ color: "#b0676d", fontStyle: "italic", fontSize: 14 }}> → {ficha.partes[i].valor}</span>
-    );
+  function solucion(h) {
+    if (!comprobado || corregido[h.id]) return null;
+    return <span style={{ color: "#b0676d", fontStyle: "italic", fontSize: 14 }}> → {h.valor}</span>;
   }
 
   return (
     <>
       <div style={styles.configCard}>
-        {nivel === 3 ? (
-          <>
-            <p style={styles.configCardTitle}>
-              {articulo.label}
-              {ficha.numero ? `.${ficha.numero}` : ""}
-            </p>
-            <p style={styles.configSubLabel}>
-              Escribe lo que recuerdes de este {ficha.numero ? "apartado" : "artículo"}. No hace falta que sea
-              literal: cuentan las palabras clave.
-            </p>
-            {!comprobado ? (
-              <textarea
-                value={textoLibre}
-                onChange={(e) => setTextoLibre(e.target.value)}
-                rows={6}
-                style={{
-                  ...styles.nombreInput,
-                  width: "100%",
-                  boxSizing: "border-box",
-                  resize: "vertical",
-                  fontFamily: "inherit",
-                  lineHeight: 1.5
-                }}
-              />
-            ) : (
-              <p style={{ lineHeight: 1.75, color: "#4a4038" }}>
-                {ficha.partes.map((p, i) =>
-                  p.clave ? (
-                    <span key={i} style={{ ...estiloHueco(i), minWidth: 0 }}>
-                      {p.valor}
-                    </span>
-                  ) : (
-                    <span key={i}>{p.valor}</span>
-                  )
-                )}
-              </p>
-            )}
-          </>
-        ) : (
-          <p style={{ lineHeight: 2.1, color: "#4a4038", margin: 0 }}>
-            {ficha.partes.map((p, i) => {
-              if (!p.clave) return <span key={i}>{p.valor}</span>;
-              if (nivel === 1) {
-                return (
-                  <span key={i}>
-                    <button onClick={() => vaciarHueco(i)} style={{ ...estiloHueco(i), cursor: "pointer" }}>
-                      {respuestas[i] || "\u00a0"}
-                    </button>
-                    {solucion(i)}
-                  </span>
-                );
-              }
+        <p style={{ lineHeight: 2.1, color: "#4a4038", margin: 0 }}>
+          {piezas.map((p, n) => {
+            if (p.id === undefined) return <span key={n}>{p.texto}</span>;
+            if (nivel === 1) {
               return (
-                <span key={i}>
-                  <input
-                    value={bloqueados[i] ? p.valor : respuestas[i] || ""}
-                    onChange={(e) => setRespuestas((r) => ({ ...r, [i]: e.target.value }))}
-                    disabled={comprobado || bloqueados[i]}
-                    placeholder={`${p.valor.charAt(0)}…`}
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    style={{ ...estiloHueco(i), width: `${Math.max(5, p.valor.length + 1)}ch`, maxWidth: "100%" }}
-                  />
-                  {solucion(i)}
+                <span key={n}>
+                  <button onClick={() => vaciarHueco(p.id)} style={{ ...estiloHueco(p.id), cursor: "pointer" }}>
+                    {respuestas[p.id] || " "}
+                  </button>
+                  {solucion(p)}
                 </span>
               );
-            })}
-          </p>
-        )}
+            }
+            return (
+              <span key={n}>
+                <input
+                  value={bloqueados[p.id] ? p.valor : respuestas[p.id] || ""}
+                  onChange={(e) => setRespuestas((r) => ({ ...r, [p.id]: e.target.value }))}
+                  disabled={comprobado || bloqueados[p.id]}
+                  placeholder={`${p.valor.charAt(0)}…`}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  style={{ ...estiloHueco(p.id), width: `${Math.max(4, p.valor.length + 2)}ch`, maxWidth: "100%" }}
+                />
+                {solucion(p)}
+              </span>
+            );
+          })}
+        </p>
       </div>
 
       {/* banco de palabras (nivel 1) */}
@@ -513,6 +518,151 @@ function Ficha({ ficha, nivel, articulo, onTerminar }) {
       {comprobado && !terminado && (
         <button onClick={reintentar} style={styles.ctaButton}>
           Reintentar los fallos
+        </button>
+      )}
+      {terminado && (
+        <button onClick={siguiente} style={styles.ctaButton}>
+          Siguiente →
+        </button>
+      )}
+    </>
+  );
+}
+
+// ✍️ De memoria (nivel 3): un solo recuadro, sin pistas. Al comprobar, el artículo sale
+// por apartados con las palabras clave en verde (las has escrito) o en rosa (te han faltado).
+function Memoria({ fichas, queEscribir, onTerminar }) {
+  const [texto, setTexto] = useState("");
+  const [intento, setIntento] = useState(1);
+  const [corregido, setCorregido] = useState(null); // "idFicha|idPalabra" → true/false
+  const [alPrimero, setAlPrimero] = useState({}); // idFicha → la tenía entera en el primer intento
+
+  // las palabras que cuentan de cada ficha (una a una, sin "y", "de", "la"…)
+  const palabras = useMemo(
+    () =>
+      fichas.map((f) => ({
+        ficha: f,
+        lista: f.partes.flatMap((p, i) =>
+          p.clave ? palabrasClave(p.valor).map((v, k) => ({ clave: `${f.id}|${i}.${k}`, valor: v })) : []
+        )
+      })),
+    [fichas]
+  );
+
+  const comprobado = corregido !== null;
+  const fichaBien = (f) => palabras.find((x) => x.ficha.id === f.id).lista.every((w) => corregido && corregido[w.clave]);
+  const faltan = comprobado ? palabras.reduce((n, x) => n + x.lista.filter((w) => !corregido[w.clave]).length, 0) : 0;
+  const todoBien = comprobado && faltan === 0;
+  const terminado = comprobado && (todoBien || intento === 2);
+
+  function comprobar() {
+    const escrito = ` ${normalizar(texto)} `;
+    const resultado = {};
+    palabras.forEach((x) => x.lista.forEach((w) => (resultado[w.clave] = escrito.includes(` ${normalizar(w.valor)} `))));
+    setCorregido(resultado);
+    if (intento === 1) {
+      const bien = {};
+      palabras.forEach((x) => (bien[x.ficha.id] = x.lista.every((w) => resultado[w.clave])));
+      setAlPrimero(bien);
+    }
+  }
+
+  function reintentar() {
+    setIntento(2);
+    setCorregido(null);
+  }
+
+  function siguiente() {
+    onTerminar(
+      fichas.map((f) => ({
+        ficha: f,
+        resultado: alPrimero[f.id] ? "perfecta" : fichaBien(f) ? "reintento" : "fallo"
+      }))
+    );
+  }
+
+  // una palabra de la corrección, en verde o en rosa
+  function palabraCorregida(ok, valor, key) {
+    return (
+      <span
+        key={key}
+        style={{
+          padding: "1px 5px",
+          borderRadius: 7,
+          background: ok ? VERDE : ROSA,
+          border: `1.5px solid ${ok ? VERDE_BORDE : ROSA_BORDE}`
+        }}
+      >
+        {valor}
+      </span>
+    );
+  }
+
+  return (
+    <>
+      <div style={styles.configCard}>
+        {!comprobado ? (
+          <>
+            <p style={styles.configSubLabel}>
+              Escribe {queEscribir}. No hace falta que sea literal: cuentan las palabras clave.
+            </p>
+            <textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              rows={10}
+              autoCapitalize="sentences"
+              style={{
+                ...styles.nombreInput,
+                width: "100%",
+                boxSizing: "border-box",
+                resize: "vertical",
+                fontFamily: "inherit",
+                lineHeight: 1.5
+              }}
+            />
+          </>
+        ) : (
+          fichas.map((f) => (
+            <p key={f.id} style={{ lineHeight: 1.9, color: "#4a4038", margin: "0 0 12px" }}>
+              {f.numero && <b style={{ color: "#7a62a8" }}>{f.numero}. </b>}
+              {f.partes.map((p, i) => {
+                if (!p.clave) return <span key={i}>{p.valor}</span>;
+                let k = -1;
+                return (
+                  <span key={i}>
+                    {trocearClave(p.valor).map((t, j) => {
+                      if (!t.escribir) return <span key={j}>{t.valor}</span>;
+                      k += 1;
+                      return palabraCorregida(corregido[`${f.id}|${i}.${k}`], t.valor, j);
+                    })}
+                  </span>
+                );
+              })}
+            </p>
+          ))
+        )}
+      </div>
+
+      {comprobado && (
+        <p style={{ ...styles.configSubLabel, textAlign: "center" }}>
+          {todoBien
+            ? intento === 1
+              ? "🌿 ¡Perfecto a la primera!"
+              : "🌱 Ahora sí. Erre que erre."
+            : intento === 1
+            ? `Te ${faltan === 1 ? "ha faltado 1 palabra" : `han faltado ${faltan} palabras`} (en rosa). Míralas y vuelve a intentarlo: tu texto sigue ahí.`
+            : "Lo que te ha faltado volverá a salir con más pistas."}
+        </p>
+      )}
+
+      {!comprobado && (
+        <button onClick={comprobar} disabled={!texto.trim()} style={{ ...styles.ctaButton, ...(texto.trim() ? {} : styles.ctaButtonDisabled) }}>
+          Comprobar
+        </button>
+      )}
+      {comprobado && !terminado && (
+        <button onClick={reintentar} style={styles.ctaButton}>
+          Completar lo que falta
         </button>
       )}
       {terminado && (

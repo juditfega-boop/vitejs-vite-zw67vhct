@@ -54,3 +54,30 @@ export function separarApartados(contenido) {
   export function segundosMemorizar(numeroApartados) {
     return Math.min(120, Math.max(30, numeroApartados * 20));
   }
+  // ✂️ palabras pequeñas que ya vienen puestas en los huecos (no hace falta escribirlas)
+const PALABRAS_PEQUENAS = new Set([
+  "y", "e", "o", "u", "ni", "de", "del", "la", "las", "el", "los", "lo", "a", "al",
+  "en", "por", "para", "con", "sin", "su", "sus", "un", "una", "que", "se"
+]);
+
+// parte una palabra clave en trozos: las palabras que hay que escribir y lo que ya viene puesto
+// "Estado social y democrático de Derecho" → Estado · social · (y) · democrático · (de) · Derecho
+export function trocearClave(valor) {
+  const trozos = (valor || "")
+    .split(/(\s+|[,;:.()«»"])/)
+    .filter(Boolean)
+    .map((t) => {
+      const limpio = normalizar(t);
+      return { escribir: !!limpio && !PALABRAS_PEQUENAS.has(limpio), valor: t };
+    });
+  // si la clave es solo una palabra pequeña ("villa" no, pero p. ej. "de"), se escribe entera
+  if (!trozos.some((t) => t.escribir)) return trozos.map((t) => ({ ...t, escribir: !!normalizar(t.valor) }));
+  return trozos;
+}
+
+// solo las palabras que hay que escribir de una palabra clave
+export function palabrasClave(valor) {
+  return trocearClave(valor)
+    .filter((t) => t.escribir)
+    .map((t) => t.valor);
+}
