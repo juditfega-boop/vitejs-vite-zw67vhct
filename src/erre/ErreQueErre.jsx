@@ -59,10 +59,12 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
   // 📌 el nivel de cada ficha al empezar la ronda (para saber si ya estaba en «De memoria»)
   const [nivelesRonda, setNivelesRonda] = useState(() => obtenerNivelesErre());
 
-  // ✍️ las fichas que aún no están en «De memoria» salen una a una;
-  // las que ya lo están se escriben juntas al final, de memoria (en el repaso, todas)
-  const unaAUna = modoRepaso ? [] : fichas.filter((f) => (nivelesRonda[f.id] || 1) < 3);
-  const deMemoria = modoRepaso ? fichas : fichas.filter((f) => (nivelesRonda[f.id] || 1) === 3);
+  // ✍️ «De memoria» es el artículo entero: solo se entra cuando TODOS los apartados están listos (nivel 3).
+  // Mientras tanto, todos salen uno a uno con huecos (los que ya están listos, esperando a los demás).
+  // En el repaso de la curva, siempre el artículo entero.
+  const todasListas = fichas.every((f) => (nivelesRonda[f.id] || 1) === 3);
+  const deMemoria = modoRepaso || todasListas ? fichas : [];
+  const unaAUna = modoRepaso || todasListas ? [] : fichas;
 
   // ⏳ cuenta atrás para memorizar
   useEffect(() => {
@@ -187,23 +189,16 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
   // ✍️ FASE 2: RECORDAR (primero una ficha cada vez; después, lo que va de memoria)
   if (fase === "recordar") {
     if (indice >= unaAUna.length) {
-      const todas = deMemoria.length === fichas.length;
-      const numeros = deMemoria.map((f) => f.numero).filter(Boolean);
-      const queEscribir = todas
-        ? "todo el artículo"
-        : numeros.length === 1
-        ? `el apartado ${numeros[0]}`
-        : `los apartados ${numeros.slice(0, -1).join(", ")} y ${numeros[numeros.length - 1]}`;
       return (
         <div style={styles.menuContainer}>
           {cabecera}
           <p style={{ ...styles.configSubLabel, textAlign: "center" }}>
-            {modoRepaso ? `Repaso ${numeroTanda} · ` : ""}De memoria · {queEscribir}
+            {modoRepaso ? `Repaso ${numeroTanda} · ` : ""}De memoria · todo el artículo
           </p>
           <Memoria
-            key={`memoria-${deMemoria.map((f) => f.id).join("-")}`}
+            key={`memoria-${fase}`}
             fichas={deMemoria}
-            queEscribir={queEscribir}
+            apartados={modoRepaso ? apartados : null}
             onTerminar={terminarMemoria}
           />
           <button onClick={onVolver} style={styles.linkVolver}><span className="hoja-volver"></span> Salir</button>
@@ -211,8 +206,10 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
       );
     }
 
+
     const ficha = unaAUna[indice];
-    const nivel = niveles[ficha.id] || 1;
+    // si ya está lista (nivel 3) pero espera a los demás apartados, sale con huecos
+    const nivel = Math.min(2, niveles[ficha.id] || 1);
     return (
       <div style={styles.menuContainer}>
         {cabecera}
@@ -531,11 +528,15 @@ function Ficha({ ficha, nivel, onTerminar }) {
 
 // ✍️ De memoria (nivel 3): un solo recuadro, sin pistas. Al comprobar, el artículo sale
 // por apartados con las palabras clave en verde (las has escrito) o en rosa (te han faltado).
-function Memoria({ fichas, queEscribir, onTerminar }) {
+// apartados: solo en el repaso, para poder mirar el artículo (y entonces cuenta como «casi»).
+function Memoria({ fichas, apartados, onTerminar }) {
   const [texto, setTexto] = useState("");
   const [intento, setIntento] = useState(1);
   const [corregido, setCorregido] = useState(null); // "idFicha|idPalabra" → true/false
   const [alPrimero, setAlPrimero] = useState({}); // idFicha → la tenía entera en el primer intento
+  const [viendo, setViendo] = useState(false); // el artículo está a la vista
+  const [mirado, setMirado] = useState(false); // lo has mirado en algún momento
+
 
   // las palabras que cuentan de cada ficha (una a una, sin "y", "de", "la"…)
   const palabras = useMemo(
@@ -576,7 +577,7 @@ function Memoria({ fichas, queEscribir, onTerminar }) {
     onTerminar(
       fichas.map((f) => ({
         ficha: f,
-        resultado: alPrimero[f.id] ? "perfecta" : fichaBien(f) ? "reintento" : "fallo"
+        resultado: alPrimero[f.id] && !mirado ? "perfecta" : fichaBien(f) ? "reintento" : "fallo"
       }))
     );
   }
@@ -604,7 +605,7 @@ function Memoria({ fichas, queEscribir, onTerminar }) {
         {!comprobado ? (
           <>
             <p style={styles.configSubLabel}>
-              Escribe {queEscribir}. No hace falta que sea literal: cuentan las palabras clave.
+              Escribe todo el artículo. No hace falta que sea literal: cuentan las palabras clave.
             </p>
             <textarea
               value={texto}
@@ -653,6 +654,35 @@ function Memoria({ fichas, queEscribir, onTerminar }) {
             ? `Te ${faltan === 1 ? "ha faltado 1 palabra" : `han faltado ${faltan} palabras`} (en rosa). Míralas y vuelve a intentarlo: tu texto sigue ahí.`
             : "Lo que te ha faltado volverá a salir con más pistas."}
         </p>
+      )}
+
+{apartados && !comprobado && (
+        <>
+          {viendo && (
+            <div style={{ ...styles.configCard, background: "#f1ecfa" }}>
+              {apartados.map((a) => (
+                <p key={a.numero || 1} style={{ lineHeight: 1.65, color: "#4a4038", margin: "0 0 10px" }}>
+                  {a.numero && <b>{a.numero}. </b>}
+                  <TextoConNegritas texto={a.texto} />
+                </p>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setViendo((v) => !v);
+              setMirado(true);
+            }}
+            style={styles.linkVolver}
+          >
+            {viendo ? "Ocultar el artículo" : "Ver el artículo"}
+          </button>
+          <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 0 }}>
+            {mirado
+              ? "Lo has mirado: este repaso contará como «casi» y volverá dentro del mismo tiempo."
+              : "Si lo miras, este repaso contará como «casi»."}
+          </p>
+        </>
       )}
 
       {!comprobado && (
