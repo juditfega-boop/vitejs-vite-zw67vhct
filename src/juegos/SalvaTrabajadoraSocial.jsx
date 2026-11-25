@@ -735,6 +735,7 @@ if (vista === "derrota") {
               </p>
               {preguntaFallida.respuestas.map((r, i) => {
                 const esLaQueElegiste = i === respuestaFallidaIndice;
+                const esLaCorrecta = i === preguntaFallida.correcta;
                 return (
                   <p
                     key={i}
@@ -742,7 +743,8 @@ if (vista === "derrota") {
                       margin: "4px 0",
                       padding: "4px 8px",
                       borderRadius: 6,
-                      background: esLaQueElegiste ? "#f5c6cb" : "transparent",
+                      background: esLaCorrecta ? "#d4edda" : esLaQueElegiste ? "#f5c6cb" : "transparent",
+                      fontWeight: esLaCorrecta ? 700 : 400
                     }}
                   >
                     {formatearTextoLargo(r)}
