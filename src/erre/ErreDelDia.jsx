@@ -4,7 +4,7 @@ import dataConstitucion from "../explorador/data/constitucion.json";
 import imagenCabecera from "../assets/kit/erre-que-erre-cabecera.png";
 import ErreQueErre from "./ErreQueErre";
 import { separarApartados, tieneClaves } from "./fichas";
-import { obtenerNivelesErre } from "../servicios/progreso";
+import { obtenerNivelesErre, marcarRacion, obtenerErreNuevo, guardarErreNuevo } from "../servicios/progreso";
 import { leerCurva, apuntarRepaso, pendientesDeHoy, resumenProximos, TOPE_DIARIO } from "../servicios/curva";
 
 // todos los artículos (hojas del JSON) que tienen palabras clave marcadas
@@ -23,6 +23,12 @@ function nivelMedio(articulo, niveles) {
   const apartados = separarApartados(articulo.contenido);
   const valores = apartados.map((a) => niveles[`${articulo.id}-${a.numero || 1}`] || 1);
   return valores.reduce((a, b) => a + b, 0) / valores.length;
+}
+
+// "2026-11-26" (para saber si el artículo nuevo se empezó hoy)
+function claveHoy() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // un número que cambia cada día (para no proponer siempre el mismo artículo)
@@ -60,11 +66,18 @@ export default function ErreDelDia({ volver, irAExplorar }) {
 
   const propuesto = useMemo(() => {
     const niveles = obtenerNivelesErre();
-    const ordenados = [...articulos].sort(
+    const ordenados = [...articulos].filter((a) => !(curva && curva[a.id])).sort(
       (a, b) => nivelMedio(a, niveles) - nivelMedio(b, niveles) || semillaDeHoy(a.id) - semillaDeHoy(b.id)
     );
     return ordenados[saltos % Math.max(1, ordenados.length)];
-  }, [articulos, saltos, empezado]);
+  }, [articulos, saltos, empezado, curva]);
+
+  // 🌱 un artículo nuevo al día, y no se abre otro hasta sellar el anterior (memoria extrema)
+  const nuevo = obtenerErreNuevo(); // { id, fecha } del último artículo nuevo que empezaste
+  const hoyClave = claveHoy();
+  const nuevoSellado = !!(nuevo && curva && curva[nuevo.id]);
+  const nuevoEnCurso = nuevo && curva && !curva[nuevo.id] && porId[nuevo.id] ? porId[nuevo.id] : null;
+  const nuevoHechoHoy = !!(nuevo && nuevo.fecha === hoyClave && nuevoSellado);
 
   const pendientes = curva ? pendientesDeHoy(curva).filter((id) => porId[id]) : [];
   const deHoy = pendientes.slice(0, TOPE_DIARIO);
@@ -84,6 +97,7 @@ export default function ErreDelDia({ volver, irAExplorar }) {
     } catch (e) {
       console.error(e);
     }
+    marcarRacion("erre"); // 🍲 el repaso de hoy también cuenta para tu ración
     if (posCola + 1 < cola.length) setPosCola(posCola + 1);
     else {
       setCola(null);
@@ -169,12 +183,41 @@ export default function ErreDelDia({ volver, irAExplorar }) {
         </div>
       )}
 
-      {propuesto ? (
+{nuevoEnCurso ? (
+        <div style={styles.configCard}>
+          <p style={{ ...styles.configSubLabel, margin: "0 0 4px" }}>Tu artículo nuevo, a medias</p>
+          <p style={styles.configCardTitle}>{nuevoEnCurso.label}</p>
+          <p style={{ ...styles.configSubLabel, margin: "0 0 14px" }}>
+            Primero se sella, luego se avanza: cuando lo escribas entero de memoria, podrás empezar otro.
+          </p>
+          <button onClick={() => setEmpezado(nuevoEnCurso)} style={styles.ctaButton}>
+            Seguir con él
+          </button>
+        </div>
+      ) : nuevoHechoHoy ? (
+        <div style={{ ...styles.configCard, textAlign: "center" }}>
+          <p style={{ ...styles.configCardTitle, marginBottom: 4 }}>🌿 Artículo nuevo de hoy: sellado</p>
+          <p style={{ ...styles.configSubLabel, margin: 0 }}>Mañana, otro. Hoy toca dejar que se asiente.</p>
+        </div>
+      ) : deHoy.length >= 3 ? (
+        <div style={{ ...styles.configCard, textAlign: "center" }}>
+          <p style={{ ...styles.configCardTitle, marginBottom: 4 }}>Primero, tu repaso de hoy</p>
+          <p style={{ ...styles.configSubLabel, margin: 0 }}>
+            Tienes {deHoy.length} artículos para repasar. Cuando los termines, podrás empezar uno nuevo.
+          </p>
+        </div>
+      ) : propuesto ? (
         <div style={styles.configCard}>
           <p style={{ ...styles.configSubLabel, margin: "0 0 4px" }}>Practicar un artículo nuevo</p>
           <p style={styles.configCardTitle}>{propuesto.label}</p>
           <p style={{ color: "#4a4038", lineHeight: 1.5, margin: "0 0 14px" }}>{propuesto.resumen}</p>
-          <button onClick={() => setEmpezado(propuesto)} style={styles.ctaButton}>
+          <button
+            onClick={() => {
+              guardarErreNuevo({ id: propuesto.id, fecha: claveHoy() });
+              setEmpezado(propuesto);
+            }}
+            style={styles.ctaButton}
+          >
             Empezar
           </button>
           <button onClick={() => setSaltos((s) => s + 1)} style={styles.linkVolver}>
@@ -186,6 +229,8 @@ export default function ErreDelDia({ volver, irAExplorar }) {
           <p style={styles.configSubLabel}>Todavía no hay artículos con fichas preparadas.</p>
         </div>
       )}
+
+
 
       <button onClick={irAExplorar} style={styles.linkVolver}>
         Elegir el artículo en Explora la Constitución

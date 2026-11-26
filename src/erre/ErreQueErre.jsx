@@ -4,7 +4,7 @@ import imagenCabecera from "../assets/kit/erre-que-erre-cabecera.png";
 import iconoReloj from "../assets/kit/icono-cronometro-reloj.png";
 import plantaFeliz from "../assets/kit/planta-resultado-feliz.png";
 import plantaTriste from "../assets/kit/planta-resultado-triste.png";
-import { separarApartados, trocear, normalizar, segundosMemorizar, trocearClave, palabrasClave } from "./fichas";
+import { separarApartados, trocear, normalizar, normalizarFlexible, segundosMemorizar, trocearClave, palabrasClave } from "./fichas";
 import { obtenerNivelesErre, guardarNivelesErre } from "../servicios/progreso";
 import { entrarEnCurva } from "../servicios/curva";
 
@@ -132,7 +132,8 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
     setFase("memorizar");
   }
 
-  const cabecera = (
+  // sinTitulo: en «De memoria» solo sale «Artículo 15», sin su título (que ya es una pista)
+  const cabeceraCon = (sinTitulo) => (
     <>
       <img
         src={imagenCabecera}
@@ -140,10 +141,11 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
         style={{ width: "100%", maxWidth: 230, display: "block", margin: "0 auto 8px" }}
       />
       <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 0 }}>
-        {articulo.label} · {articulo.resumen}
+        {sinTitulo ? articulo.label : `${articulo.label} · ${articulo.resumen}`}
       </p>
     </>
   );
+  const cabecera = cabeceraCon(false);
 
   if (fichas.length === 0) {
     return (
@@ -191,14 +193,16 @@ export default function ErreQueErre({ articulo, onVolver, modoRepaso = false, nu
     if (indice >= unaAUna.length) {
       return (
         <div style={styles.menuContainer}>
-          {cabecera}
+          {cabeceraCon(true)}
           <p style={{ ...styles.configSubLabel, textAlign: "center" }}>
             {modoRepaso ? `Repaso ${numeroTanda} · ` : ""}De memoria · todo el artículo
           </p>
           <Memoria
             key={`memoria-${fase}`}
             fichas={deMemoria}
-            apartados={modoRepaso ? apartados : null}
+            titulo={articulo.resumen}
+            apartados={apartados}
+            modoRepaso={modoRepaso}
             onTerminar={terminarMemoria}
           />
           <button onClick={onVolver} style={styles.linkVolver}><span className="hoja-volver"></span> Salir</button>
@@ -379,7 +383,7 @@ function Ficha({ ficha, nivel, onTerminar }) {
   function comprobar() {
     const resultado = {};
     huecos.forEach((h) => {
-      resultado[h.id] = bloqueados[h.id] || normalizar(respuestas[h.id]) === normalizar(h.valor);
+      resultado[h.id] = bloqueados[h.id] || normalizarFlexible(respuestas[h.id]) === normalizarFlexible(h.valor);
     });
     setCorregido(resultado);
   }
@@ -529,13 +533,14 @@ function Ficha({ ficha, nivel, onTerminar }) {
 // ✍️ De memoria (nivel 3): un solo recuadro, sin pistas. Al comprobar, el artículo sale
 // por apartados con las palabras clave en verde (las has escrito) o en rosa (te han faltado).
 // apartados: solo en el repaso, para poder mirar el artículo (y entonces cuenta como «casi»).
-function Memoria({ fichas, apartados, onTerminar }) {
+function Memoria({ fichas, titulo, apartados, modoRepaso, onTerminar }) {
   const [texto, setTexto] = useState("");
   const [intento, setIntento] = useState(1);
   const [corregido, setCorregido] = useState(null); // "idFicha|idPalabra" → true/false
   const [alPrimero, setAlPrimero] = useState({}); // idFicha → la tenía entera en el primer intento
   const [viendo, setViendo] = useState(false); // el artículo está a la vista
   const [mirado, setMirado] = useState(false); // lo has mirado en algún momento
+  const [vistoTitulo, setVistoTitulo] = useState(false); // primera pista: el título (no cuenta como «casi»)
 
 
   // las palabras que cuentan de cada ficha (una a una, sin "y", "de", "la"…)
@@ -557,9 +562,9 @@ function Memoria({ fichas, apartados, onTerminar }) {
   const terminado = comprobado && (todoBien || intento === 2);
 
   function comprobar() {
-    const escrito = ` ${normalizar(texto)} `;
+    const escrito = ` ${normalizarFlexible(texto)} `;
     const resultado = {};
-    palabras.forEach((x) => x.lista.forEach((w) => (resultado[w.clave] = escrito.includes(` ${normalizar(w.valor)} `))));
+    palabras.forEach((x) => x.lista.forEach((w) => (resultado[w.clave] = escrito.includes(` ${normalizarFlexible(w.valor)} `))));
     setCorregido(resultado);
     if (intento === 1) {
       const bien = {};
@@ -658,6 +663,11 @@ function Memoria({ fichas, apartados, onTerminar }) {
 
 {apartados && !comprobado && (
         <>
+          {vistoTitulo && (
+            <p style={{ ...styles.configSubLabel, textAlign: "center", margin: "0 0 4px", color: "#5b4a3a" }}>
+              <b>{titulo}</b>
+            </p>
+          )}
           {viendo && (
             <div style={{ ...styles.configCard, background: "#f1ecfa" }}>
               {apartados.map((a) => (
@@ -668,20 +678,32 @@ function Memoria({ fichas, apartados, onTerminar }) {
               ))}
             </div>
           )}
-          <button
-            onClick={() => {
-              setViendo((v) => !v);
-              setMirado(true);
-            }}
-            style={styles.linkVolver}
-          >
-            {viendo ? "Ocultar el artículo" : "Ver el artículo"}
-          </button>
-          <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 0 }}>
-            {mirado
-              ? "Lo has mirado: este repaso contará como «casi» y volverá dentro del mismo tiempo."
-              : "Si lo miras, este repaso contará como «casi»."}
-          </p>
+          {!vistoTitulo ? (
+            <button onClick={() => setVistoTitulo(true)} style={styles.linkVolver}>
+              Ver el título
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setViendo((v) => !v);
+                setMirado(true);
+              }}
+              style={styles.linkVolver}
+            >
+              {viendo ? "Ocultar el artículo" : "Ver el artículo"}
+            </button>
+          )}
+          {vistoTitulo && (
+            <p style={{ ...styles.configSubLabel, textAlign: "center", marginTop: 0 }}>
+              {mirado
+                ? modoRepaso
+                  ? "Lo has mirado: este repaso contará como «casi» y volverá dentro del mismo tiempo."
+                  : "Lo has mirado: esta vez no contará como acertado a la primera."
+                : modoRepaso
+                ? "Si miras el artículo, este repaso contará como «casi»."
+                : "Si miras el artículo, no contará como acertado a la primera."}
+            </p>
+          )}
         </>
       )}
 

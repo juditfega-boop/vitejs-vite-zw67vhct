@@ -285,3 +285,18 @@ export function obtenerExtrasRacion() {
 export function guardarExtrasRacion(extras) {
   localStorage.setItem(CLAVE_RACION_EXTRAS, JSON.stringify(extras));
 }
+// 🌱 Erre que erre: el último artículo nuevo que empezaste ({ id, fecha })
+// (un artículo nuevo al día, y no se abre otro hasta sellar el anterior)
+export const CLAVE_ERRE_NUEVO = "opo_erre_nuevo_v1";
+
+export function obtenerErreNuevo() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_ERRE_NUEVO)) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function guardarErreNuevo(datos) {
+  localStorage.setItem(CLAVE_ERRE_NUEVO, JSON.stringify(datos));
+}

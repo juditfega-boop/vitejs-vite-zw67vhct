@@ -81,3 +81,14 @@ export function palabrasClave(valor) {
     .filter((t) => t.escribir)
     .map((t) => t.valor);
 }
+// 🔤 como normalizar, pero da igual el singular o el plural de cada palabra
+// («español» / «españoles», «libertad» / «libertades», «derecho» / «derechos»)
+function quitarPlural(palabra) {
+  if (palabra.length > 4 && palabra.endsWith("es")) return palabra.slice(0, -2);
+  if (palabra.length > 3 && palabra.endsWith("s")) return palabra.slice(0, -1);
+  return palabra;
+}
+
+export function normalizarFlexible(texto) {
+  return normalizar(texto).split(" ").map(quitarPlural).join(" ");
+}
