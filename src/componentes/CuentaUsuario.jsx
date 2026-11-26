@@ -93,16 +93,30 @@ export default function CuentaUsuario({ usuario, estadoAcceso }) {
   if (usuario) {
     return (
       <>
-        <div style={styles.configCard}>
-          <p style={styles.configCardTitle}>Tu cuenta</p>
-          <p style={styles.configSubLabel}>Sesión iniciada como <b>{usuario.email}</b></p>
+        <div style={{ ...styles.configCard, textAlign: "left" }}>
+          <p style={{ margin: 0, fontSize: 12.5, color: "#8a8578" }}>Tu cuenta</p>
+          <p style={{ margin: "2px 0 0", fontSize: 15, fontWeight: 700, color: "#4a463f", wordBreak: "break-all" }}>
+            {usuario.email}
+          </p>
           {estadoAcceso === "pendiente" && (
             <p style={styles.configSubLabel}>
               🌱 Tu solicitud de acceso está pendiente. Cuando la aceptemos, se desbloqueará todo la próxima vez que abras la app.
             </p>
           )}
           {estadoAcceso === "aprobada" && (
-            <p style={styles.configSubLabel}>🌿 Tienes acceso completo.</p>
+            <span
+              style={{
+                display: "inline-block",
+                marginTop: 8,
+                padding: "3px 10px",
+                borderRadius: 999,
+                fontSize: 12,
+                background: "#e3ecd9",
+                color: "#3f5a3a"
+              }}
+            >
+              🌿 Acceso completo
+            </span>
           )}
           {estadoAcceso === "pendiente" && verificado === false && (
             <div
@@ -134,9 +148,25 @@ export default function CuentaUsuario({ usuario, estadoAcceso }) {
           {estadoAcceso === "pendiente" && verificado === true && (
             <p style={styles.configSubLabel}>✉️ Correo confirmado.</p>
           )}
-          <button onClick={salir} style={styles.linkVolver}>
-            Cerrar sesión
-          </button>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 10 }}>
+            <span style={{ fontSize: 12, color: "#7d7468" }}>☁️ Tu progreso se guarda en tu cuenta.</span>
+            <button
+              onClick={salir}
+              style={{
+                flexShrink: 0,
+                border: "none",
+                borderRadius: 999,
+                padding: "6px 12px",
+                fontSize: 12.5,
+                fontFamily: "inherit",
+                color: "#5b4a3a",
+                background: "#f3ede3",
+                cursor: "pointer"
+              }}
+            >
+              Cerrar sesión
+            </button>
+          </div>
           {mensajeOk && <p style={{ ...styles.configSubLabel, marginTop: 6 }}>{mensajeOk}</p>}
         </div>
         {usuario.uid === ADMIN_UID && <PanelAdministracion />}

@@ -53,7 +53,14 @@ import {
   CLAVE_RACHA,
   CLAVE_TIEMPOS,
   obtenerNivelesErre,
-  guardarNivelesErre
+  guardarNivelesErre,
+  obtenerRacion,
+  CLAVE_RACION,
+  CLAVE_RACION_EXTRAS,
+  CLAVE_DIAS_CUMPLIDOS,
+  CLAVE_PARTIDA,
+  CLAVE_JARDIN,
+  CLAVE_ERRE_NUEVO
 } from "./servicios/progreso";
 
 // 🧑‍🤝‍🧑 envuelve una pantalla con el personaje flotante global — se omite
@@ -73,6 +80,53 @@ const FRASES_BIENVENIDA = [
   "me declaro aprendiz imperecedera",
   "el conocimiento también se construye en sociedad"
 ];
+
+// ☁️ lo demás que también se guarda en tu cuenta (además de estadísticas, racha, favoritas y Erre que erre):
+// la ración de hoy, lo que eliges en Personalizar, la planta de la semana, el test a medias,
+// el jardín, el artículo nuevo de Erre que erre, la visita guiada y el historial de simulacros
+const CLAVES_EXTRA = [
+  CLAVE_RACION,
+  CLAVE_RACION_EXTRAS,
+  CLAVE_DIAS_CUMPLIDOS,
+  CLAVE_PARTIDA,
+  CLAVE_JARDIN,
+  CLAVE_ERRE_NUEVO,
+  CLAVE_VISITA,
+  "opo_simulacro_historial_v1"
+];
+
+function leerOtros() {
+  const otros = {};
+  CLAVES_EXTRA.forEach((clave) => {
+    const valor = localStorage.getItem(clave);
+    if (valor !== null) otros[clave] = valor;
+  });
+  return otros;
+}
+
+// lo de la nube pasa a este dispositivo; la ración de hoy y los días cumplidos se juntan con lo que ya hubiera aquí
+function aplicarOtros(otros) {
+  Object.entries(otros || {}).forEach(([clave, valor]) => {
+    if (!CLAVES_EXTRA.includes(clave) || typeof valor !== "string") return;
+    try {
+      if (clave === CLAVE_DIAS_CUMPLIDOS) {
+        const aqui = JSON.parse(localStorage.getItem(clave)) || {};
+        localStorage.setItem(clave, JSON.stringify({ ...JSON.parse(valor), ...aqui }));
+        return;
+      }
+      if (clave === CLAVE_RACION) {
+        const hoy = obtenerRacion().fecha;
+        const nube = JSON.parse(valor) || {};
+        if (nube.fecha !== hoy) return; // una ración de otro día ya no sirve
+        localStorage.setItem(clave, JSON.stringify({ ...nube, ...obtenerRacion() }));
+        return;
+      }
+    } catch {
+      return;
+    }
+    localStorage.setItem(clave, valor);
+  });
+}
 
 export default function App() {
   const [preguntasBase, setPreguntasBase] = useState([]);
@@ -97,6 +151,8 @@ export default function App() {
   const aprobada = estadoAcceso === "aprobada";
   // ☁️ el progreso se guarda en la nube, vinculado a la cuenta
   const [sincronizando, setSincronizando] = useState(false);
+  // 🛟 no se sube nada hasta haber traído lo de la nube (así un dispositivo nuevo, vacío, no borra tu progreso)
+  const nubeLista = useRef(false);
   const [mensajeSync, setMensajeSync] = useState("");
 
   // 🏁 abrir la carrera directamente en el modo online (desde el buzón o un reto)
@@ -115,6 +171,7 @@ export default function App() {
       tiempos: obtenerTiempos(),
       favoritos: obtenerFavoritos(),
       erre: obtenerNivelesErre(),
+      otros: leerOtros(),
       actualizado: new Date().toISOString()
     };
   }
@@ -125,10 +182,11 @@ export default function App() {
     if (datos.tiempos) localStorage.setItem(CLAVE_TIEMPOS, JSON.stringify(datos.tiempos));
     if (datos.favoritos) guardarFavoritos(datos.favoritos);
     if (datos.erre) guardarNivelesErre(datos.erre, false); // copiar desde la nube no cuenta como ficha hecha hoy
+    if (datos.otros) aplicarOtros(datos.otros);
   }
 
   async function sincronizarConNube() {
-    if (!usuario) return;
+    if (!usuario || !nubeLista.current) return;
     try {
       await setDoc(doc(db, "progreso", usuario.uid), datosLocales());
     } catch (e) {
@@ -147,6 +205,7 @@ export default function App() {
       } else {
         await setDoc(doc(db, "progreso", u.uid), datosLocales());
       }
+      nubeLista.current = true;
     } catch (e) {
       setMensajeSync("⚠️ No se pudo conectar. Comprueba tu conexión a internet.");
     }
@@ -176,6 +235,17 @@ export default function App() {
     if (usuario) {
       cargarProgresoCuenta(usuario);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario?.uid]);
+
+  // ☁️ al salir de la app o cambiar de pestaña, se guarda también en la nube
+  useEffect(() => {
+    if (!usuario) return;
+    const alOcultar = () => {
+      if (document.visibilityState === "hidden") sincronizarConNube();
+    };
+    document.addEventListener("visibilitychange", alOcultar);
+    return () => document.removeEventListener("visibilitychange", alOcultar);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario?.uid]);
 
@@ -700,15 +770,10 @@ if (pantalla === "muerte") {
   if (pantalla === "ajustes") {
     return conPersonaje(
       <div style={styles.menuContainer}>
-        <div style={styles.menuHeader}>
-          <div style={styles.perfilHeaderRow}>
-            <h1 style={styles.menuTitle}>Mi perfil</h1>
-            <img src={iconoPerfilSilueta} alt="" style={styles.perfilHeaderIcono} />
-          </div>
-          <div style={styles.menuUnderline} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <TituloHub titulo="Mi perfil" color={COLOR_SECCION.expediente.linea} />
+          <img src={iconoPerfilHero} alt="" style={{ width: 150, maxWidth: "45%", objectFit: "contain", flexShrink: 0 }} />
         </div>
-
-        <img src={iconoPerfilHero} alt="" style={styles.perfilHeroImg} />
 
         {avisoExpulsion && (
           <div style={{ ...styles.configCard, background: "#f9e3e3" }}>
@@ -728,12 +793,7 @@ if (pantalla === "muerte") {
 {usuario && aprobada && <MiIdentidad usuario={usuario} />}
 
 
-        <div style={styles.perfilNotaCard}>
-          <span style={{ fontSize: 22 }}>🌸</span>
-          <p style={{ margin: 0 }}>
-            Tu progreso es importante. Guárdalo y nunca perderás lo que has conseguido. 💗
-          </p>
-        </div>
+
 
         <button onClick={() => volverA("expediente")} style={styles.linkVolver}>
           <span className="hoja-volver"></span> Volver a Mi expediente
