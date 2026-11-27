@@ -75,12 +75,149 @@ function puertaDe(sala, hijoId) {
   return zona ? { tipo: 'arco', ...zona } : null;
 }
 
+// 🚧 salas que todavía no tienen sus artículos: se abren con su llave y dentro se ve su estructura
+// (no cuentan para la ración de Explora ni salen en Erre que erre ni en los juegos: no tienen artículos)
+const SALAS_EN_OBRAS = {
+  'titulo-2': { label: 'Título II', subtitle: 'De la Corona', desde: 56, hasta: 65, partes: [] },
+  'titulo-3': {
+    label: 'Título III',
+    subtitle: 'De las Cortes Generales',
+    desde: 66,
+    hasta: 96,
+    partes: [
+      { label: 'Capítulo I', subtitle: 'De las Cámaras', desde: 66, hasta: 80 },
+      { label: 'Capítulo II', subtitle: 'De la elaboración de las leyes', desde: 81, hasta: 92 },
+      { label: 'Capítulo III', subtitle: 'De los Tratados Internacionales', desde: 93, hasta: 96 }
+    ]
+  },
+  'titulo-4': { label: 'Título IV', subtitle: 'Del Gobierno y de la Administración', desde: 97, hasta: 107, partes: [] },
+  'titulo-5': { label: 'Título V', subtitle: 'De las relaciones entre el Gobierno y las Cortes Generales', desde: 108, hasta: 116, partes: [] },
+  'titulo-6': { label: 'Título VI', subtitle: 'Del Poder Judicial', desde: 117, hasta: 127, partes: [] },
+  'titulo-7': { label: 'Título VII', subtitle: 'Economía y Hacienda', desde: 128, hasta: 136, partes: [] },
+  'titulo-8': {
+    label: 'Título VIII',
+    subtitle: 'De la Organización Territorial del Estado',
+    desde: 137,
+    hasta: 158,
+    partes: [
+      { label: 'Capítulo I', subtitle: 'Principios generales', desde: 137, hasta: 139 },
+      { label: 'Capítulo II', subtitle: 'De la Administración Local', desde: 140, hasta: 142 },
+      { label: 'Capítulo III', subtitle: 'De las Comunidades Autónomas', desde: 143, hasta: 158 }
+    ]
+  },
+  'titulo-9': { label: 'Título IX', subtitle: 'Del Tribunal Constitucional', desde: 159, hasta: 165, partes: [] },
+  'titulo-10': { label: 'Título X', subtitle: 'De la reforma constitucional', desde: 166, hasta: 169, partes: [] }
+};
+
+// 🚧 dentro de una sala en obras: su nombre, sus artículos y lo que hay dentro
+function SalaEnObras({ obra, onVolver }) {
+  const tarjeta = {
+    background: '#fdfaf4',
+    borderRadius: 22,
+    padding: '14px 16px',
+    boxShadow: '0 3px 14px rgba(0,0,0,0.04)',
+    marginBottom: 12,
+    position: 'relative',
+    overflow: 'hidden'
+  };
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 640,
+        overflowY: 'auto',
+        background: '#f8f3ea',
+        backgroundImage:
+          'radial-gradient(circle at 12% 8%, rgba(233,185,182,0.22), rgba(233,185,182,0) 34%), radial-gradient(circle at 92% 30%, rgba(201,184,222,0.20), rgba(201,184,222,0) 32%)'
+      }}
+    >
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 18px 40px', boxSizing: 'border-box', fontFamily: 'Arial, Helvetica, sans-serif', color: '#4a463f' }}>
+        <p style={{ fontFamily: "'Caveat', cursive", fontWeight: 700, fontSize: 40, lineHeight: 1, color: '#5b4a3a', margin: 0 }}>{obra.label}</p>
+        <p style={{ fontSize: 14, color: '#5c5850', margin: '8px 0 16px', lineHeight: 1.4 }}>
+          {obra.subtitle} · artículos {obra.desde} a {obra.hasta}
+        </p>
+
+        <div style={{ ...tarjeta, paddingTop: 30 }}>
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: -20,
+              right: -20,
+              top: 0,
+              height: 20,
+              transform: 'rotate(-2deg)',
+              background: 'repeating-linear-gradient(-45deg, #f2cb8f 0 18px, #6b5a48 18px 36px)',
+              opacity: 0.8
+            }}
+          />
+          <p style={{ margin: '6px 0 4px', fontWeight: 700, fontSize: 15 }}>🚧 Esta sala está en obras</p>
+          <p style={{ margin: 0, fontSize: 13, color: '#5c5850', lineHeight: 1.45 }}>
+            Todavía no puedes abrir sus artículos, pero ya sabes qué hay dentro y dónde empieza y acaba cada parte.
+          </p>
+        </div>
+
+        <div style={tarjeta}>
+          <p style={{ margin: '0 0 4px', fontSize: 12, color: '#8a8578' }}>Lo que hay dentro</p>
+          {obra.partes.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.45 }}>
+              Este Título no tiene capítulos: va directamente del artículo {obra.desde} al {obra.hasta}.
+            </p>
+          ) : (
+            obra.partes.map((p, i) => (
+              <div
+                key={p.label}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  padding: '8px 0',
+                  borderBottom: i < obra.partes.length - 1 ? '1px solid #f0e8db' : 'none',
+                  fontSize: 13.5
+                }}
+              >
+                <span>
+                  <b>{p.label}</b> · {p.subtitle}
+                </span>
+                <span style={{ whiteSpace: 'nowrap', color: '#6e6256' }}>
+                  {p.desde}–{p.hasta}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+        <button
+          onClick={onVolver}
+          style={{
+            display: 'block',
+            width: '100%',
+            border: 'none',
+            borderRadius: 20,
+            padding: 14,
+            fontSize: 15,
+            fontWeight: 700,
+            fontFamily: 'inherit',
+            color: '#5b4a3a',
+            background: '#f3ede3',
+            cursor: 'pointer'
+          }}
+        >
+          ‹ Volver
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) {
   const [rutaIds, setRutaIds] = useState([]);
   const [transicion, setTransicion] = useState(null); // { direccion, sala, otroLado, puerta, ids }
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState('');
   const [llave, setLlave] = useState(null); // { destino, rango, ids, datos }: sala cerrada con llave
+  const [obra, setObra] = useState(null); // sala en obras abierta (sin artículos todavía)
   const contRef = useRef(null); // dónde está la sala en la página (para que la animación encaje justo encima)
 
   function medirMarco() {
@@ -141,6 +278,13 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
     // 🚧 puerta dibujada pero sin sala detrás todavía (p. ej. Título V): no se navega
     const existe = atajo ? !!idsDestino : (nodoActual.children || []).some((n) => n.id === childId);
     if (!existe) {
+      // 🚧 sala en obras con su rango conocido: se abre con su llave, como las demás
+      const enObras = SALAS_EN_OBRAS[childId];
+      if (enObras) {
+        if (llavesDeHoy().includes(childId)) setObra(enObras);
+        else setLlave({ destino: { id: childId, label: enObras.label }, rango: { desde: enObras.desde, hasta: enObras.hasta }, obra: enObras });
+        return;
+      }
       setAviso('🚧 Esta sala todavía está en obras');
       return;
     }
@@ -169,6 +313,12 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
   }
 
   function abrirConLlave() {
+    if (llave.obra) {
+      guardarLlave(llave.destino.id);
+      setObra(llave.obra);
+      setLlave(null);
+      return;
+    }
     const { destino, ids, datos } = llave;
     guardarLlave(destino.id);
     setLlave(null);
@@ -235,6 +385,7 @@ export default function LawExplorer({ data, skin, getNodeState, onLeafAction }) 
           onComplete={alTerminarCruce}
         />
       )}
+      {obra && <SalaEnObras obra={obra} onVolver={() => setObra(null)} />}
       {llave && (
         <LlaveSala sala={llave.destino} rango={llave.rango} onAbrir={abrirConLlave} onCerrar={() => setLlave(null)} />
       )}

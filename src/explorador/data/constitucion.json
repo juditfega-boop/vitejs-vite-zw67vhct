@@ -208,6 +208,15 @@
       "subtitle": "Derechos y deberes fundamentales",
       "vistaHijos": "capitulos",
       "imagenFondo": "titulo-1-capitulos",
+      "atajos": {
+        "articulo-10": {
+          "top": "3.8%",
+          "left": "45.7%",
+          "width": "8.4%",
+          "height": "5.6%",
+          "etiqueta": "Art. 10"
+        }
+      },
       "hotspots": {
         "capitulo-1": {
           "top": "81.4%",

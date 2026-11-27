@@ -79,11 +79,44 @@ export default function SalaCapitulo({ node, onSelect, onJump, onBack, getNodeSt
               height: puerta.height,
               background: 'transparent',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: puerta.etiqueta ? '50%' : '8px',
+              // ✨ los atajos con etiqueta (p. ej. el Art. 10 del frontón) llevan un brillo suave
+              boxShadow: puerta.etiqueta
+                ? '0 0 0 3px rgba(232,184,138,0.55), 0 0 14px 4px rgba(232,184,138,0.45)'
+                : 'none',
               cursor: 'pointer',
             }}
           />
         ))}
+
+        {/* 🏷️ la etiqueta del atajo, justo debajo de su zona (también se puede pulsar) */}
+        {Object.entries(atajos)
+          .filter(([, puerta]) => puerta.etiqueta)
+          .map(([id, puerta]) => (
+            <button
+              key={`etiqueta-${id}`}
+              onClick={() => onJump(id)}
+              style={{
+                position: 'absolute',
+                top: `calc(${puerta.top} + ${puerta.height})`,
+                left: `calc(${puerta.left} + ${puerta.width} / 2)`,
+                transform: 'translate(-50%, -20%)',
+                background: '#fdfaf4',
+                border: '1.2px solid #6b5640',
+                borderRadius: 999,
+                padding: '2px 10px',
+                fontFamily: 'Georgia, serif',
+                fontSize: 12,
+                fontWeight: 'bold',
+                color: '#4a3b2e',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 1px 4px rgba(90,61,43,0.18)',
+                cursor: 'pointer',
+              }}
+            >
+              {puerta.etiqueta}
+            </button>
+          ))}
       </div>
     </div>
   );
