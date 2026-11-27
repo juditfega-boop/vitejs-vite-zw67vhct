@@ -35,6 +35,21 @@ export function escalonDe(s) {
   return ESCALON.PRIORITARIO;
 }
 
+// 🔁 repaso espaciado de los test: una pregunta fallada vuelve a los 1, 3, 7 y 21 días
+// (fallo → mañana; cada acierto la manda más lejos; acertada a los 21 días → dominada)
+export const INTERVALOS_TEST = [1, 3, 7, 21];
+
+export function diaDeHoy(sumar = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + sumar);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// ¿le toca volver a salir hoy (o se quedó atrasada)?
+export function tocaRepasar(s) {
+  return !!(s && s.repaso && s.repaso.proxima <= diaDeHoy());
+}
+
 // devuelve en qué escalón estaba y en cuál queda, por si la pantalla quiere celebrarlo
 // mantenimiento = true cuando respondes desde «Casos resueltos → Repaso de mantenimiento»
 export function registrarRespuesta(pregunta, correcta, mantenimiento = false) {
@@ -65,6 +80,18 @@ export function registrarRespuesta(pregunta, correcta, mantenimiento = false) {
     stats[id].errores += 1;
     // un fallo, esté donde esté, la devuelve a 🔴
     despues = ESCALON.PRIORITARIO;
+  }
+  // 🔁 cuándo vuelve a salir en los test (solo las que alguna vez has fallado)
+  if (!correcta) {
+    stats[id].repaso = { paso: 0, proxima: diaDeHoy(INTERVALOS_TEST[0]) };
+  } else if (stats[id].repaso) {
+    const paso = stats[id].repaso.paso + 1;
+    if (paso >= INTERVALOS_TEST.length) {
+      delete stats[id].repaso; // acertada a los 21 días: ya no se fuerza
+      if (despues === ESCALON.RESUELTO) despues = ESCALON.DOMINADA;
+    } else {
+      stats[id].repaso = { paso, proxima: diaDeHoy(INTERVALOS_TEST[paso]) };
+    }
   }
   stats[id].escalon = despues;
 

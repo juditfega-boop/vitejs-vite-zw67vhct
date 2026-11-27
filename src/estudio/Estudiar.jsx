@@ -13,7 +13,8 @@ import {
   borrarPartida,
   clasificarErrores,
   ESCALON,
-  marcarRacion
+  marcarRacion,
+  tocaRepasar
 } from "../servicios/progreso";
 import { styles } from "../estilos";
 import iconoTazaPlantita from "../assets/kit/icono-taza-plantita-evolucion.png";
@@ -131,13 +132,20 @@ function mezclar(array) {
   return copia;
 }
 
-// Elige primero las preguntas que menos te han salido (a igualdad de veces, al azar)
+// Elige las preguntas del test:
+// 🔁 primero las falladas a las que les toca volver (repaso espaciado), como mucho la mitad del test;
+// 🌱 el resto, las que menos te han salido (las que nunca te han salido, antes que ninguna)
 function elegirEquilibradas(lista, cantidad) {
   const stats = obtenerStats();
   const vecesDe = (p) => stats[String(p.id)]?.veces || 0;
-  return mezclar(lista)
+  const tocan = mezclar(lista.filter((p) => tocaRepasar(stats[String(p.id)])))
+    .sort((a, b) => stats[String(a.id)].repaso.proxima.localeCompare(stats[String(b.id)].repaso.proxima))
+    .slice(0, Math.floor(cantidad / 2));
+  const yaElegidas = new Set(tocan.map((p) => String(p.id)));
+  const resto = mezclar(lista.filter((p) => !yaElegidas.has(String(p.id))))
     .sort((a, b) => vecesDe(a) - vecesDe(b))
-    .slice(0, cantidad);
+    .slice(0, cantidad - tocan.length);
+  return mezclar([...tocan, ...resto]); // mezcladas, para que no salgan todas juntas al principio
 }
 
 function prepararPregunta(p) {
